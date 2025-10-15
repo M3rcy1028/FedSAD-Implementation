@@ -7,9 +7,9 @@ def get_args():
     parser = argparse.ArgumentParser()
 
     # train
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--dropout_rate', type=float, default=0.1)
-    parser.add_argument('--percentile', type=int, default=84)
+    parser.add_argument('--percentile', type=int, default=95)
     parser.add_argument('--random_seed', type=int, default=123)
 
     '''
@@ -19,7 +19,7 @@ def get_args():
     '''
     # clients
     parser.add_argument('--client_nums', type=int, default=15)   # 서버수가 50까지 되려나..? 될수도..?
-    parser.add_argument('--client_epochs', type=int, default=20) # == local epochs
+    parser.add_argument('--client_epochs', type=int, default=30) # == local epochs
 
     # servers
     # parser.add_argument('--server_nums', default=6)

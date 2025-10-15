@@ -23,6 +23,7 @@ def split_dataset_for_clients(input_file="./graph_datas/CIC_normal.csv", num_cli
         raise FileNotFoundError(f"❌ {input_file} 없음")
 
     df = pd.read_csv(input_file)
+    df = df.sample(frac=1, random_state=5).reset_index(drop=True)
 
     # (선택) 너무 크면 샘플링
     if NUM_SAMPLES and len(df) > NUM_SAMPLES:

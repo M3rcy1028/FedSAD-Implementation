@@ -12,7 +12,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # --- 설정값 ---
 SAVE_STAT = "normal_stats.pkl"
-TIME_WINDOW = '2T'       # 데이터를 몇 분 단위로 묶을지
+TIME_WINDOW = '1T'       # 데이터를 몇 분 단위로 묶을지
 THRESHOLD_STD = 3        # 정상 범위를 판단할 표준편차 배수
 NUM_SAMPLES = 10736459      # 샘플링 개수
 
@@ -174,7 +174,7 @@ def evaluate_attack_counts(file_path, normal_stats, attack_name):
 
 
 def experiment_all_attacks_simple():
-    with open(SAVE_STAT, "rb") as f:
+    with open("normal_stats_fl.pkl", "rb") as f:
         normal_stats = pickle.load(f)
 
     label_mapping = {
@@ -195,10 +195,10 @@ def experiment_all_attacks_simple():
     }
 
     for num, attack_name in label_mapping.items():
-        file_path = f"CIC_anomaly_{num}.csv"
+        file_path = f"./graph_datas/CIC_anomaly_{num}.csv"
         evaluate_attack_counts(file_path, normal_stats, attack_name)
 
 # --- 실행 ---
 if __name__ == "__main__":
-    run_anomaly_detection()
+    # run_anomaly_detection()
     experiment_all_attacks_simple()

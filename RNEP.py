@@ -1,6 +1,6 @@
 from arguments import get_args
 from utils import *
-from model_aae import TransformerAAE, FLClient  # FLClient class can be used if imported
+from model_cmp import TransformerAAE, FLClient  # FLClient class can be used if imported
 
 WEIGHT_PATH = "./rnep/rnep_vae_transformer_weights.h5"
 MATRIX_PATH = "./rnep/rnep_cm.png"
@@ -73,12 +73,16 @@ def local_train(rnd, X_local, X_test_scaled, y_test, client_idx, epochs=50, batc
               validation_split=0.1)
 
     # 평가
-    acc, _, _ = evaluate_model(model, X_local, X_test_scaled, y_test, percentile)
+    acc, _, y_pred = evaluate_model(model, X_local, X_test_scaled, y_test, percentile)
+
+    cm = confusion_matrix(y_test, y_pred)
 
     # 로그 저장
     with open("./rnep/rnep_server_report.txt", "a") as f:
         f.write(f"\n--- Client {client_idx} Round {rnd+1} ---\n")
         f.write(f"Accuracy: {acc:.4f}\n")
+        f.write("Confusion Matrix:\n")
+        f.write(str(cm) + "\n")
 
     return acc
 

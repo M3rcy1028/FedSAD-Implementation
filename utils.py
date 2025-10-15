@@ -52,6 +52,27 @@ def get_datasets_nsl(random_seed=args.random_seed):
 
     return X_train_scaled, X_test_scaled, y_test
 
+def get_datasets_kdd99(random_seed=args.random_seed):
+    np.random.seed(random_seed)
+    random.seed(random_seed)
+
+    df_normal = pd.read_csv("./KDD99/KDD99_normal.csv")
+    df_anomaly = pd.read_csv("./KDD99/KDD99_anomaly.csv")
+
+    df_normal = shuffle(df_normal, random_state=random_seed)
+
+    scaler = MinMaxScaler()
+    mid_idx = len(df_normal) // 2
+    df_normal_train = df_normal[:mid_idx]
+    df_normal_test = df_normal[mid_idx:]
+
+    X_train_scaled = scaler.fit_transform(df_normal_train)
+    df_test = pd.concat([df_normal_test, df_anomaly], ignore_index=True)
+    y_test = np.concatenate([np.zeros(len(df_normal_test)), np.ones(len(df_anomaly))])
+    X_test_scaled, y_test = shuffle(scaler.transform(df_test), y_test, random_state=random_seed)
+
+    return X_train_scaled, X_test_scaled, y_test
+
 
 def get_datasets_cic(random_seed=args.random_seed):
     np.random.seed(random_seed)
@@ -127,6 +148,7 @@ def get_datasets_cic(random_seed=args.random_seed):
     X_test, y_test = shuffle(X_test, y_test, random_state=random_seed)
 
     return X_train, X_test, y_test
+
 
 
 # def get_datasets_dapt(random_seed=args.random_seed):
