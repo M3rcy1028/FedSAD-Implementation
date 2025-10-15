@@ -22,4 +22,4 @@
 /model_dapt.py
 /rnep
 /test.py
-/utils.py
+/utils.py*.h5
