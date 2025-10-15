@@ -119,7 +119,7 @@ def main():
     args = get_args()
 
     # 데이터 불러오기
-    X_train, X_test, y_test = get_datasets_cic_uns()
+    X_train, X_test, y_test = get_datasets_kdd99()
     # X_train = reshape_for_sequence(X_train, timesteps=10, features=12)
     # X_test = reshape_for_sequence(X_test, timesteps=10, features=12)
 
