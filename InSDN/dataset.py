@@ -106,22 +106,27 @@ def feature_selection():
 
     # --- 피처 선택 ---
     SELECTED_FEATURES = [
-        "Flow Duration", "Flow Byts/s", "Flow Pkts/s",
-        "Tot Fwd Pkts", "TotLen Fwd Pkts",
-        "Fwd Pkt Len Max", "Fwd Pkt Len Min", "Fwd Pkt Len Mean", "Fwd Pkt Len Std",
-        "Fwd IAT Mean", "Fwd IAT Std", "Fwd IAT Max", "Fwd IAT Min",
-        "Fwd Header Len", "Fwd Pkts/s", "Fwd PSH Flags", "Fwd URG Flags",
-        "Subflow Fwd Pkts", "Subflow Fwd Byts",
-        "Tot Bwd Pkts", "TotLen Bwd Pkts",
-        "Bwd Pkt Len Max", "Bwd Pkt Len Min", "Bwd Pkt Len Mean", "Bwd Pkt Len Std",
-        "Bwd IAT Mean", "Bwd IAT Std", "Bwd IAT Max", "Bwd IAT Min",
-        "Bwd Header Len", "Bwd Pkts/s", "Bwd PSH Flags", "Bwd URG Flags",
-        "Subflow Bwd Pkts", "Subflow Bwd Byts",
-        "Pkt Len Min", "Pkt Len Max", "Pkt Len Mean", "Pkt Len Std", "Pkt Len Var",
-        "FIN Flag Cnt", "SYN Flag Cnt", "RST Flag Cnt", "PSH Flag Cnt",
-        "ACK Flag Cnt", "URG Flag Cnt", "ECE Flag Cnt",
-        "Active Mean", "Active Std", "Idle Mean", "Idle Std",
-        "Label"
+        "Protocol", "Flow Duration",
+        "Tot Fwd Pkts", "Tot Bwd Pkts",
+        "TotLen Fwd Pkts", "TotLen Bwd Pkts",
+        "Fwd Pkt Len Max", "Fwd Pkt Len Min",
+        "Fwd Pkt Len Mean", "Fwd Pkt Len Std",
+        "Bwd Pkt Len Max", "Bwd Pkt Len Min",
+        "Bwd Pkt Len Mean", "Bwd Pkt Len Std",
+        "Flow Byts/s", "Flow Pkts/s",
+        "Flow IAT Mean", "Flow IAT Std",
+        "Flow IAT Max", "Flow IAT Min",
+        "Fwd IAT Tot", "Fwd IAT Mean",
+        "Fwd IAT Std", "Fwd IAT Max", "Fwd IAT Min",
+        "Bwd IAT Tot", "Bwd IAT Mean",
+        "Bwd IAT Std", "Bwd IAT Max", "Bwd IAT Min",
+        "Fwd Header Len", "Bwd Header Len",
+        "Fwd Pkts/s", "Bwd Pkts/s",
+        "Pkt Len Min", "Pkt Len Max",
+        "Pkt Len Mean", "Pkt Len Std", "Pkt Len Var",
+        "Pkt Size Avg",
+        "Active Mean", "Active Std", "Active Max", "Active Min",
+        "Idle Mean", "Idle Std", "Idle Max", "Idle Min"
     ]
 
     # --- 정상 / 비정상 데이터 로드 ---

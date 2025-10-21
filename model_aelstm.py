@@ -36,7 +36,9 @@ class SaveEvaluationFedAvg(fl.server.strategy.FedAvg):
 
         # 안전하게 빌드 보장 (timesteps=10, features=13 가정)
         if not mdl.weights:
-            _ = mdl(tf.zeros((1, 10, 13)))
+            # _ = mdl(tf.zeros((1, 10, 13))) # KDD99
+            # _ = model(tf.zeros((1, 12, 4))) # InSDN
+            _ = model(tf.zeros((1, 10, 4))) # CIC
 
         nd = mdl.get_weights()
         return fl.common.ndarrays_to_parameters(nd)
@@ -149,6 +151,9 @@ class FLClient(fl.client.NumPyClient):
         self.y_test = y_test
         self.epochs = epochs
         self.batch_size = batch_size
+
+        # 🧩 모델 빌드 (중요!)
+        _ = self.model(tf.zeros((1, X_train.shape[1], X_train.shape[2])))
 
     def fit(self, parameters, config):
         self.model.set_weights(parameters)

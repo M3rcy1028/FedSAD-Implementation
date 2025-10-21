@@ -14,7 +14,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def main():
     args = get_args()
-    X_train_scaled, X_test_scaled, y_test = get_datasets_kdd99()
+    X_train_scaled, X_test_scaled, y_test = get_datasets_insdn()
     client_data = np.array_split(X_train_scaled, args.client_nums)
     
     # 서버 평가를 위한 모델/데이터 준비
@@ -24,9 +24,9 @@ def main():
     central_model.compile(optimizer=Adam(0.0001), loss="mse")
 
     # 🔹 서버 모델만 pretrain weight 로드
-    # PRETRAIN_PATH = "rnep_frame_251010/rnep_frame_aae_transformer_weights.h5"
-    # central_model.load_weights(PRETRAIN_PATH)
-    # print(f"[Server] Loaded pre-trained weights from {PRETRAIN_PATH}")
+    PRETRAIN_PATH = "rnep_frame_251021/rnep_frame_aae_transformer_weights.h5"
+    central_model.load_weights(PRETRAIN_PATH)
+    print(f"[Server] Loaded pre-trained weights from {PRETRAIN_PATH}")
 
     eval_server_args = {
         "model": central_model,
@@ -53,12 +53,12 @@ def main():
         client_model = TransformerAAE(input_dim)
         _ = client_model(tf.zeros((1, input_dim)), prior_labels=tf.zeros((1,1)))
         
-        # PRETRAIN_PATH = "rnep_frame_251010/rnep_frame_aae_transformer_weights.h5"
-        # try:
-        #     client_model.load_weights(PRETRAIN_PATH)
-        #     print(f"[Client {cid_int}] Loaded pre-trained weights from {PRETRAIN_PATH}")
-        # except Exception as e:
-        #     print(f"[Client {cid_int}] Warning: failed to load weights from {PRETRAIN_PATH} — {e}")
+        PRETRAIN_PATH = "rnep_frame_251021/rnep_frame_aae_transformer_weights.h5"
+        try:
+            client_model.load_weights(PRETRAIN_PATH)
+            print(f"[Client {cid_int}] Loaded pre-trained weights from {PRETRAIN_PATH}")
+        except Exception as e:
+            print(f"[Client {cid_int}] Warning: failed to load weights from {PRETRAIN_PATH} — {e}")
         
         return FLClient(
             cid_int,

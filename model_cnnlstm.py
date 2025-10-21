@@ -50,38 +50,48 @@ class SaveEvaluationFedAvg(fl.server.strategy.FedAvg):
 
 @tf.keras.utils.register_keras_serializable(package="Custom")
 class CNN_LSTM(tf.keras.Model):
-    def __init__(self, timesteps=10, features=12, cnn_filters=64, lstm_units=128, dropout_rate=0.1):
+    def __init__(self, timesteps=10, features=12, cnn_filters=64, lstm_units=128):
         super().__init__()
         self.timesteps = timesteps
         self.features = features
 
-        # CNN Feature Extractor (시계열 각 step에 대한 로컬 패턴 학습)
+        # ---- CNN Feature Extractor ----
         self.conv1 = layers.Conv1D(cnn_filters, 3, padding="same", activation="relu")
         self.conv2 = layers.Conv1D(cnn_filters, 3, padding="same", activation="relu")
         self.pool = layers.MaxPooling1D(pool_size=2)
 
-        # LSTM Temporal modeling
+        # Dropout after 2nd Pooling (P=0.25)
+        self.dropout_cnn = layers.Dropout(0.25)
+
+        # Flatten before LSTM
+        self.flatten = layers.Flatten()
+
+        # ---- LSTM Temporal Modeling ----
         self.lstm = layers.LSTM(lstm_units, return_sequences=False)
 
-        # Dense Classifier
-        self.fc1 = layers.Dense(128, activation="relu")
-        self.dropout = layers.Dropout(dropout_rate)
-        self.fc2 = layers.Dense(64, activation="relu")
+        # ---- Fully Connected + Regularization ----
+        self.fc1 = layers.Dense(
+            128,
+            activation="relu",
+            kernel_regularizer=tf.keras.regularizers.l2(0.1)
+        )
 
-        # Output layer (binary classification)
+        # Dropout after FC (P=0.5)
+        self.dropout_fc = layers.Dropout(0.5)
+
+        # ---- Output Layer ----
         self.output_layer = layers.Dense(1, activation="sigmoid")
 
     def call(self, inputs, training=None):
-        """
-        inputs: (batch, timesteps=10, features=12)
-        """
-        x = self.conv1(inputs)       # (batch, 10, filters)
+        x = self.conv1(inputs)
         x = self.conv2(x)
-        x = self.pool(x)             # (batch, 5, filters)
-        x = self.lstm(x)             # (batch, lstm_units)
+        x = self.pool(x)
+        x = self.dropout_cnn(x, training=training)
+        x = self.flatten(x)              # Flatten before feeding to LSTM
+        x = tf.expand_dims(x, axis=1)    # (batch, 1, features) → for LSTM input
+        x = self.lstm(x)
         x = self.fc1(x)
-        x = self.dropout(x, training=training)
-        x = self.fc2(x)
+        x = self.dropout_fc(x, training=training)
         return self.output_layer(x)
 
 class FLClient(fl.client.NumPyClient):

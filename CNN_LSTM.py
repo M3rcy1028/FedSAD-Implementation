@@ -11,7 +11,7 @@ MATRIX_PATH = "./cnn_lstm/cnn_lstm_cm.png"
 RESULT_PATH = "./cnn_lstm/cnn_lstm_server.txt"
 ROC_PATH = "./cnn_lstm/cnn_lstm_roc.png"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 
 # ----------------------------
@@ -24,7 +24,6 @@ def reshape_for_sequence_nsl(X, timesteps=10, features=12):
         X = np.concatenate([X, pad], axis=1)
     X = X[:, :timesteps * features]
     return X.reshape(-1, timesteps, features)
-
 
 # ----------------------------
 # NSL-KDD 지도학습 데이터셋 로더
@@ -74,8 +73,8 @@ def get_datasets_nsl_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=10,
 
 # CIC 2018 데이터셋 전처리
 def get_datasets_cic_multi_supervised(
-    normal_csv="./CIC_ae_normal.csv",
-    anomaly_pattern="./CIC_anomaly_ae_{}.csv",
+    normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
+    anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
     num_anomaly_files=14,
     random_seed=42,
     anomaly_ratio=0.2,
@@ -98,11 +97,19 @@ def get_datasets_cic_multi_supervised(
     # 주요 피처 (20개)
     # ----------------------------
     SELECTED_FEATURES = [
-        "Tot Fwd Pkts", "Tot Bwd Pkts", "TotLen Fwd Pkts", "TotLen Bwd Pkts",
-        "Fwd Pkt Len Max", "Fwd Pkt Len Mean", "Bwd Pkt Len Max", "Bwd Pkt Len Mean",
-        "Flow Byts/s", "Flow Pkts/s", "Flow IAT Mean", "Flow IAT Std",
-        "Fwd IAT Mean", "Fwd IAT Std", "Bwd IAT Mean", "Bwd IAT Std",
-        "Fwd Header Len", "ACK Flag Cnt", "Idle Mean", "Idle Std"
+        "Flow Duration", "Tot Fwd Pkts", "Tot Bwd Pkts",
+        "TotLen Fwd Pkts", "TotLen Bwd Pkts",
+        "Fwd Pkt Len Max", "Fwd Pkt Len Mean",
+        "Bwd Pkt Len Max", "Bwd Pkt Len Mean",
+        "Flow Byts/s", "Flow Pkts/s",
+        "Flow IAT Mean", "Flow IAT Std",
+        "Fwd IAT Mean", "Fwd IAT Std",
+        "Bwd IAT Mean", "Bwd IAT Std",
+        "Pkt Len Min", "Pkt Len Max", "Pkt Len Mean", "Pkt Len Std", "Pkt Len Var",
+        "FIN Flag Cnt", "SYN Flag Cnt", "RST Flag Cnt", "PSH Flag Cnt", "ACK Flag Cnt", "URG Flag Cnt",
+        "Fwd Header Len", "Bwd Header Len",
+        "Down/Up Ratio", "Pkt Size Avg",
+        "Active Mean", "Active Std", "Idle Mean", "Idle Std",
     ]
 
     # ----------------------------
@@ -227,6 +234,100 @@ def get_datasets_kdd99_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=1
     print(f"✅ Loaded KDD99 (train {len(X_train_seq)}, test {len(X_test_seq)}) with {anomaly_ratio*100:.1f}% anomaly in training")
     return X_train_seq, y_train, X_test_seq, y_test
 
+# InSDN 데이터셋 전처리
+def get_datasets_insdn_supervised(
+    normal_csv="./InSDN/ae_datas/InSDN_normal_48.csv",
+    anomaly_csv="./InSDN/ae_datas/InSDN_anomaly_48.csv",
+    random_seed=42,
+    anomaly_ratio=0.2,
+    timesteps=8,     # 48 = 8 x 6
+    features=6
+):
+    """
+    InSDN 48-feature 지도학습 세트 (CNN-LSTM 입력용)
+    - 정상의 절반은 train, 나머지 절반 + 전체 이상치로 test 구성
+    - train에는 anomaly_ratio 비율의 이상치 일부만 포함
+    - CNN-LSTM 입력을 위해 (timesteps, features) = (8, 6)으로 reshape
+    반환: X_train_seq, y_train, X_test_seq, y_test
+    """
+    np.random.seed(random_seed)
+    random.seed(random_seed)
+
+    # ---------------------------
+    # (1) Load & clean
+    # ---------------------------
+    df_normal = pd.read_csv(normal_csv, low_memory=False)
+    df_anomaly = pd.read_csv(anomaly_csv, low_memory=False)
+
+    def _clean(df):
+        return df.apply(pd.to_numeric, errors="coerce") \
+                 .replace([np.inf, -np.inf], np.nan) \
+                 .fillna(0)
+    df_normal = _clean(df_normal)
+    df_anomaly = _clean(df_anomaly)
+
+    # ---------------------------
+    # (2) Split normal data
+    # ---------------------------
+    df_normal = shuffle(df_normal, random_state=random_seed)
+    mid_idx = len(df_normal) // 2
+    df_normal_train = df_normal.iloc[:mid_idx]
+    df_normal_test  = df_normal.iloc[mid_idx:]
+
+    # ---------------------------
+    # (3) Scaling
+    # ---------------------------
+    scaler = MinMaxScaler()
+    X_normal_train = scaler.fit_transform(df_normal_train.values)
+    X_normal_test  = scaler.transform(df_normal_test.values)
+    X_anomaly_all  = scaler.transform(df_anomaly.values)
+
+    # ---------------------------
+    # (4) Select anomalies for train/test
+    # ---------------------------
+    n_anom_train = int(len(X_anomaly_all) * anomaly_ratio)
+    X_anomaly_train = X_anomaly_all[:n_anom_train]
+    X_anomaly_test  = X_anomaly_all[n_anom_train:]
+
+    # ---------------------------
+    # (5) Combine & label
+    # ---------------------------
+    X_train = np.concatenate([X_normal_train, X_anomaly_train], axis=0)
+    y_train = np.concatenate([
+        np.zeros(len(X_normal_train), dtype=int),
+        np.ones(len(X_anomaly_train), dtype=int)
+    ])
+
+    X_test = np.concatenate([X_normal_test, X_anomaly_test], axis=0)
+    y_test = np.concatenate([
+        np.zeros(len(X_normal_test), dtype=int),
+        np.ones(len(X_anomaly_test), dtype=int)
+    ])
+
+    X_train, y_train = shuffle(X_train, y_train, random_state=random_seed)
+    X_test,  y_test  = shuffle(X_test,  y_test,  random_state=random_seed)
+
+    # ---------------------------
+    # (6) Reshape for CNN-LSTM
+    # ---------------------------
+    def reshape_for_sequence_insdn(X, timesteps=8, features=6):
+        n_samples, n_feats = X.shape
+        if n_feats < timesteps * features:
+            pad = np.zeros((n_samples, timesteps * features - n_feats))
+            X = np.concatenate([X, pad], axis=1)
+        X = X[:, :timesteps * features]
+        return X.reshape(-1, timesteps, features)
+
+    X_train_seq = reshape_for_sequence_insdn(X_train, timesteps, features)
+    X_test_seq  = reshape_for_sequence_insdn(X_test,  timesteps, features)
+
+    # ---------------------------
+    # (7) Summary
+    # ---------------------------
+    print(f"[InSDN Supervised] Train: {X_train_seq.shape}, Test: {X_test_seq.shape}")
+    print(f"y_train: {y_train.shape}, y_test: {y_test.shape}, anomaly_ratio(train)={anomaly_ratio}")
+
+    return X_train_seq, y_train, X_test_seq, y_test
 
 # ----------------------------
 # 메인 실행 함수
@@ -237,17 +338,20 @@ def main():
     #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
     # )
 
-    # X_train, y_train, X_test, y_test = get_datasets_cic_multi_supervised(
-    #     normal_csv="./CIC2018/ae_datas/CIC_ae_normal.csv",
-    #     anomaly_pattern="./CIC2018/ae_datas/CIC_anomaly_ae_{}.csv",
-    #     num_anomaly_files=14,
-    #     anomaly_ratio=0.2,
-    #     timesteps=10,
-    #     features=2
-    # )
-    X_train, y_train, X_test, y_test = get_datasets_kdd99_supervised(
-        random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
+    X_train, y_train, X_test, y_test = get_datasets_cic_multi_supervised(
+        normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
+        anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
+        num_anomaly_files=14,
+        anomaly_ratio=0.2,
+        timesteps=10,
+        features=2
     )
+
+    # X_train, y_train, X_test, y_test = get_datasets_kdd99_supervised(
+    #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
+    # )
+
+    # X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=8, features=6)
 
     print("Train:", X_train.shape, y_train.shape)
     print("Test :", X_test.shape, y_test.shape)
@@ -257,8 +361,9 @@ def main():
     # ----------------------------
     model = CNN_LSTM(timesteps=10, features=12)
     # _ = model(tf.zeros((1, 10, 12))) # NSL
-    # _ = model(tf.zeros((1, 10, 2))) # CIC
-    _ = model(tf.zeros((1, 10, 13))) # KDD99
+    _ = model(tf.zeros((1, 10, 4))) # CIC
+    # _ = model(tf.zeros((1, 10, 13))) # KDD99
+    # _ = model(tf.zeros((1, 8, 6))) # InSDN
     model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])
     model.summary()
 
@@ -321,8 +426,9 @@ def main():
         cid_int = int(cid)
         client_model = CNN_LSTM(timesteps=10, features=12)
         # _ = client_model(tf.zeros((1, 10, 12))) # NSL
-        # _ = model(tf.zeros((1, 10, 2))) # CIC
-        _ = model(tf.zeros((1, 10, 13))) # KDD99
+        _ = model(tf.zeros((1, 10, 4))) # CIC
+        # _ = model(tf.zeros((1, 10, 13))) # KDD99
+        # _ = model(tf.zeros((1, 8, 6))) # InSDN
         client_model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])
 
         X_tr = client_data[cid_int]

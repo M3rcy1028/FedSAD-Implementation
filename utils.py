@@ -73,63 +73,75 @@ def get_datasets_kdd99(random_seed=args.random_seed):
 
     return X_train_scaled, X_test_scaled, y_test
 
-
-def get_datasets_cic(random_seed=args.random_seed):
+# CIC
+def get_datasets_cic_filtered(random_seed=42):
     np.random.seed(random_seed)
     random.seed(random_seed)
 
     # ---------------------------
-    # (0) [변경] 데이터 개수 설정
+    # (0) 선택 피처 (InSDN 스타일 36개)
     # ---------------------------
-    N_NORMAL_TRAIN = 2748235
-    N_NORMAL_TEST = 2748235
-    N_ANOMALY_TEST = 2748235
+    SELECTED_FEATURES = [
+        "Flow Duration", "Tot Fwd Pkts", "Tot Bwd Pkts",
+        "TotLen Fwd Pkts", "TotLen Bwd Pkts",
+        "Fwd Pkt Len Max", "Fwd Pkt Len Mean",
+        "Bwd Pkt Len Max", "Bwd Pkt Len Mean",
+        "Flow Byts/s", "Flow Pkts/s",
+        "Flow IAT Mean", "Flow IAT Std",
+        "Fwd IAT Mean", "Fwd IAT Std",
+        "Bwd IAT Mean", "Bwd IAT Std",
+        "Pkt Len Min", "Pkt Len Max", "Pkt Len Mean", "Pkt Len Std", "Pkt Len Var",
+        "FIN Flag Cnt", "SYN Flag Cnt", "RST Flag Cnt", "PSH Flag Cnt", "ACK Flag Cnt", "URG Flag Cnt",
+        "Fwd Header Len", "Bwd Header Len",
+        "Down/Up Ratio", "Pkt Size Avg",
+        "Active Mean", "Active Std", "Idle Mean", "Idle Std"
+    ]
 
     # ---------------------------
     # (1) 정상 데이터 로드 & 정리
     # ---------------------------
-    df_normal = pd.read_csv("./CIC2018/ae_datas/CIC_ae_normal.csv")
-    df_normal = shuffle(df_normal, random_state=random_seed)
+    normal_path = "./CIC2018/ae_datas_all_features/CIC_ae_normal.csv"
+    df_normal = pd.read_csv(normal_path, low_memory=False)
+
+    # 공통 피처만 사용 (파일에 존재하는 컬럼만 선택)
+    existing_cols = [c for c in SELECTED_FEATURES if c in df_normal.columns]
+    df_normal = df_normal[existing_cols].copy()
+
+    # 클린업
     df_normal = df_normal.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
     df_normal[df_normal < 0] = 0
+    df_normal = shuffle(df_normal, random_state=random_seed)
 
     # ---------------------------
-    # (2) 공격 데이터 로드 & 정리
+    # (2) 이상 데이터 로드 & 정리
     # ---------------------------
-    anomaly_files = [f"./CIC2018/ae_datas/CIC_anomaly_ae_{i}.csv" for i in range(1, 15)]
-    df_anomaly_list = [pd.read_csv(f) for f in anomaly_files]
-    df_anomaly = pd.concat(df_anomaly_list, ignore_index=True)
+    anomaly_files = [
+        f"./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{i}.csv" for i in range(1, 15)
+    ]
+    anomaly_dfs = []
+    for path in anomaly_files:
+        if os.path.exists(path):
+            df_temp = pd.read_csv(path, low_memory=False)
+            use_cols = [c for c in existing_cols if c in df_temp.columns]
+            df_temp = df_temp[use_cols].copy()
+            anomaly_dfs.append(df_temp)
+        else:
+            print(f"⚠️ Warning: {path} not found, skipping.")
+
+    df_anomaly = pd.concat(anomaly_dfs, ignore_index=True)
     df_anomaly = shuffle(df_anomaly, random_state=random_seed)
     df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
     df_anomaly[df_anomaly < 0] = 0
 
     # ---------------------------
-    # (3) [변경] 요청사항에 맞게 데이터 분할
+    # (3) 정상 데이터 절반 분할
     # ---------------------------
-    
-    # 정상 데이터 분할
-    total_normal_needed = N_NORMAL_TRAIN + N_NORMAL_TEST
-    if len(df_normal) < total_normal_needed:
-        raise ValueError(
-            f"정상 데이터 개수({len(df_normal)})가 "
-            f"필요한 총 개수({total_normal_needed})보다 부족합니다."
-        )
-    
-    df_normal_train = df_normal.iloc[:N_NORMAL_TRAIN]
-    df_normal_test = df_normal.iloc[N_NORMAL_TRAIN:total_normal_needed]
+    mid_idx = len(df_normal) // 2
+    df_normal_train = df_normal.iloc[:mid_idx]
+    df_normal_test = df_normal.iloc[mid_idx:]
 
-    # 이상 데이터 분할
-    if len(df_anomaly) < N_ANOMALY_TEST:
-        raise ValueError(
-            f"이상 데이터 개수({len(df_anomaly)})가 "
-            f"테스트에 필요한 개수({N_ANOMALY_TEST})보다 부족합니다."
-        )
-
-    df_anomaly_test = df_anomaly.iloc[:N_ANOMALY_TEST]
-    
-    print(f"정상 훈련 데이터: {len(df_normal_train)}개")
-    print(f"정상 테스트 데이터: {len(df_normal_test)}개")
-    print(f"이상 테스트 데이터: {len(df_anomaly_test)}개")
+    print(f"정상 데이터 총 {len(df_normal)}개 → Train {len(df_normal_train)}, Test {len(df_normal_test)}")
+    print(f"이상 데이터 총 {len(df_anomaly)}개 (모두 테스트에 사용)")
 
     # ---------------------------
     # (4) MinMax 정규화
@@ -137,18 +149,89 @@ def get_datasets_cic(random_seed=args.random_seed):
     scaler = MinMaxScaler()
     X_train = scaler.fit_transform(df_normal_train.values)
 
-    # ---------------------------
-    # (5) 레이블 생성 & 셔플
-    # ---------------------------
-    df_test = pd.concat([df_normal_test, df_anomaly_test], ignore_index=True)
+    df_test = pd.concat([df_normal_test, df_anomaly], ignore_index=True)
     X_test = scaler.transform(df_test.values)
+    y_test = np.concatenate([
+        np.zeros(len(df_normal_test)),
+        np.ones(len(df_anomaly))
+    ])
 
-    y_test = np.concatenate([np.zeros(len(df_normal_test)), np.ones(len(df_anomaly_test))])
-    
+    # ---------------------------
+    # (5) 셔플 & 리턴
+    # ---------------------------
     X_test, y_test = shuffle(X_test, y_test, random_state=random_seed)
+
+    print(f"최종 Train shape: {X_train.shape}, Test shape: {X_test.shape}")
+    print(f"y_test: Normal={np.sum(y_test==0)}, Anomaly={np.sum(y_test==1)}")
 
     return X_train, X_test, y_test
 
+# InSDN
+def get_datasets_insdn(random_seed=args.random_seed):
+    """
+    Load and preprocess InSDN dataset (48 features, Table 9 subset).
+    Normal data is split 50/50 for train/test, anomaly data is for testing only.
+    """
+
+    np.random.seed(random_seed)
+    random.seed(random_seed)
+
+    # ---------------------------
+    # (1) Load dataset
+    # ---------------------------
+    normal_path = "./InSDN/ae_datas/InSDN_normal_48.csv"
+    anomaly_path = "./InSDN/ae_datas/InSDN_anomaly_48.csv"
+
+    df_normal = pd.read_csv(normal_path)
+    df_anomaly = pd.read_csv(anomaly_path)
+
+    print(f"✅ Loaded InSDN data → Normal: {df_normal.shape}, Anomaly: {df_anomaly.shape}")
+
+    # ---------------------------
+    # (2) Shuffle normal data
+    # ---------------------------
+    df_normal = shuffle(df_normal, random_state=random_seed)
+
+    # ---------------------------
+    # (3) Split train/test for normal
+    # ---------------------------
+    mid_idx = len(df_normal) // 2
+    df_normal_train = df_normal.iloc[:mid_idx]
+    df_normal_test = df_normal.iloc[mid_idx:]
+
+    # ---------------------------
+    # (4) Preprocessing: numeric cleanup
+    # ---------------------------
+    df_normal_train = df_normal_train.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
+    df_normal_test = df_normal_test.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
+    df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
+
+    # ---------------------------
+    # (5) Scaling (MinMax)
+    # ---------------------------
+    scaler = MinMaxScaler()
+    X_train_scaled = scaler.fit_transform(df_normal_train.values)
+
+    df_test = pd.concat([df_normal_test, df_anomaly], ignore_index=True)
+    X_test_scaled = scaler.transform(df_test.values)
+
+    # ---------------------------
+    # (6) Labeling (0=Normal, 1=Anomaly)
+    # ---------------------------
+    y_test = np.concatenate([np.zeros(len(df_normal_test)), np.ones(len(df_anomaly))])
+
+    # ---------------------------
+    # (7) Shuffle test set
+    # ---------------------------
+    X_test_scaled, y_test = shuffle(X_test_scaled, y_test, random_state=random_seed)
+
+    # ---------------------------
+    # (8) Print summary
+    # ---------------------------
+    print(f"Train: {X_train_scaled.shape}, Test: {X_test_scaled.shape}, y_test: {y_test.shape}")
+    print(f"Normal train: {len(df_normal_train)}, Normal test: {len(df_normal_test)}, Anomaly: {len(df_anomaly)}")
+
+    return X_train_scaled, X_test_scaled, y_test
 
 
 # def get_datasets_dapt(random_seed=args.random_seed):
