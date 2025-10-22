@@ -405,7 +405,7 @@ def main():
     # _ = model(tf.zeros((1, 10, 12)))
     # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=13) # KDD
     # _ = model(tf.zeros((1, 10, 13))) # KDD99
-    model = AE_LSTM(timesteps=10, features=4) # CIC
+    model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=4) # CIC
     _ = model(tf.zeros((1, 10, 4)))
     # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=12, features=4) # KDD
     # _ = model(tf.zeros((1, 12, 4))) # InSDN

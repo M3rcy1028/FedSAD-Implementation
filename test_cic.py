@@ -7,15 +7,15 @@ import seaborn as sns
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc
 from sklearn.utils import shuffle
 from sklearn.preprocessing import MinMaxScaler
-from model_aae import TransformerAAE
+from model_taae_rnep import TransformerAAE
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1" 
 
 # --------------------------------------------------
 # 경로 및 파라미터
 # --------------------------------------------------
-WEIGHT_PATH = "rnep_frame_251010/rnep_frame_aae_transformer_weights.h5"
-PERCENTILE = 84
+WEIGHT_PATH = "Results/InSDN/rnep/rnep_frame_aae_transformer_weights.h5"
+PERCENTILE = 70
 RANDOM_SEED = 123
 N_TRAIN = 5_000_000
 

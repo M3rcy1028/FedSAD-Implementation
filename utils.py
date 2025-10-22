@@ -16,6 +16,7 @@ from typing import List, Tuple, Dict, Optional
 from sklearn.preprocessing import MinMaxScaler, RobustScaler 
 from sklearn.metrics import classification_report, confusion_matrix, mean_squared_error, roc_curve, roc_auc_score
 from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 
 import tensorflow as tf
 from tensorflow.keras import layers, Model
@@ -74,7 +75,7 @@ def get_datasets_kdd99(random_seed=args.random_seed):
     return X_train_scaled, X_test_scaled, y_test
 
 # CIC
-def get_datasets_cic_filtered(random_seed=42):
+def get_datasets_cic(random_seed=args.random_seed):
     np.random.seed(random_seed)
     random.seed(random_seed)
 
