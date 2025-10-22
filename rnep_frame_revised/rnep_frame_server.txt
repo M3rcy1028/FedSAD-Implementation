@@ -1,0 +1,12 @@
+[Server Evaluation Report]
+
+[Round 0] Server Evaluation Report
+Accuracy: 0.6760
+              precision    recall  f1-score   support
+
+      Normal       0.70      0.95      0.81   6742354
+     Anomaly       0.03      0.00      0.01   2748235
+
+    accuracy                           0.68   9490589
+   macro avg       0.37      0.48      0.41   9490589
+weighted avg       0.51      0.68      0.57   9490589
