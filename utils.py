@@ -105,8 +105,8 @@ def get_datasets_cic(random_seed=args.random_seed):
     df_normal = pd.read_csv(normal_path, low_memory=False)
 
     # 공통 피처만 사용 (파일에 존재하는 컬럼만 선택)
-    existing_cols = [c for c in SELECTED_FEATURES if c in df_normal.columns]
-    df_normal = df_normal[existing_cols].copy()
+    # existing_cols = [c for c in SELECTED_FEATURES if c in df_normal.columns]
+    # df_normal = df_normal[existing_cols].copy()
 
     # 클린업
     df_normal = df_normal.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
@@ -123,8 +123,8 @@ def get_datasets_cic(random_seed=args.random_seed):
     for path in anomaly_files:
         if os.path.exists(path):
             df_temp = pd.read_csv(path, low_memory=False)
-            use_cols = [c for c in existing_cols if c in df_temp.columns]
-            df_temp = df_temp[use_cols].copy()
+            # use_cols = [c for c in existing_cols if c in df_temp.columns]
+            # df_temp = df_temp[use_cols].copy()
             anomaly_dfs.append(df_temp)
         else:
             print(f"⚠️ Warning: {path} not found, skipping.")
@@ -134,12 +134,48 @@ def get_datasets_cic(random_seed=args.random_seed):
     df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
     df_anomaly[df_anomaly < 0] = 0
 
+    # # ---------------------------
+    # # (3) 정상 데이터 절반 분할
+    # # ---------------------------
+    # mid_idx = len(df_normal) // 2
+    # df_normal_train = df_normal.iloc[:mid_idx]
+    # df_normal_test = df_normal.iloc[mid_idx:]
+
+    # print(f"정상 데이터 총 {len(df_normal)}개 → Train {len(df_normal_train)}, Test {len(df_normal_test)}")
+    # print(f"이상 데이터 총 {len(df_anomaly)}개 (모두 테스트에 사용)")
+
+    # # ---------------------------
+    # # (4) MinMax 정규화
+    # # ---------------------------
+    # scaler = MinMaxScaler()
+    # X_train = scaler.fit_transform(df_normal_train.values)
+
+    # df_test = pd.concat([df_normal_test, df_anomaly], ignore_index=True)
+    # X_test = scaler.transform(df_test.values)
+    # y_test = np.concatenate([
+    #     np.zeros(len(df_normal_test)),
+    #     np.ones(len(df_anomaly))
+    # ])
+
+    # # ---------------------------
+    # # (5) 셔플 & 리턴
+    # # ---------------------------
+    # X_test, y_test = shuffle(X_test, y_test, random_state=random_seed)
+
+    # print(f"최종 Train shape: {X_train.shape}, Test shape: {X_test.shape}")
+    # print(f"y_test: Normal={np.sum(y_test==0)}, Anomaly={np.sum(y_test==1)}")
+
+    # return X_train, X_test, y_test
     # ---------------------------
-    # (3) 정상 데이터 절반 분할
+    # (3) 개수 제한 (각 150,000개)
     # ---------------------------
+    n_samples = 150_000
+    df_normal = df_normal.sample(n=min(len(df_normal), n_samples * 2), random_state=random_seed)
+    df_anomaly = df_anomaly.sample(n=min(len(df_anomaly), n_samples), random_state=random_seed)
+
     mid_idx = len(df_normal) // 2
-    df_normal_train = df_normal.iloc[:mid_idx]
-    df_normal_test = df_normal.iloc[mid_idx:]
+    df_normal_train = df_normal.iloc[:n_samples].copy() if len(df_normal) >= n_samples else df_normal.iloc[:mid_idx]
+    df_normal_test = df_normal.iloc[-n_samples:].copy() if len(df_normal) >= n_samples * 2 else df_normal.iloc[mid_idx:]
 
     print(f"정상 데이터 총 {len(df_normal)}개 → Train {len(df_normal_train)}, Test {len(df_normal_test)}")
     print(f"이상 데이터 총 {len(df_anomaly)}개 (모두 테스트에 사용)")
@@ -169,19 +205,14 @@ def get_datasets_cic(random_seed=args.random_seed):
 
 # InSDN
 def get_datasets_insdn(random_seed=args.random_seed):
-    """
-    Load and preprocess InSDN dataset (48 features, Table 9 subset).
-    Normal data is split 50/50 for train/test, anomaly data is for testing only.
-    """
-
     np.random.seed(random_seed)
     random.seed(random_seed)
 
     # ---------------------------
     # (1) Load dataset
     # ---------------------------
-    normal_path = "./InSDN/ae_datas/InSDN_normal_48.csv"
-    anomaly_path = "./InSDN/ae_datas/InSDN_anomaly_48.csv"
+    normal_path = "./InSDN/raw_datas/InSDN_normal.csv"
+    anomaly_path = "./InSDN/raw_datas/InSDN_anomaly.csv"
 
     df_normal = pd.read_csv(normal_path)
     df_anomaly = pd.read_csv(anomaly_path)
@@ -196,9 +227,9 @@ def get_datasets_insdn(random_seed=args.random_seed):
     # ---------------------------
     # (3) Split train/test for normal
     # ---------------------------
-    mid_idx = len(df_normal) // 2
-    df_normal_train = df_normal.iloc[:mid_idx]
-    df_normal_test = df_normal.iloc[mid_idx:]
+    split_point = int(len(df_normal) * 0.8)
+    df_normal_train = df_normal.iloc[:split_point]
+    df_normal_test = df_normal.iloc[split_point:]
 
     # ---------------------------
     # (4) Preprocessing: numeric cleanup
@@ -207,6 +238,15 @@ def get_datasets_insdn(random_seed=args.random_seed):
     df_normal_test = df_normal_test.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
     df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
 
+    def _clean(df):
+        df = df.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
+        # ✅ Drop last column
+        return df.iloc[:, :-1]
+
+    df_normal_train = _clean(df_normal_train)
+    df_normal_test = _clean(df_normal_test)
+    df_anomaly = _clean(df_anomaly)
+    
     # ---------------------------
     # (5) Scaling (MinMax)
     # ---------------------------

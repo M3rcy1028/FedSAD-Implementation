@@ -1,1800 +1,1155 @@
 
---- Client 1 Evaluation ---
-Accuracy: 0.7762
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 9 Evaluation ---
-Accuracy: 0.7737
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 5 Evaluation ---
-Accuracy: 0.7759
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
 --- Client 3 Evaluation ---
-Accuracy: 0.7734
+Accuracy: 0.8691
               precision    recall  f1-score   support
 
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
+      Normal       0.41      0.95      0.57     13685
+     Anomaly       0.99      0.86      0.92    136743
 
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 12 Evaluation ---
-Accuracy: 0.7762
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 14 Evaluation ---
-Accuracy: 0.7735
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 4 Evaluation ---
-Accuracy: 0.7759
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 11 Evaluation ---
-Accuracy: 0.7760
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 13 Evaluation ---
-Accuracy: 0.7690
-              precision    recall  f1-score   support
-
-      Normal       0.46      0.95      0.62     34212
-     Anomaly       0.98      0.72      0.83    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.79    170955
-
-
---- Client 7 Evaluation ---
-Accuracy: 0.7691
-              precision    recall  f1-score   support
-
-      Normal       0.46      0.96      0.62     34212
-     Anomaly       0.98      0.72      0.83    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.79    170955
-
-
---- Client 0 Evaluation ---
-Accuracy: 0.7779
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 10 Evaluation ---
-Accuracy: 0.7738
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 6 Evaluation ---
-Accuracy: 0.7773
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.87    150428
+   macro avg       0.70      0.90      0.75    150428
+weighted avg       0.94      0.87      0.89    150428
 
 
 --- Client 2 Evaluation ---
-Accuracy: 0.7693
+Accuracy: 0.8680
               precision    recall  f1-score   support
 
-      Normal       0.46      0.96      0.62     34212
-     Anomaly       0.99      0.72      0.83    136743
+      Normal       0.40      0.95      0.57     13685
+     Anomaly       0.99      0.86      0.92    136743
 
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.79    170955
-
-
---- Client 8 Evaluation ---
-Accuracy: 0.7773
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 8 Evaluation ---
-Accuracy: 0.7784
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 11 Evaluation ---
-Accuracy: 0.7761
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.87    150428
+   macro avg       0.70      0.90      0.74    150428
+weighted avg       0.94      0.87      0.89    150428
 
 
 --- Client 13 Evaluation ---
-Accuracy: 0.7735
+Accuracy: 0.8692
               precision    recall  f1-score   support
 
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
+      Normal       0.41      0.95      0.57     13685
+     Anomaly       0.99      0.86      0.92    136743
 
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 9 Evaluation ---
-Accuracy: 0.7735
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 0 Evaluation ---
-Accuracy: 0.7785
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 7 Evaluation ---
-Accuracy: 0.7696
-              precision    recall  f1-score   support
-
-      Normal       0.46      0.95      0.62     34212
-     Anomaly       0.98      0.72      0.83    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.79    170955
-
-
---- Client 4 Evaluation ---
-Accuracy: 0.7763
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 2 Evaluation ---
-Accuracy: 0.7698
-              precision    recall  f1-score   support
-
-      Normal       0.46      0.96      0.62     34212
-     Anomaly       0.98      0.72      0.83    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.79    170955
-
-
---- Client 14 Evaluation ---
-Accuracy: 0.7732
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.79    170955
-
-
---- Client 6 Evaluation ---
-Accuracy: 0.7781
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 10 Evaluation ---
-Accuracy: 0.7693
-              precision    recall  f1-score   support
-
-      Normal       0.46      0.95      0.62     34212
-     Anomaly       0.98      0.72      0.83    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.79    170955
-
-
---- Client 12 Evaluation ---
-Accuracy: 0.7730
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.79    170955
-
-
---- Client 5 Evaluation ---
-Accuracy: 0.7759
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 3 Evaluation ---
-Accuracy: 0.7734
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
+    accuracy                           0.87    150428
+   macro avg       0.70      0.90      0.75    150428
+weighted avg       0.94      0.87      0.89    150428
 
 
 --- Client 1 Evaluation ---
-Accuracy: 0.7761
+Accuracy: 0.8612
               precision    recall  f1-score   support
 
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
+      Normal       0.39      0.95      0.56     13685
+     Anomaly       0.99      0.85      0.92    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.86    150428
+   macro avg       0.69      0.90      0.74    150428
+weighted avg       0.94      0.86      0.88    150428
 
 
---- Client 6 Evaluation ---
-Accuracy: 0.7807
+--- Client 10 Evaluation ---
+Accuracy: 0.8589
               precision    recall  f1-score   support
 
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.39      0.95      0.55     13685
+     Anomaly       0.99      0.85      0.92    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 4 Evaluation ---
-Accuracy: 0.7769
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 11 Evaluation ---
-Accuracy: 0.7769
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.86    150428
+   macro avg       0.69      0.90      0.73    150428
+weighted avg       0.94      0.86      0.88    150428
 
 
 --- Client 9 Evaluation ---
-Accuracy: 0.7739
+Accuracy: 0.8582
               precision    recall  f1-score   support
 
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
+      Normal       0.39      0.95      0.55     13685
+     Anomaly       0.99      0.85      0.92    136743
 
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 12 Evaluation ---
-Accuracy: 0.7769
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 7 Evaluation ---
-Accuracy: 0.7740
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
+    accuracy                           0.86    150428
+   macro avg       0.69      0.90      0.73    150428
+weighted avg       0.94      0.86      0.88    150428
 
 
 --- Client 8 Evaluation ---
-Accuracy: 0.7806
+Accuracy: 0.8657
               precision    recall  f1-score   support
 
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.40      0.95      0.56     13685
+     Anomaly       0.99      0.86      0.92    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 5 Evaluation ---
-Accuracy: 0.7770
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 0 Evaluation ---
-Accuracy: 0.7789
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 1 Evaluation ---
-Accuracy: 0.7789
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 13 Evaluation ---
-Accuracy: 0.7738
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 2 Evaluation ---
-Accuracy: 0.7691
-              precision    recall  f1-score   support
-
-      Normal       0.46      0.96      0.62     34212
-     Anomaly       0.98      0.72      0.83    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.72      0.84      0.73    170955
-weighted avg       0.88      0.77      0.79    170955
-
-
---- Client 10 Evaluation ---
-Accuracy: 0.7743
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 3 Evaluation ---
-Accuracy: 0.7794
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 14 Evaluation ---
-Accuracy: 0.7737
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 12 Evaluation ---
-Accuracy: 0.7799
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 5 Evaluation ---
-Accuracy: 0.7801
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 11 Evaluation ---
-Accuracy: 0.7798
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 7 Evaluation ---
-Accuracy: 0.7772
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 1 Evaluation ---
-Accuracy: 0.7816
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.87    150428
+   macro avg       0.70      0.90      0.74    150428
+weighted avg       0.94      0.87      0.89    150428
 
 
 --- Client 4 Evaluation ---
-Accuracy: 0.7772
+Accuracy: 0.8676
               precision    recall  f1-score   support
 
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 8 Evaluation ---
-Accuracy: 0.7824
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 14 Evaluation ---
-Accuracy: 0.7773
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 13 Evaluation ---
-Accuracy: 0.7773
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 2 Evaluation ---
-Accuracy: 0.7749
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.96      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 10 Evaluation ---
-Accuracy: 0.7743
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 9 Evaluation ---
-Accuracy: 0.7773
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 3 Evaluation ---
-Accuracy: 0.7794
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 0 Evaluation ---
-Accuracy: 0.7796
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 6 Evaluation ---
-Accuracy: 0.7824
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 2 Evaluation ---
-Accuracy: 0.7744
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 7 Evaluation ---
-Accuracy: 0.7749
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 8 Evaluation ---
-Accuracy: 0.7809
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 12 Evaluation ---
-Accuracy: 0.7778
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 3 Evaluation ---
-Accuracy: 0.7792
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 10 Evaluation ---
-Accuracy: 0.7744
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 13 Evaluation ---
-Accuracy: 0.7776
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 9 Evaluation ---
-Accuracy: 0.7781
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+      Normal       0.40      0.95      0.57     13685
+     Anomaly       0.99      0.86      0.92    136743
+
+    accuracy                           0.87    150428
+   macro avg       0.70      0.90      0.74    150428
+weighted avg       0.94      0.87      0.89    150428
 
 
 --- Client 5 Evaluation ---
-Accuracy: 0.7796
+Accuracy: 0.8580
               precision    recall  f1-score   support
 
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.39      0.95      0.55     13685
+     Anomaly       0.99      0.85      0.92    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 0 Evaluation ---
-Accuracy: 0.7810
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.86    150428
+   macro avg       0.69      0.90      0.73    150428
+weighted avg       0.94      0.86      0.88    150428
 
 
 --- Client 14 Evaluation ---
-Accuracy: 0.7776
+Accuracy: 0.8635
               precision    recall  f1-score   support
 
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.40      0.95      0.56     13685
+     Anomaly       0.99      0.85      0.92    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 6 Evaluation ---
-Accuracy: 0.7810
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 4 Evaluation ---
-Accuracy: 0.7794
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 11 Evaluation ---
-Accuracy: 0.7795
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 1 Evaluation ---
-Accuracy: 0.7795
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.86    150428
+   macro avg       0.70      0.90      0.74    150428
+weighted avg       0.94      0.86      0.89    150428
 
 
 --- Client 7 Evaluation ---
-Accuracy: 0.7798
+Accuracy: 0.8478
               precision    recall  f1-score   support
 
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.37      0.96      0.53     13685
+     Anomaly       0.99      0.84      0.91    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 14 Evaluation ---
-Accuracy: 0.7799
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 6 Evaluation ---
-Accuracy: 0.7820
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 11 Evaluation ---
-Accuracy: 0.7809
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.85    150428
+   macro avg       0.68      0.90      0.72    150428
+weighted avg       0.94      0.85      0.87    150428
 
 
 --- Client 12 Evaluation ---
-Accuracy: 0.7810
+Accuracy: 0.8571
               precision    recall  f1-score   support
 
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 13 Evaluation ---
-Accuracy: 0.7775
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 1 Evaluation ---
-Accuracy: 0.7807
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 9 Evaluation ---
-Accuracy: 0.7798
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 2 Evaluation ---
-Accuracy: 0.7751
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.96      0.63     34212
-     Anomaly       0.99      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 5 Evaluation ---
-Accuracy: 0.7812
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 10 Evaluation ---
-Accuracy: 0.7776
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 3 Evaluation ---
-Accuracy: 0.7824
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 8 Evaluation ---
-Accuracy: 0.7821
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 0 Evaluation ---
-Accuracy: 0.7805
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 4 Evaluation ---
-Accuracy: 0.7793
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 6 Evaluation ---
-Accuracy: 0.7827
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 14 Evaluation ---
-Accuracy: 0.7805
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 3 Evaluation ---
-Accuracy: 0.7830
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 13 Evaluation ---
-Accuracy: 0.7804
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 1 Evaluation ---
-Accuracy: 0.7814
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 9 Evaluation ---
-Accuracy: 0.7781
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 2 Evaluation ---
-Accuracy: 0.7747
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 8 Evaluation ---
-Accuracy: 0.7829
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 10 Evaluation ---
-Accuracy: 0.7776
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+      Normal       0.38      0.95      0.55     13685
+     Anomaly       0.99      0.85      0.92    136743
+
+    accuracy                           0.86    150428
+   macro avg       0.69      0.90      0.73    150428
+weighted avg       0.94      0.86      0.88    150428
 
 
 --- Client 11 Evaluation ---
-Accuracy: 0.7797
+Accuracy: 0.8500
               precision    recall  f1-score   support
 
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.37      0.96      0.54     13685
+     Anomaly       0.99      0.84      0.91    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 5 Evaluation ---
-Accuracy: 0.7798
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.85    150428
+   macro avg       0.68      0.90      0.72    150428
+weighted avg       0.94      0.85      0.88    150428
 
 
 --- Client 0 Evaluation ---
-Accuracy: 0.7813
+Accuracy: 0.8652
               precision    recall  f1-score   support
 
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.40      0.95      0.56     13685
+     Anomaly       0.99      0.86      0.92    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.87    150428
+   macro avg       0.70      0.90      0.74    150428
+weighted avg       0.94      0.87      0.89    150428
 
 
---- Client 12 Evaluation ---
-Accuracy: 0.7800
+--- Client 6 Evaluation ---
+Accuracy: 0.8552
               precision    recall  f1-score   support
 
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.38      0.95      0.55     13685
+     Anomaly       0.99      0.85      0.91    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.86    150428
+   macro avg       0.69      0.90      0.73    150428
+weighted avg       0.94      0.86      0.88    150428
+
+
+--- Client 11 Evaluation ---
+Accuracy: 0.8230
+Threshold : 0.0127
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.95      0.50     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
+
+
+--- Client 3 Evaluation ---
+Accuracy: 0.8227
+Threshold : 0.0125
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
+
+
+--- Client 14 Evaluation ---
+Accuracy: 0.8230
+Threshold : 0.0127
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
+
+
+--- Client 2 Evaluation ---
+Accuracy: 0.8228
+Threshold : 0.0126
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
 
 
 --- Client 4 Evaluation ---
-Accuracy: 0.7800
+Accuracy: 0.8228
+Threshold : 0.0126
               precision    recall  f1-score   support
 
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
+
+
+--- Client 12 Evaluation ---
+Accuracy: 0.8230
+Threshold : 0.0127
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
+
+
+--- Client 1 Evaluation ---
+Accuracy: 0.8228
+Threshold : 0.0126
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
+
+
+--- Client 9 Evaluation ---
+Accuracy: 0.8232
+Threshold : 0.0128
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.96      0.50     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
+
+
+--- Client 5 Evaluation ---
+Accuracy: 0.8230
+Threshold : 0.0127
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
+
+
+--- Client 0 Evaluation ---
+Accuracy: 0.8228
+Threshold : 0.0126
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
+
+
+--- Client 8 Evaluation ---
+Accuracy: 0.8228
+Threshold : 0.0126
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
+
+
+--- Client 6 Evaluation ---
+Accuracy: 0.8232
+Threshold : 0.0127
+              precision    recall  f1-score   support
+
+      Normal       0.33      0.96      0.50     13685
+     Anomaly       0.99      0.81      0.89    136743
+
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
 
 
 --- Client 7 Evaluation ---
-Accuracy: 0.7781
+Accuracy: 0.8233
+Threshold : 0.0128
               precision    recall  f1-score   support
 
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.34      0.96      0.50     13685
+     Anomaly       0.99      0.81      0.89    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 1 Evaluation ---
-Accuracy: 0.7813
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 14 Evaluation ---
-Accuracy: 0.7805
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 6 Evaluation ---
-Accuracy: 0.7825
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 11 Evaluation ---
-Accuracy: 0.7799
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 8 Evaluation ---
-Accuracy: 0.7827
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 4 Evaluation ---
-Accuracy: 0.7821
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 10 Evaluation ---
-Accuracy: 0.7788
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 5 Evaluation ---
-Accuracy: 0.7800
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 7 Evaluation ---
-Accuracy: 0.7808
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.82    150428
+   macro avg       0.67      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
 
 
 --- Client 13 Evaluation ---
-Accuracy: 0.7801
+Accuracy: 0.8227
+Threshold : 0.0125
               precision    recall  f1-score   support
 
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 12 Evaluation ---
-Accuracy: 0.7818
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 9 Evaluation ---
-Accuracy: 0.7784
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 2 Evaluation ---
-Accuracy: 0.7791
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.96      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.85      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 3 Evaluation ---
-Accuracy: 0.7816
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 0 Evaluation ---
-Accuracy: 0.7813
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
 
 
 --- Client 10 Evaluation ---
-Accuracy: 0.7777
+Accuracy: 0.8230
+Threshold : 0.0127
               precision    recall  f1-score   support
 
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
+      Normal       0.33      0.95      0.49     13685
+     Anomaly       0.99      0.81      0.89    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.82    150428
+   macro avg       0.66      0.88      0.69    150428
+weighted avg       0.93      0.82      0.86    150428
 
 
---- Client 6 Evaluation ---
-Accuracy: 0.7828
+--- Client 8 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0034
               precision    recall  f1-score   support
 
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
---- Client 4 Evaluation ---
-Accuracy: 0.7820
+--- Client 7 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0034
               precision    recall  f1-score   support
 
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 9 Evaluation ---
-Accuracy: 0.7776
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
 --- Client 3 Evaluation ---
-Accuracy: 0.7814
+Accuracy: 0.9928
+Threshold : 0.0031
               precision    recall  f1-score   support
 
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.98      0.94      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 8 Evaluation ---
-Accuracy: 0.7828
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 11 Evaluation ---
-Accuracy: 0.7815
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 12 Evaluation ---
-Accuracy: 0.7799
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 0 Evaluation ---
-Accuracy: 0.7819
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 7 Evaluation ---
-Accuracy: 0.7778
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 1 Evaluation ---
-Accuracy: 0.7814
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 5 Evaluation ---
-Accuracy: 0.7818
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 2 Evaluation ---
-Accuracy: 0.7749
-              precision    recall  f1-score   support
-
-      Normal       0.47      0.96      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
-
-    accuracy                           0.77    170955
-   macro avg       0.73      0.84      0.73    170955
-weighted avg       0.88      0.77      0.80    170955
-
-
---- Client 13 Evaluation ---
-Accuracy: 0.7805
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 14 Evaluation ---
-Accuracy: 0.7805
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 8 Evaluation ---
-Accuracy: 0.7825
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 11 Evaluation ---
-Accuracy: 0.7829
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 0 Evaluation ---
-Accuracy: 0.7828
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 14 Evaluation ---
-Accuracy: 0.7801
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
-
-
---- Client 6 Evaluation ---
-Accuracy: 0.7836
-              precision    recall  f1-score   support
-
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
-
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.98      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
 --- Client 9 Evaluation ---
-Accuracy: 0.7802
+Accuracy: 0.9940
+Threshold : 0.0038
               precision    recall  f1-score   support
 
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.98      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
---- Client 7 Evaluation ---
-Accuracy: 0.7799
+--- Client 11 Evaluation ---
+Accuracy: 0.9936
+Threshold : 0.0035
               precision    recall  f1-score   support
 
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
---- Client 12 Evaluation ---
-Accuracy: 0.7814
+--- Client 13 Evaluation ---
+Accuracy: 0.9930
+Threshold : 0.0032
               precision    recall  f1-score   support
 
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 0 Evaluation ---
+Accuracy: 0.9930
+Threshold : 0.0033
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 4 Evaluation ---
+Accuracy: 0.9931
+Threshold : 0.0033
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 5 Evaluation ---
+Accuracy: 0.9931
+Threshold : 0.0033
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 14 Evaluation ---
+Accuracy: 0.9938
+Threshold : 0.0036
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 2 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0034
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 1 Evaluation ---
+Accuracy: 0.9937
+Threshold : 0.0036
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 6 Evaluation ---
+Accuracy: 0.9937
+Threshold : 0.0036
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
 --- Client 10 Evaluation ---
-Accuracy: 0.7777
+Accuracy: 0.9936
+Threshold : 0.0035
               precision    recall  f1-score   support
 
-      Normal       0.47      0.95      0.63     34212
-     Anomaly       0.98      0.73      0.84    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
---- Client 3 Evaluation ---
-Accuracy: 0.7826
+--- Client 12 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0034
               precision    recall  f1-score   support
 
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
---- Client 2 Evaluation ---
-Accuracy: 0.7785
+--- Client 7 Evaluation ---
+Accuracy: 0.9932
+Threshold : 0.0020
               precision    recall  f1-score   support
 
-      Normal       0.47      0.96      0.63     34212
-     Anomaly       0.99      0.73      0.84    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
---- Client 1 Evaluation ---
-Accuracy: 0.7826
+--- Client 9 Evaluation ---
+Accuracy: 0.9936
+Threshold : 0.0021
               precision    recall  f1-score   support
 
-      Normal       0.48      0.94      0.63     34212
-     Anomaly       0.98      0.74      0.85    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
---- Client 5 Evaluation ---
-Accuracy: 0.7815
+--- Client 12 Evaluation ---
+Accuracy: 0.9935
+Threshold : 0.0020
               precision    recall  f1-score   support
 
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
 --- Client 4 Evaluation ---
-Accuracy: 0.7815
+Accuracy: 0.9933
+Threshold : 0.0020
               precision    recall  f1-score   support
 
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 10 Evaluation ---
+Accuracy: 0.9935
+Threshold : 0.0020
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 2 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0020
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 11 Evaluation ---
+Accuracy: 0.9938
+Threshold : 0.0021
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 0 Evaluation ---
+Accuracy: 0.9932
+Threshold : 0.0020
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 6 Evaluation ---
+Accuracy: 0.9940
+Threshold : 0.0022
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 1 Evaluation ---
+Accuracy: 0.9937
+Threshold : 0.0021
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 14 Evaluation ---
+Accuracy: 0.9940
+Threshold : 0.0022
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 8 Evaluation ---
+Accuracy: 0.9932
+Threshold : 0.0019
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 5 Evaluation ---
+Accuracy: 0.9932
+Threshold : 0.0020
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 3 Evaluation ---
+Accuracy: 0.9925
+Threshold : 0.0017
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.94      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 
 
 --- Client 13 Evaluation ---
-Accuracy: 0.7816
+Accuracy: 0.9929
+Threshold : 0.0019
               precision    recall  f1-score   support
 
-      Normal       0.48      0.95      0.63     34212
-     Anomaly       0.98      0.74      0.84    136743
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
 
-    accuracy                           0.78    170955
-   macro avg       0.73      0.84      0.74    170955
-weighted avg       0.88      0.78      0.80    170955
+    accuracy                           0.99    150428
+   macro avg       0.98      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 13 Evaluation ---
+Accuracy: 0.9931
+Threshold : 0.0016
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 7 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0016
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 11 Evaluation ---
+Accuracy: 0.9937
+Threshold : 0.0017
+              precision    recall  f1-score   support
+
+      Normal       0.97      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 14 Evaluation ---
+Accuracy: 0.9940
+Threshold : 0.0018
+              precision    recall  f1-score   support
+
+      Normal       0.97      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 4 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0016
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 9 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0016
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 10 Evaluation ---
+Accuracy: 0.9937
+Threshold : 0.0017
+              precision    recall  f1-score   support
+
+      Normal       0.97      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 12 Evaluation ---
+Accuracy: 0.9936
+Threshold : 0.0017
+              precision    recall  f1-score   support
+
+      Normal       0.97      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 1 Evaluation ---
+Accuracy: 0.9938
+Threshold : 0.0017
+              precision    recall  f1-score   support
+
+      Normal       0.97      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 0 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0016
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 5 Evaluation ---
+Accuracy: 0.9934
+Threshold : 0.0016
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 6 Evaluation ---
+Accuracy: 0.9942
+Threshold : 0.0018
+              precision    recall  f1-score   support
+
+      Normal       0.97      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 2 Evaluation ---
+Accuracy: 0.9935
+Threshold : 0.0016
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 8 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0016
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 3 Evaluation ---
+Accuracy: 0.9927
+Threshold : 0.0015
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.94      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 12 Evaluation ---
+Accuracy: 0.9940
+Threshold : 0.0013
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 1 Evaluation ---
+Accuracy: 0.9937
+Threshold : 0.0011
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 8 Evaluation ---
+Accuracy: 0.9934
+Threshold : 0.0011
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 5 Evaluation ---
+Accuracy: 0.9932
+Threshold : 0.0010
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 10 Evaluation ---
+Accuracy: 0.9939
+Threshold : 0.0012
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 3 Evaluation ---
+Accuracy: 0.9927
+Threshold : 0.0009
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.94      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 7 Evaluation ---
+Accuracy: 0.9936
+Threshold : 0.0011
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 11 Evaluation ---
+Accuracy: 0.9936
+Threshold : 0.0011
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 2 Evaluation ---
+Accuracy: 0.9935
+Threshold : 0.0011
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 14 Evaluation ---
+Accuracy: 0.9940
+Threshold : 0.0012
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 13 Evaluation ---
+Accuracy: 0.9930
+Threshold : 0.0010
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 0 Evaluation ---
+Accuracy: 0.9931
+Threshold : 0.0010
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 9 Evaluation ---
+Accuracy: 0.9939
+Threshold : 0.0011
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 6 Evaluation ---
+Accuracy: 0.9944
+Threshold : 0.0015
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.96      0.97     13685
+     Anomaly       1.00      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.98      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
+
+
+--- Client 4 Evaluation ---
+Accuracy: 0.9933
+Threshold : 0.0010
+              precision    recall  f1-score   support
+
+      Normal       0.98      0.95      0.96     13685
+     Anomaly       0.99      1.00      1.00    136743
+
+    accuracy                           0.99    150428
+   macro avg       0.99      0.97      0.98    150428
+weighted avg       0.99      0.99      0.99    150428
 

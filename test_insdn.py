@@ -5,6 +5,8 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import tensorflow as tf
 from model_taae_rnep import TransformerAAE
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1" 
 
@@ -45,9 +47,9 @@ def evaluate_taae_mixed(model, base_dir="./InSDN/ae_datas", features=48, percent
     # ✅ 정상 데이터 로드 및 절반 분리 (Train / Test)
     df_normal = pd.read_csv(normal_path)
     df_normal = df_normal.sample(frac=1, random_state=123).reset_index(drop=True)
-    mid = len(df_normal) // 2
-    df_normal_train = df_normal.iloc[:mid]
-    df_normal_test = df_normal.iloc[mid:]
+    split_point = int(len(df_normal) * 0.8)
+    df_normal_train = df_normal.iloc[:split_point]
+    df_normal_test = df_normal.iloc[split_point:]
 
     # 정규화 fit은 Train(normal)으로만 수행
     scaler = MinMaxScaler()
@@ -99,6 +101,35 @@ def evaluate_taae_mixed(model, base_dir="./InSDN/ae_datas", features=48, percent
             "Pred_Anomaly": pred_anomaly
         })
 
+    # ---- 데이터 전처리 ----
+    X_normal = scaler.transform(df_normal_test.values)
+    X_anomaly = scaler.transform(df_anomaly.values)
+
+    preds_normal = model.predict(X_normal, verbose=0)
+    preds_anomaly = model.predict(X_anomaly, verbose=0)
+
+    errors_normal = np.mean(np.square(X_normal - preds_normal), axis=1)
+    errors_anomaly = np.mean(np.square(X_anomaly - preds_anomaly), axis=1)
+
+    # ---- 시각화 ----
+    plt.figure(figsize=(10,6))
+    sns.kdeplot(errors_normal, label="Normal", fill=True, color="green", alpha=0.5)
+    sns.kdeplot(errors_anomaly, label="Anomaly", fill=True, color="red", alpha=0.5)
+
+    plt.axvline(threshold, color="blue", linestyle="--", label=f"Threshold ({threshold:.6f})")
+    plt.xlabel("Reconstruction Error")
+    plt.ylabel("Density")
+    plt.title("Distribution of Reconstruction Errors (Normal vs Anomaly)")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.5)
+
+    save_path = os.path.join("./", "reconstruction_error_distribution.png")
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+    plt.close()
+
+    print(f"📊 Reconstruction error distribution plot saved → {save_path}")
+
     df = pd.DataFrame(results)
     save_path = os.path.join(base_dir, f"evaluation_mixed_summary_p{percentile}.csv")
     df.to_csv(save_path, index=False)
@@ -117,7 +148,7 @@ print(f"✅ Loaded pre-trained weights from {PRETRAIN_PATH}")
 # ---------------------------
 # 평가 실행
 # ---------------------------
-PERCENTILE = 95
+PERCENTILE = 88
 evaluate_taae_mixed(
     model=model,
     base_dir="./InSDN/ae_datas",

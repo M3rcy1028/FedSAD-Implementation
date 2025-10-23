@@ -111,23 +111,23 @@ Accuracy: 0.9939
 weighted avg       0.99      0.99      0.99    150428
 
 [Round 10] Server Evaluation Report
-Accuracy: 0.9939
+Accuracy: 0.9795
               precision    recall  f1-score   support
 
-      Normal       0.98      0.95      0.97     13685
-     Anomaly       1.00      1.00      1.00    136743
+      Normal       0.84      0.95      0.89     13685
+     Anomaly       1.00      0.98      0.99    136743
 
-    accuracy                           0.99    150428
-   macro avg       0.99      0.98      0.98    150428
-weighted avg       0.99      0.99      0.99    150428
+    accuracy                           0.98    150428
+   macro avg       0.92      0.97      0.94    150428
+weighted avg       0.98      0.98      0.98    150428
 
 📊 [Server Classification Report]
               precision    recall  f1-score   support
 
-      Normal       0.98      0.95      0.97     13685
-     Anomaly       1.00      1.00      1.00    136743
+      Normal       0.84      0.95      0.89     13685
+     Anomaly       1.00      0.98      0.99    136743
 
-    accuracy                           0.99    150428
-   macro avg       0.99      0.98      0.98    150428
-weighted avg       0.99      0.99      0.99    150428
+    accuracy                           0.98    150428
+   macro avg       0.92      0.97      0.94    150428
+weighted avg       0.98      0.98      0.98    150428
 

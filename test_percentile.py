@@ -1,164 +1,436 @@
 import os
-import random
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, confusion_matrix, roc_curve, auc
+from sklearn.utils import shuffle
 import tensorflow as tf
+from model_taae_rnep import TransformerAAE  # 이 모델 클래스가 필요합니다.
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import (
-    classification_report, confusion_matrix,
-    roc_curve, auc, precision_score, recall_score, f1_score, accuracy_score
-)
-from sklearn.utils import shuffle
-from sklearn.preprocessing import MinMaxScaler
 
-from model_taae_rnep import TransformerAAE
-
-# --------------------------------------------------
-# 기본 설정
-# --------------------------------------------------
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-WEIGHT_PATH = "Results/InSDN/rnep/rnep_frame_aae_transformer_weights.h5"
-RANDOM_SEED = 123
-PERCENTILES = [50, 55, 60, 65, 70, 75, 80]
 
 # --------------------------------------------------
-# 데이터셋 로드 함수 (Train: 정상, Test: 정상 절반 + 이상)
+# 데이터 클리닝 헬퍼 함수
 # --------------------------------------------------
-def get_datasets_insdn(random_seed=RANDOM_SEED):
-    np.random.seed(random_seed)
-    random.seed(random_seed)
+def _clean_dataframe(df):
+    """'Label'/'label' 컬럼을 삭제하고, 'inf'/'nan' 값을 0으로 대체하며, 큰 값을 clip합니다."""
+    
+    # # 1. Label 컬럼 삭제 (기존 _drop_label_columns 로직 통합)
+    # cols_to_drop = []
+    # if "Label" in df.columns:
+    #     cols_to_drop.append("Label")
+    # if "label" in df.columns:
+    #     cols_to_drop.append("label")
+    
+    # if cols_to_drop:
+    #     df = df.drop(columns=cols_to_drop)
+        
+    # # 2. 숫자형 변환, inf/nan 처리, clip (기존 _clean_dataframe 로직)
+    # df = df.apply(pd.to_numeric, errors="coerce")
+    # df = df.replace([np.inf, -np.inf], np.nan).fillna(0)
+    # # 너무 큰 값 잘라내기 (InSDN, CIC 데이터셋의 특성)
+    # df = np.clip(df, -1e6, 1e6) 
+    # return df
+    df = df.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
+    # ✅ Drop last column
+    return df.iloc[:, :-1]
 
-    normal_path = "./InSDN/ae_datas/InSDN_normal.csv"
-    anomaly_path = "./InSDN/ae_datas/InSDN_anomaly.csv"
+# --------------------------------------------------
+# Confusion Matrix 헬퍼 함수
+# --------------------------------------------------
+def _plot_and_print_cm(y_test, y_pred, save_path, labels, title):
+    """Confusion Matrix를 DataFrame으로 출력하고, seaborn 히트맵으로 저장합니다."""
+    cm = confusion_matrix(y_test, y_pred)
+    
+    # 1. 텍스트(DataFrame)로 출력
+    try:
+        # cm.ravel()이 (tn, fp, fn, tp) 4개 값을 반환한다고 가정
+        tn, fp, fn, tp = cm.ravel()
+        cm_table = pd.DataFrame(
+            [[tn, fp], [fn, tp]],
+            index=[f'Actual {labels[0]}', f'Actual {labels[1]}'],
+            columns=[f'Predicted {labels[0]}', f'Predicted {labels[1]}']
+        )
+        print("\n🧾 [Confusion Matrix]")
+        print(cm_table)
+    except ValueError: 
+        # 2x2 행렬이 아닌 경우 (예: 한 클래스만 예측된 경우)
+        print(f"\n🧾 [Confusion Matrix] (Raw)\n{cm}")
 
+    # 2. 이미지(Heatmap)로 저장
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm,
+                annot=True,
+                fmt='d',
+                cmap='Blues',
+                xticklabels=[f'Predicted {labels[0]}', f'Predicted {labels[1]}'],
+                yticklabels=[f'Actual {labels[0]}', f'Actual {labels[1]}'])
+    plt.title(title)
+    plt.ylabel("Actual")
+    plt.xlabel("Predicted")
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+    plt.close()
+
+# --------------------------------------------------
+# 데이터셋별 설정
+# --------------------------------------------------
+DATASET_CONFIG = {
+    "KDD99": {
+        "base_dir": "./KDD99/KDD99_split",
+        "normal_file": "KDD99_normal.csv",
+        "anomaly_prefix": "KDD99_anomaly_",
+        "merged_anomaly_file": "KDD99_anomaly.csv",
+        "plot_save_path": "./KDD99_distribution.png",
+        "attack_map": {
+            0: "back", 1: "buffer_overflow", 2: "ftp_write", 3: "guess_passwd",
+            4: "imap", 5: "ipsweep", 6: "land", 7: "loadmodule", 8: "multihop",
+            9: "neptune", 10: "nmap", 11: "perl", 12: "phf", 13: "portsweep",
+            14: "rootkit", 15: "satan", 16: "spy", 17: "warezclient", 18: "warezmaster"
+        }
+    },
+    "InSDN": {
+        "base_dir": "./InSDN/raw_datas",
+        "normal_file": "InSDN_normal.csv",
+        "anomaly_prefix": "InSDN_anomaly_",
+        "merged_anomaly_file": "InSDN_anomaly.csv",
+        "plot_save_path": "./InSDN_distribution.png",
+        "attack_map": {
+            0: "BFA (BruteForce)",
+            1: "BOTNET",
+            2: "DDoS",
+            3: "DoS",
+            4: "Probe",
+            5: "U2R",
+            6: "Web-Attack"
+        }
+    },
+    "CIC": {
+        "base_dir": "./CIC2018/ae_datas_all_features",
+        "normal_file": "CIC_ae_normal.csv",
+        "anomaly_prefix": "CIC_anomaly_ae_", # 개별 파일 접두사
+        "merged_anomaly_file": "CIC_anomaly.csv", # 합본 파일 이름
+        "plot_save_path": "./CIC_distribution.png",
+        "attack_map": {
+            1: "DDOS attack-HOIC",
+            2: "DDoS attacks-LOIC-HTTP",
+            3: "DoS attacks-Hulk",
+            4: "Bot",
+            5: "FTP-BruteForce",
+            6: "SSH-Bruteforce",
+            7: "Infiltration",
+            8: "DoS attacks-SlowHTTPTest",
+            9: "DoS attacks-GoldenEye",
+            10: "DoS attacks-Slowloris",
+            11: "DDOS attack-LOIC-UDP",
+            12: "Brute Force -Web",
+            13: "Brute Force -XSS",
+            14: "SQL Injection"
+        }
+    }
+}
+
+# --------------------------------------------------
+# 범용 평가 함수
+# --------------------------------------------------
+def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
+    """
+    지정된 데이터셋에 대해 TAAE 모델의 이상 탐지 성능을 평가합니다.
+
+    :param model: 훈련된 TAAE 모델
+    :param dataset_name: "KDD99", "InSDN", "CIC" 중 하나
+    :param percentile: 임계값 계산을 위한 백분위수 (예: 90)
+    :param train_split_ratio: 정상 데이터를 훈련/테스트로 나눌 비율 (예: 0.8)
+    """
+    
+    # 1. 설정 로드
+    try:
+        config = DATASET_CONFIG[dataset_name]
+    except KeyError:
+        print(f"❌ Error: No config found for dataset '{dataset_name}'")
+        return
+
+    base_dir = config["base_dir"]
+    normal_path = os.path.join(base_dir, config["normal_file"])
+    anomaly_prefix = config["anomaly_prefix"]
+    merged_file = config["merged_anomaly_file"]
+    attack_map = config["attack_map"]
+    plot_save_path = config["plot_save_path"]
+
+    # 2. Anomaly 파일 리스트 탐색
+    anomaly_files = sorted([
+        f for f in os.listdir(base_dir)
+        if f.startswith(anomaly_prefix) and f.endswith(".csv")
+    ])
+    
+    # 합본 파일(Merged)을 리스트 맨 앞에 추가
+    merged_path = os.path.join(base_dir, merged_file)
+    if os.path.exists(merged_path):
+        anomaly_files = [merged_file] + anomaly_files
+    
+    print(f"\nEvaluating dataset: {dataset_name.upper()}")
+    print(f"📊 Found {len(anomaly_files)} anomaly datasets for evaluation")
+
+    results = []
+
+    # 3. 정상 데이터 로드, 클리닝 및 분할
     df_normal = pd.read_csv(normal_path)
-    df_anomaly = pd.read_csv(anomaly_path)
-    print(f"✅ Loaded InSDN data → Normal: {df_normal.shape}, Anomaly: {df_anomaly.shape}")
+    df_normal = shuffle(df_normal, random_state=123)
+    split_point = int(len(df_normal) * train_split_ratio)
+    df_normal_train = df_normal.iloc[:split_point]
+    df_normal_test = df_normal.iloc[split_point:]
 
-    # ✅ 정상 데이터 절반 split → train / test
-    df_normal = shuffle(df_normal, random_state=random_seed)
-    mid_idx = len(df_normal) // 2
-    df_normal_train = df_normal.iloc[:mid_idx]
-    df_normal_test = df_normal.iloc[mid_idx:]
+    df_normal_train = _clean_dataframe(df_normal_train)
+    df_normal_test = _clean_dataframe(df_normal_test)
 
-    # 숫자형 변환 + 결측치 처리
-    df_normal_train = df_normal_train.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
-    df_normal_test = df_normal_test.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
-    df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
+    print(f"Normal data split: Train={len(df_normal_train)}, Test={len(df_normal_test)}")
 
-    # ✅ 정규화 (train 기준 fit)
+    # 4. 정규화 (Scaler)
     scaler = MinMaxScaler()
-    X_train_scaled = scaler.fit_transform(df_normal_train.values)
+    X_train = scaler.fit_transform(df_normal_train.values)
+    X_normal_test = scaler.transform(df_normal_test.values)
 
-    df_test = pd.concat([df_normal_test, df_anomaly], ignore_index=True)
-    X_test_scaled = scaler.transform(df_test.values)
-    y_test = np.concatenate([np.zeros(len(df_normal_test)), np.ones(len(df_anomaly))])
-    X_test_scaled, y_test = shuffle(X_test_scaled, y_test, random_state=random_seed)
+    # 5. 임계값(Threshold) 계산
+    preds_train = model.predict(X_train, verbose=0)
+    train_errors = np.mean(np.square(X_train - preds_train), axis=1)
+    threshold = np.percentile(train_errors, percentile)
+    print(f"\n📏 Threshold ({percentile}th percentile): {threshold:.6f}")
 
-    print(f"Train: {X_train_scaled.shape}, Test: {X_test_scaled.shape}")
-    print(f"Normal train: {len(df_normal_train)}, Normal test: {len(df_normal_test)}, Anomaly: {len(df_anomaly)}")
-    return X_train_scaled, X_test_scaled, y_test, df_normal_test, df_anomaly
+    error_by_attack = {} # 시각화를 위한 오류 저장
+    numeric_keys = []
 
+    # 6. 각 Anomaly 파일별 평가
+    for file in anomaly_files:
+        anomaly_path = os.path.join(base_dir, file)
+        df_anomaly = pd.read_csv(anomaly_path)
+        df_anomaly = _clean_dataframe(df_anomaly) # 클리닝 적용
+
+        if "label" in df_anomaly.columns:
+            df_anomaly = df_anomaly.drop(columns=["label"])
+
+        X_anomaly = scaler.transform(df_anomaly.values)
+        
+        # 테스트셋 구성 (Normal-Test + Anomaly)
+        X_test = np.concatenate([X_normal_test, X_anomaly])
+        y_test = np.concatenate([np.zeros(len(X_normal_test)), np.ones(len(X_anomaly))])
+
+        # 예측 및 오류 계산
+        preds_test = model.predict(X_test, verbose=0)
+        test_errors = np.mean(np.square(X_test - preds_test), axis=1)
+        y_pred = (test_errors > threshold).astype(int)
+
+        # Metrics 계산
+        acc = accuracy_score(y_test, y_pred)
+        prec = precision_score(y_test, y_pred, zero_division=0)
+        rec = recall_score(y_test, y_pred, zero_division=0)
+        f1 = f1_score(y_test, y_pred, zero_division=0)
+        pred_normal = int(np.sum(y_pred == 0))
+        pred_anomaly = int(np.sum(y_pred == 1))
+
+        print(f"\n🚨 {file}")
+        print(f"Samples: {len(X_test)} | Accuracy={acc:.6f}, Precision={prec:.6f}, Recall={rec:.6f}, F1={f1:.6f}")
+
+        # 6-1. 합본(Merged) 파일인 경우 Confusion Matrix 및 ROC Curve 생성
+        if file == merged_file:
+            
+            # === Confusion Matrix (기존 로직) ===
+            cm_save_path = f"./{dataset_name}_cm.png"
+            title = f'Confusion Matrix - {dataset_name.upper()} (P={percentile})'
+            
+            _plot_and_print_cm(
+                y_test, 
+                y_pred, 
+                cm_save_path, 
+                labels=['Normal', 'Anomaly'], 
+                title=title
+            )
+            print(f"📈 Saved confusion matrix → {cm_save_path}")
+
+            # === ROC Curve (📌 신규 추가) ===
+            # (y_test는 0/1, test_errors는 점수(reconstruction error)임)
+            fpr, tpr, _ = roc_curve(y_test, test_errors)
+            roc_auc = auc(fpr, tpr)
+            
+            roc_save_path = f"./{dataset_name}_roc.png"
+            
+            plt.figure(figsize=(8, 6))
+            plt.plot(fpr, tpr, color='darkorange', lw=2, 
+                     label=f'ROC curve (AUC = {roc_auc:.4f})')
+            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel('False Positive Rate (FPR)')
+            plt.ylabel('True Positive Rate (TPR)')
+            plt.title(f'ROC Curve - {dataset_name.upper()}')
+            plt.legend(loc="lower right")
+            plt.grid(True, linestyle="--", alpha=0.4)
+            plt.tight_layout()
+            plt.savefig(roc_save_path, dpi=300)
+            plt.close()
+            
+            print(f"📈 Saved ROC curve → {roc_save_path} (AUC = {roc_auc:.4f})")
+
+        results.append({
+            "File": file, "Samples": len(X_test), "Accuracy": acc,
+            "Precision": prec, "Recall": rec, "F1": f1,
+            "Pred_Normal": pred_normal, "Pred_Anomaly": pred_anomaly
+        })
+
+        # 7. 시각화용 데이터 저장 (합본 파일 제외)
+        if file != merged_file:
+            try:
+                num_str = file.replace(anomaly_prefix, "").replace(".csv", "")
+                attack_num = int(num_str)
+                
+                # Anomaly 데이터만(X_normal_test 제외)의 오류 계산
+                preds_anomaly_only = model.predict(X_anomaly, verbose=0)
+                errors_anomaly_only = np.mean(np.square(X_anomaly - preds_anomaly_only), axis=1)
+
+                attack_label = attack_map.get(attack_num, f"attack_{attack_num}")
+                error_by_attack[attack_num] = (attack_label, errors_anomaly_only)
+                numeric_keys.append(attack_num)
+            except Exception as e:
+                print(f"Warning: Could not parse attack number from '{file}'. Skipping for plot. Error: {e}")
+
+    # 8. 결과 저장
+    df = pd.DataFrame(results)
+    summary_save_path = f"./{dataset_name}_summary.csv"
+    
+    df.to_csv(summary_save_path, index=False)
+    print(f"\n📁 Saved summary → {summary_save_path}")
+    print(df.round(6))
+
+    # 9. 🔥 공격 유형별 Reconstruction Error 히스토그램
+    if error_by_attack:
+        plt.figure(figsize=(12, 7))
+        
+        # Normal (Test) 오류 계산
+        preds_normal_test = model.predict(X_normal_test, verbose=0)
+        errors_normal_test = np.mean(np.square(X_normal_test - preds_normal_test), axis=1)
+        
+        # Normal 히스토그램
+        plt.hist(errors_normal_test, bins=200, alpha=0.6, label="Normal", color="green", density=True)
+
+        # 공격별 히스토그램
+        numeric_keys = sorted(set(numeric_keys))
+        n_attacks = len(numeric_keys)
+        palette = plt.cm.tab20(np.linspace(0, 1, max(3, n_attacks)))
+
+        for i, atk_num in enumerate(numeric_keys):
+            atk_name, errs = error_by_attack[atk_num]
+            plt.hist(errs, bins=200, alpha=0.5, label=f"{atk_name}", color=palette[i % 20], density=True)
+
+        # Threshold
+        plt.axvline(threshold, color="blue", linestyle="--", label=f"Threshold ({threshold:.6f})")
+
+        plt.xscale("log")
+        plt.yscale("log")
+        plt.xlabel("Reconstruction Error (log scale)")
+        plt.ylabel("Density (log scale)")
+        plt.title(f"Reconstruction Error - ({dataset_name.upper()})")
+        plt.legend(fontsize=8, loc="upper right", ncol=1)
+        plt.grid(True, linestyle="--", alpha=0.4)
+        plt.tight_layout()
+        plt.savefig(plot_save_path, dpi=300)
+        plt.close()
+
+        print(f"📊 Saved distribution plot → {plot_save_path}")
 
 # --------------------------------------------------
-# 데이터 로드
+# 모델 로드 설정 (훈련된 모델 클래스 'TransformerAAE'가 필요합니다)
 # --------------------------------------------------
-X_train_scaled, X_test_scaled, y_test, df_normal_test, df_anomaly = get_datasets_insdn(RANDOM_SEED)
-input_dim = X_train_scaled.shape[1]
 
-# --------------------------------------------------
-# 모델 로드
-# --------------------------------------------------
-model = TransformerAAE(input_dim)
-_ = model(tf.zeros((1, input_dim)), prior_labels=tf.zeros((1, 1)))  # build
-model.load_weights(WEIGHT_PATH)
-print(f"✅ Loaded weights from {WEIGHT_PATH}")
+# 'model_taae_rnep' 모듈이 없으면 실행되지 않으므로, 
+# 실제 사용 시에는 TransformerAAE 클래스가 정의된 파일을 import 해야 합니다.
+try:
+    from model_taae_rnep import TransformerAAE
+except ImportError:
+    print("="*50)
+    print("⚠️ WARNING: 'model_taae_rnep' 모듈을 찾을 수 없습니다.")
+    print("실제 평가를 위해서는 'TransformerAAE' 모델 클래스가 필요합니다.")
+    print("임시로 tf.keras.Model을 생성하여 스크립트 실행 테스트를 진행합니다.")
+    print("="*50)
+    
+    # 임시 모델 (스크립트 실행 테스트용)
+    def create_dummy_model(input_dim):
+        inp = tf.keras.Input(shape=(input_dim,))
+        x = tf.keras.layers.Dense(int(input_dim/2), activation='relu')(inp)
+        out = tf.keras.layers.Dense(input_dim, activation='sigmoid')(x)
+        model = tf.keras.Model(inputs=inp, outputs=out)
+        # TAAE 모델의 predict 시그니처와 맞추기 위해 더미 함수 추가
+        original_predict = model.predict
+        model.predict = lambda x, verbose=0, prior_labels=None: original_predict(x, verbose=verbose)
+        return model
+    
+    # TransformerAAE 클래스를 임시 모델 생성 함수로 대체
+    TransformerAAE = lambda input_dim: create_dummy_model(input_dim)
 
-# --------------------------------------------------
-# Train Reconstruction Error 계산 (Threshold 기준)
-# --------------------------------------------------
-X_train_pred = model.predict(X_train_scaled, verbose=0)
-train_errors = np.mean(np.square(X_train_scaled - X_train_pred), axis=1)
 
-# --------------------------------------------------
-# Percentile 실험 (Train-normal 기반 threshold)
-# --------------------------------------------------
-results = []
-
-for p in PERCENTILES:
-    threshold = np.percentile(train_errors, p)
-
-    # ✅ Test (normal + anomaly)에 적용
-    X_pred = model.predict(X_test_scaled, verbose=0)
-    errors = np.mean(np.square(X_test_scaled - X_pred), axis=1)
-    y_pred = (errors > threshold).astype(int)
-
-    # Metrics 계산
-    acc = accuracy_score(y_test, y_pred)
-    prec = precision_score(y_test, y_pred, zero_division=0)
-    rec = recall_score(y_test, y_pred, zero_division=0)
-    f1 = f1_score(y_test, y_pred, zero_division=0)
-    fpr, tpr, _ = roc_curve(y_test, errors)
-    roc_auc = auc(fpr, tpr)
-
-    results.append({
-        "Percentile": p,
-        "Threshold": threshold,
-        "Accuracy": acc,
-        "Precision": prec,
-        "Recall": rec,
-        "F1": f1,
-        "AUC": roc_auc
-    })
-
-    print(f"\n[Percentile {p}]")
-    print(f"Threshold={threshold:.6f}")
-    print(f"Accuracy={acc:.4f}, Precision={prec:.4f}, Recall={rec:.4f}, F1={f1:.4f}, AUC={roc_auc:.4f}")
-
-# ✅ DataFrame 저장
-df_res = pd.DataFrame(results)
-os.makedirs("Results/InSDN", exist_ok=True)
-df_res.to_csv("Results/InSDN/percentile_experiment_results.csv", index=False)
-print("\n📁 Saved percentile_experiment_results.csv")
-print(df_res.round(4))
-
-# ✅ AUC 기준 최적 percentile 선택
-best_idx = df_res["AUC"].idxmax()
-best_row = df_res.loc[best_idx]
-best_p = best_row["Percentile"]
-best_auc = best_row["AUC"]
-best_threshold = best_row["Threshold"]
-
-print(f"\n🏆 Best Percentile: {best_p} (AUC={best_auc:.4f}, Threshold={best_threshold:.6f})")
+MODEL_CONFIG = {
+    "KDD99": {
+        "input_dim": 115,
+        "weights": "Results/KDD99/rnep/rnep_frame_aae_transformer_weights.h5"
+    },
+    "InSDN": {
+        "input_dim": 83,
+        # "weights": "rnep_insdn/rnep_frame_aae_transformer_weights.h5"
+        "weights": "rnep_frame_revised2/rnep_frame_aae_transformer_weights.h5"
+    },
+    "CIC": {
+        "input_dim": 78,
+        "weights": "rnep_cic2018/rnep_frame_aae_transformer_weights.h5"
+    }
+}
 
 # --------------------------------------------------
-# 이후 부분: confusion matrix / ROC curve / report 등은 best_p 기준으로 유지
+# 평가 실행
 # --------------------------------------------------
-threshold = best_threshold
-X_pred = model.predict(X_test_scaled, verbose=0)
-errors = np.mean(np.square(X_test_scaled - X_pred), axis=1)
-y_pred = (errors > threshold).astype(int)
+if __name__ == "__main__":
+    
+    # --- ⚠️ 여기서 실행할 데이터셋을 선택하세요 ---
+    DATASET_TO_RUN = "InSDN" 
+    # (옵션: "KDD99", "InSDN", "CIC")
+    # -----------------------------------------
 
-cm = confusion_matrix(y_test, y_pred)
-plt.figure(figsize=(5, 4))
-sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
-            xticklabels=["Pred_Normal", "Pred_Anomaly"],
-            yticklabels=["Actual_Normal", "Actual_Anomaly"])
-plt.title(f"Confusion Matrix (InSDN, {best_p}th Percentile, AUC={best_auc:.4f})")
-plt.tight_layout()
-plt.savefig(f"Results/InSDN/cm_best_p{int(best_p)}.png", dpi=300)
+    PERCENTILE = 95
+    
+    # 선택된 데이터셋의 설정 로드
+    if DATASET_TO_RUN not in MODEL_CONFIG:
+        print(f"❌ Error: '{DATASET_TO_RUN}'에 대한 모델 설정이 MODEL_CONFIG에 없습니다.")
+    else:
+        config = MODEL_CONFIG[DATASET_TO_RUN]
+        input_dim = config["input_dim"]
+        weights_path = config["weights"]
 
-# ROC Curve
-fpr, tpr, _ = roc_curve(y_test, errors)
-roc_auc = auc(fpr, tpr)
-plt.figure(figsize=(5, 4))
-plt.plot(fpr, tpr, lw=2, label=f"AUC={roc_auc:.4f} (p={best_p})")
-plt.plot([0, 1], [0, 1], linestyle="--", color="gray")
-plt.xlabel("FPR")
-plt.ylabel("TPR")
-plt.title(f"ROC Curve (Best Percentile {best_p})")
-plt.legend()
-plt.tight_layout()
-plt.savefig(f"Results/InSDN/roc_best_p{int(best_p)}.png", dpi=300)
-print(f"✅ Saved best ROC & Confusion Matrix (p={best_p}, AUC={best_auc:.4f})")
+        # 모델 빌드
+        model = TransformerAAE(input_dim=input_dim)
+        # TAAE 모델은 build를 위해 prior_labels가 필요할 수 있음 (원본 코드 기준)
+        try:
+             _ = model(tf.zeros((1, input_dim)), prior_labels=tf.zeros((1, 1)))
+        except Exception as e:
+            print(f"Model build with prior_labels failed, trying without: {e}")
+            try:
+                # prior_labels가 없는 경우를 대비한 빌드 시도
+                 _ = model.build(input_shape=(None, input_dim))
+            except Exception as e2:
+                 print(f"Model build failed: {e2}")
+                 # build가 안되면 predict에서 오류날 수 있음
+                 pass
+
+        # 가중치 로드
+        if os.path.exists(weights_path):
+            model.load_weights(weights_path)
+            print(f"✅ Loaded pre-trained weights from {weights_path}")
+        else:
+            print(f"⚠️ WARNING: Weight file not found at {weights_path}. 모델이 훈련되지 않았습니다.")
+
+        # 평가 실행
+        evaluate_dataset(
+            model=model,
+            dataset_name=DATASET_TO_RUN,
+            percentile=PERCENTILE
+        )
+
+        print(f"\n--- Evaluation Complete for {DATASET_TO_RUN} (Percentile = {PERCENTILE}) ---")

@@ -94,7 +94,7 @@ def get_datasets_cic_multi_supervised(
     random.seed(random_seed)
 
     # ----------------------------
-    # 주요 피처 (20개)
+    # 주요 피처 (36개)
     # ----------------------------
     SELECTED_FEATURES = [
         "Flow Duration", "Tot Fwd Pkts", "Tot Bwd Pkts",
@@ -342,7 +342,7 @@ def main():
         normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
         anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
         num_anomaly_files=14,
-        anomaly_ratio=0.2,
+        anomaly_ratio=0.5,
         timesteps=10,
         features=2
     )
