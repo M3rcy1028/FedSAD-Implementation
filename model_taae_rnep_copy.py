@@ -3,6 +3,9 @@
 '''
 from utils import *
 from arguments import get_args
+# 🔽 [수정] 콜백에 필요한 sklearn.metrics 임포트
+from sklearn.metrics import accuracy_score, f1_score
+
 args = get_args()
 
 BATCH_SIZE = args.batch_size
@@ -99,7 +102,6 @@ class SaveEvaluationRNEP(fl.server.strategy.FedAvg):
                 i += 1
 
         # 3) 모든 혼합 결과를 단순 평균하여 최종 글로벌 파라미터 생성
-        #    (리스트[텐서]들에 대해 element-wise 평균)
         num_buckets = len(mixed_param_lists)
         agg = []
         for layer_idx in range(len(mixed_param_lists[0])):
@@ -187,12 +189,9 @@ class TransformerAAE(tf.keras.Model):
         self.latent_dim = latent_dim
         self.beta = beta
 
-        # -------------------
         # Encoder
-        # -------------------
         self.embedding = layers.Dense(embed_dim)
         self.expand = layers.Reshape((1, embed_dim))
-
         self.encoder_blocks = []
         for _ in range(num_encoder_layers):
             attn = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
@@ -205,16 +204,12 @@ class TransformerAAE(tf.keras.Model):
             norm2 = layers.LayerNormalization()
             drop2 = layers.Dropout(dropout_rate)
             self.encoder_blocks.append((attn, norm1, drop1, ffn, norm2, drop2))
-
         self.flatten = layers.Flatten()
         self.latent = layers.Dense(latent_dim)
 
-        # -------------------
         # Decoder
-        # -------------------
         self.dec_dense = layers.Dense(embed_dim)
         self.expand_dec = layers.Reshape((1, embed_dim))
-
         self.decoder_blocks = []
         for _ in range(num_decoder_layers):
             attn = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
@@ -227,12 +222,9 @@ class TransformerAAE(tf.keras.Model):
             norm2 = layers.LayerNormalization()
             drop2 = layers.Dropout(dropout_rate)
             self.decoder_blocks.append((attn, norm1, drop1, ffn, norm2, drop2))
-
         self.output_layer = layers.Dense(input_dim)
 
-        # -------------------
         # Adversarial Regularizer
-        # -------------------
         self.grl = GradientReversal(lambd=grl_lambda)
         self.discriminator = tf.keras.Sequential([
             layers.Dense(128), layers.LeakyReLU(),
@@ -245,9 +237,7 @@ class TransformerAAE(tf.keras.Model):
         self.bce = tf.keras.losses.BinaryCrossentropy()
 
     def call(self, inputs, training=None, prior_labels=None):
-        # -------------------
         # Encoder
-        # -------------------
         x = self.embedding(inputs)
         x = self.expand(x)
         for attn, norm1, drop1, ffn, norm2, drop2 in self.encoder_blocks:
@@ -255,13 +245,10 @@ class TransformerAAE(tf.keras.Model):
             x = drop1(norm1(x + attn_out), training=training)
             ffn_out = ffn(x)
             x = drop2(norm2(x + ffn_out), training=training)
-
         flat = self.flatten(x)
         z = self.latent(flat)
 
-        # -------------------
         # Decoder
-        # -------------------
         x_dec = self.dec_dense(z)
         x_dec = self.expand_dec(x_dec)
         for attn, norm1, drop1, ffn, norm2, drop2 in self.decoder_blocks:
@@ -269,14 +256,10 @@ class TransformerAAE(tf.keras.Model):
             x_dec = drop1(norm1(x_dec + attn_out), training=training)
             ffn_out = ffn(x_dec)
             x_dec = drop2(norm2(x_dec + ffn_out), training=training)
-
         output = self.output_layer(tf.squeeze(x_dec, axis=1))
 
-        # -------------------
         # Loss
-        # -------------------
         recon_loss = self.mse(inputs, output)
-
         if prior_labels is not None:  # prior 분포와 맞추기 (예: 정규분포 샘플 vs 인코딩 z)
             z_grl = self.grl(z)
             d_pred = self.discriminator(z_grl, training=training)
@@ -288,15 +271,52 @@ class TransformerAAE(tf.keras.Model):
 
         return output
 
+# 🔽 [신규] 비지도 모델 훈련 시 지도학습 메트릭을 계산하는 커스텀 콜백
+class SupervisedMetricCallback(tf.keras.callbacks.Callback):
+    def __init__(self, X_train_local, X_val, y_val, percentile):
+        super().__init__()
+        self.X_train_local = X_train_local  # 임계값 계산을 위한 클라이언트 훈련 데이터
+        self.X_val = X_val                  # 검증용 피처 (정상 + 이상)
+        self.y_val = y_val                  # 검증용 레이블 (0/1)
+        self.percentile = percentile
+
+    def on_epoch_end(self, epoch, logs=None):
+        if logs is None:
+            logs = {}
+            
+        # 1. 훈련 데이터(X_train_local)로 임계값(Threshold) 계산
+        train_preds = self.model.predict(self.X_train_local, verbose=0)
+        train_errors = np.mean(np.square(self.X_train_local - train_preds), axis=1)
+        threshold = np.percentile(train_errors, self.percentile)
+
+        # 2. 검증 데이터(X_val)로 예측
+        val_preds = self.model.predict(self.X_val, verbose=0)
+        val_errors = np.mean(np.square(self.X_val - val_preds), axis=1)
+        
+        # 3. 임계값 기준으로 0/1 분류
+        y_pred = (val_errors > threshold).astype(int)
+
+        # 4. 지도학습 메트릭 계산
+        acc = accuracy_score(self.y_val, y_pred)
+        f1 = f1_score(self.y_val, y_pred, zero_division=0)
+        
+        # 5. Keras 로그에 추가 (훈련 시 출력됨)
+        logs['val_accuracy'] = acc
+        logs['val_f1_score'] = f1
+        print(f" - val_accuracy: {acc:.4f} - val_f1_score: {f1:.4f} (Threshold: {threshold:.6f})")
+
 class FLClient(fl.client.NumPyClient):
-    def __init__(self, cid, model, X_train, X_test, y_test, epochs=50):
+    # 🔽 [수정] 생성자에 X_val, y_val 추가
+    def __init__(self, cid, model, X_train, X_val, y_val, X_test, y_test, epochs=50):
         self.cid = cid
         self.model = model
         self.X_train = X_train
+        self.X_val = X_val       # 🔽 [수정]
+        self.y_val = y_val       # 🔽 [수정]
         self.X_test = X_test
         self.y_test = y_test
         self.epochs = epochs
-        self.model(tf.zeros((1, X_train.shape[1])))   # 초기 weight로 초기화
+        self.model(tf.zeros((1, X_train.shape[1])))  # 초기 weight로 초기화
 
     def get_parameters(self, config):
         return self.model.get_weights()
@@ -304,11 +324,21 @@ class FLClient(fl.client.NumPyClient):
     def fit(self, parameters, config):
         self.model.set_weights(parameters) # 서버의 최신 가중치를 가져와 학습함
         self.model.compile(optimizer=Adam(0.0001))
+        
+        # 🔽 [신규] 콜백 생성
+        metrics_callback = SupervisedMetricCallback(
+            self.X_train, self.X_val, self.y_val, percentile=PERCENTILE
+        )
+        
         self.model.fit(self.X_train, self.X_train,
                        epochs=self.epochs,
                        batch_size=BATCH_SIZE,
                        verbose=2,
-                       validation_split=0.2)
+                       # 🔽 [수정] validation_split 대신 콜백 사용
+                       callbacks=[metrics_callback]
+                       # validation_split=0.2 # ◀️ [수정] 제거
+                      )
+        
         ent = compute_client_entropy(self.X_train)   # ★ 엔트로피 계산
         return self.model.get_weights(), len(self.X_train), {"entropy": float(ent)}
 
@@ -338,10 +368,9 @@ class FLClient(fl.client.NumPyClient):
         print(report)
 
         # ✅ 파일 저장
-        with open("./rnep_frame_revised2/client.txt", "a") as f:
+        with open("./rnep_frame_revised/client.txt", "a") as f:
             f.write(f"\n--- Client {self.cid} Evaluation ---\n")
             f.write(f"Accuracy: {acc:.4f}\n")
-            f.write(f"Threshold : {threshold:.4f}\n")
             f.write(report + "\n")
 
         return float(1 - acc), len(self.X_test), {}

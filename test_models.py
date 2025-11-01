@@ -1,276 +1,258 @@
+## Test CNN-LSTM
+
 import os
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import tensorflow as tf
-from model_taae_rnep import TransformerAAE
+from tensorflow.keras import layers
+from tensorflow.keras.optimizers import Adam
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import (
+    precision_score, recall_score, f1_score, accuracy_score, 
+    confusion_matrix, roc_curve, auc
+)
+from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 import seaborn as sns
+import random
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 # --------------------------------------------------
-# KDD99 Dataset Evaluation Function
+# 1. 헬퍼 함수 (TAAE 스크립트와 동일)
 # --------------------------------------------------
-def evaluate_taae_kdd99(model, base_dir="./KDD99/KDD99_split", features=117, percentile=95):
-    normal_path = os.path.join(base_dir, "KDD99_normal.csv")
 
-    # anomaly_x.csv 리스트 추출
-    anomaly_files = sorted([
-        f for f in os.listdir(base_dir)
-        if f.startswith("KDD99_anomaly_") and f.endswith(".csv")
-    ])
+def _clean_dataframe(df):
+    """'Label'/'label' 컬럼을 삭제하고, 'inf'/'nan' 값을 0으로 대체하며, 큰 값을 clip합니다."""
+    if 'Label' in df.columns:
+        df = df.drop(columns=['Label'])
+    if 'label' in df.columns:
+        df = df.drop(columns=['label'])
+        
+    df = df.apply(pd.to_numeric, errors="coerce")
+    df = df.replace([np.inf, -np.inf], np.nan).fillna(0)
+    df = np.clip(df, -1e6, 1e6) 
+    return df
 
-    # ✅ 전체 anomaly 합본 파일도 함께 평가
-    anomaly_all_path = os.path.join(base_dir, "KDD99_anomaly.csv")
-    if os.path.exists(anomaly_all_path):
-        anomaly_files = ["KDD99_anomaly.csv"] + anomaly_files
+def _plot_and_print_cm(y_test, y_pred, save_path, labels, title):
+    """Confusion Matrix를 DataFrame으로 출력하고, seaborn 히트맵으로 저장합니다."""
+    cm = confusion_matrix(y_test, y_pred)
+    
+    try:
+        tn, fp, fn, tp = cm.ravel()
+        cm_table = pd.DataFrame(
+            [[tn, fp], [fn, tp]],
+            index=[f'Actual {labels[0]}', f'Actual {labels[1]}'],
+            columns=[f'Predicted {labels[0]}', f'Predicted {labels[1]}']
+        )
+        print("\n🧾 [Confusion Matrix]")
+        print(cm_table)
+    except ValueError: 
+        print(f"\n🧾 [Confusion Matrix] (Raw)\n{cm}")
 
-    print(f"\n📊 Found {len(anomaly_files)} anomaly datasets for KDD99 evaluation")
-
-    results = []
-
-    # ✅ 정상 데이터 로드 및 절반 분리 (Train / Test)
-    df_normal = pd.read_csv(normal_path)
-    df_normal = df_normal.sample(frac=1, random_state=123).reset_index(drop=True)
-    split_point = int(len(df_normal) * 0.8)
-    df_normal_train = df_normal.iloc[:split_point]
-    df_normal_test = df_normal.iloc[split_point:]
-
-    # 정규화 fit은 Train(normal)으로만 수행
-    scaler = MinMaxScaler()
-    X_train = scaler.fit_transform(df_normal_train)
-    X_normal_test = scaler.transform(df_normal_test)
-
-    # ✅ Train(normal) reconstruction error → threshold 계산
-    preds_train = model.predict(X_train, verbose=0)
-    train_errors = np.mean(np.square(X_train - preds_train), axis=1)
-    threshold = np.percentile(train_errors, percentile)
-    print(f"\n📏 Threshold ({percentile}th percentile): {threshold:.6f}")
-
-    # 시각화를 위해 합본(merged) anomaly 데이터를 저장할 변수
-    df_merged_anomaly_for_plot = None 
-
-    # --------------------------------------------------
-    # 각 anomaly_i.csv 에 대해 평가
-    # --------------------------------------------------
-    # for file in anomaly_files:
-    #     anomaly_path = os.path.join(base_dir, file)
-    #     df_anomaly = pd.read_csv(anomaly_path)
-    #     df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
-
-    #     # ✅ label 컬럼이 있으면 제거
-    #     if "label" in df_anomaly.columns:
-    #         df_anomaly = df_anomaly.drop(columns=["label"])
-
-    #     # KDD99_anomaly.csv (합본) 데이터를 시각화용으로 저장
-    #     if file == "KDD99_anomaly.csv" and df_merged_anomaly_for_plot is None:
-    #          df_merged_anomaly_for_plot = df_anomaly.copy()
-
-    #     X_anomaly = scaler.transform(df_anomaly)
-    #     X_test = np.concatenate([X_normal_test, X_anomaly])
-    #     y_test = np.concatenate([np.zeros(len(X_normal_test)), np.ones(len(X_anomaly))])
-
-    #     preds_test = model.predict(X_test, verbose=0)
-    #     test_errors = np.mean(np.square(X_test - preds_test), axis=1)
-    #     y_pred = (test_errors > threshold).astype(int)
-
-    #     # Metrics 계산
-    #     acc = accuracy_score(y_test, y_pred)
-    #     prec = precision_score(y_test, y_pred, zero_division=0)
-    #     rec = recall_score(y_test, y_pred, zero_division=0)
-    #     f1 = f1_score(y_test, y_pred, zero_division=0)
-
-    #     pred_normal = int(np.sum(y_pred == 0))
-    #     pred_anomaly = int(np.sum(y_pred == 1))
-
-    #     print(f"\n🚨 {file}")
-    #     print(f"Samples: {len(X_test)} | Accuracy={acc:.6f}, Precision={prec:.6f}, Recall={rec:.6f}, F1={f1:.6f}")
-
-    #     results.append({
-    #         "File": file,
-    #         "Samples": len(X_test),
-    #         "Accuracy": acc,
-    #         "Precision": prec,
-    #         "Recall": rec,
-    #         "F1": f1,
-    #         "Pred_Normal": pred_normal,
-    #         "Pred_Anomaly": pred_anomaly
-    #     })
-
-    # --------------------------------------------------
-    # 결과 저장
-    # --------------------------------------------------
-    df = pd.DataFrame(results)
-    save_path = os.path.join(base_dir, f"evaluation_mixed_summary_p{percentile}.csv")
-    df.to_csv(save_path, index=False)
-    print(f"\n📁 Saved summary → {save_path}")
-    print(df.round(6))
-
-    # --------------------------------------------------
-    # 🔥 공격 유형별 Reconstruction Error 히스토그램 (Merged 제외)
-    # --------------------------------------------------
-    # (1) Normal error 계산
-    preds_normal = model.predict(X_normal_test, verbose=0)
-    errors_normal = np.mean(np.square(X_normal_test - preds_normal), axis=1)
-
-    # (2) 공격 유형별 reconstruction error 저장 (번호 -> 이름 매핑, merged 제외)
-    attack_name_map = {
-        0: "back",
-        1: "buffer_overflow",
-        2: "ftp_write",
-        3: "guess_passwd",
-        4: "imap",
-        5: "ipsweep",
-        6: "land",
-        7: "loadmodule",
-        8: "multihop",
-        9: "neptune",
-        10: "nmap",
-        11: "perl",
-        12: "phf",
-        13: "portsweep",
-        14: "rootkit",
-        15: "satan",
-        16: "spy",
-        17: "warezclient",
-        18: "warezmaster"
-    }
-
-    error_by_attack = {}
-    numeric_keys = []
-
-    for file in anomaly_files:
-        if file == "KDD99_anomaly.csv":  # skip merged file entirely
-            continue
-
-        # 파일명에서 숫자 추출 (예: KDD99_anomaly_3.csv -> 3)
-        try:
-            num_str = file.replace("KDD99_anomaly_", "").replace(".csv", "")
-            attack_num = int(num_str)
-        except Exception:
-            # 파일명 포맷이 다르면 건너뜀
-            continue
-
-        path = os.path.join(base_dir, file)
-        df_anomaly = pd.read_csv(path)
-        df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
-
-        X_anomaly = scaler.transform(df_anomaly.values)
-        preds_anomaly = model.predict(X_anomaly, verbose=0)
-        errors_anomaly = np.mean(np.square(X_anomaly - preds_anomaly), axis=1)
-
-        # use mapped name if available, else fallback to numeric string
-        attack_label = attack_name_map.get(attack_num, f"attack_{attack_num}")
-        error_by_attack[attack_num] = (attack_label, errors_anomaly)
-        numeric_keys.append(attack_num)
-
-    # 정렬: 숫자 오름차순, 하지만 요청에 따라 0(back)이 있으면 맨 뒤로 보낸다
-    numeric_keys = sorted(set(numeric_keys))
-
-    # (3) 히스토그램 플롯 (Normal + 공격별)
-    plt.figure(figsize=(12,7))
-
-    # Normal 먼저
-    plt.hist(errors_normal, bins=200, alpha=0.6, label="Normal", color="green", density=True)
-
-    # 팔레트 (항목 수에 맞춤)
-    n_attacks = len(numeric_keys)
-    palette = plt.cm.tab20(np.linspace(0, 1, max(3, n_attacks)))  # 충분한 색 확보
-
-    for i, atk_num in enumerate(numeric_keys):
-        atk_name, errs = error_by_attack[atk_num]
-        plt.hist(errs, bins=200, alpha=0.5, label=f"{atk_name}", color=palette[i], density=True)
-
-    # Threshold
-    plt.axvline(threshold, color="blue", linestyle="--", label=f"Threshold ({threshold:.6f})")
-
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.xlabel("Reconstruction Error (log scale)")
-    plt.ylabel("Density (log scale)")
-    plt.title("Reconstruction Error per Attack Type (KDD99)")
-    plt.legend(fontsize=8, loc="upper right", ncol=1)
-    plt.grid(True, linestyle="--", alpha=0.4)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm,
+                annot=True,
+                fmt='d',
+                cmap='Blues',
+                xticklabels=[f'Predicted {labels[0]}', f'Predicted {labels[1]}'],
+                yticklabels=[f'Actual {labels[0]}', f'Actual {labels[1]}'])
+    plt.title(title)
+    plt.ylabel("Actual")
+    plt.xlabel("Predicted")
     plt.tight_layout()
-    plt.savefig("./KDD99_distribution.png", dpi=300)
+    plt.savefig(save_path, dpi=300)
     plt.close()
 
-    print("📊 Saved → ./KDD99_distribution.png")
+# --------------------------------------------------
+# 2. CNN-LSTM 모델 및 유틸리티
+# --------------------------------------------------
 
-def evaluate_taae_indsn(model, base_dir="./InSDN/ae_datas", features=117, percentile=95):
-    normal_path = os.path.join(base_dir, "InSDN_normal.csv")
+@tf.keras.utils.register_keras_serializable(package="Custom")
+class CNN_LSTM(tf.keras.Model):
+    """
+    CNN-LSTM 모델 아키텍처 (model_cnnlstm.py와 동일)
+    """
+    def __init__(self, timesteps=10, features=12, cnn_filters=64, lstm_units=128):
+        super().__init__()
+        self.timesteps = timesteps
+        self.features = features
+        self.conv1 = layers.Conv1D(cnn_filters, 3, padding="same", activation="relu")
+        self.conv2 = layers.Conv1D(cnn_filters, 3, padding="same", activation="relu")
+        self.pool = layers.MaxPooling1D(pool_size=2)
+        self.dropout_cnn = layers.Dropout(0.25)
+        self.flatten = layers.Flatten()
+        self.lstm = layers.LSTM(lstm_units, return_sequences=False)
+        self.fc1 = layers.Dense(
+            128,
+            activation="relu",
+            kernel_regularizer=tf.keras.regularizers.l2(0.1)
+        )
+        self.dropout_fc = layers.Dropout(0.5)
+        self.output_layer = layers.Dense(1, activation="sigmoid")
 
-    # anomaly_x.csv 리스트 추출
+    def call(self, inputs, training=None):
+        x = self.conv1(inputs)
+        x = self.conv2(x)
+        x = self.pool(x)
+        x = self.dropout_cnn(x, training=training)
+        x = self.flatten(x)
+        x = tf.expand_dims(x, axis=1)
+        x = self.lstm(x)
+        x = self.fc1(x)
+        x = self.dropout_fc(x, training=training)
+        return self.output_layer(x)
+
+def reshape_for_sequence(X, timesteps=10, features=12):
+    """
+    2D (N, F) 데이터를 3D (N, T, F) 시퀀스 데이터로 Reshape (패딩 포함)
+    """
+    n_samples, n_feats = X.shape
+    target_len = timesteps * features
+    
+    if n_feats < target_len:
+        pad = np.zeros((n_samples, target_len - n_feats))
+        X = np.concatenate([X, pad], axis=1)
+    elif n_feats > target_len:
+        X = X[:, :target_len]
+        
+    return X.reshape(-1, timesteps, features)
+
+# --------------------------------------------------
+# 3. 데이터셋 설정 (TAAE 스크립트와 동일)
+# --------------------------------------------------
+DATASET_CONFIG = {
+    "KDD99": {
+        "base_dir": "./KDD99/KDD99_split",
+        "normal_file": "KDD99_normal.csv",
+        "anomaly_prefix": "KDD99_anomaly_",
+        "merged_anomaly_file": "KDD99_anomaly.csv",
+        "plot_save_path": "./cnn_lstm/KDD99_cnn_lstm_distribution.png",
+        "attack_map": {
+            0: "back", 1: "buffer_overflow", 2: "ftp_write", 3: "guess_passwd",
+            4: "imap", 5: "ipsweep", 6: "land", 7: "loadmodule", 8: "multihop",
+            9: "neptune", 10: "nmap", 11: "perl", 12: "phf", 13: "portsweep",
+            14: "rootkit", 15: "satan", 16: "spy", 17: "warezclient", 18: "warezmaster"
+        }
+    },
+    "CSE-CIC-IDS2018": {
+        "base_dir": "./CIC2018/ae_datas_all_features",
+        "normal_file": "CIC_ae_normal.csv",
+        "anomaly_prefix": "CIC_anomaly_ae_",
+        "merged_anomaly_file": "CIC_ae_anomaly.csv",
+        "plot_save_path": "./cnn_lstm/CIC_cnn_lstm_distribution.png",
+        "attack_map": {
+            1: "DDOS attack-HOIC", 2: "DDoS attacks-LOIC-HTTP", 3: "DoS attacks-Hulk",
+            4: "Bot", 5: "FTP-BruteForce", 6: "SSH-Bruteforce", 7: "Infiltration",
+            8: "DoS attacks-SlowHTTPTest", 9: "DoS attacks-GoldenEye", 10: "DoS attacks-Slowloris",
+            11: "DDOS attack-LOIC-UDP", 12: "Brute Force -Web", 13: "Brute Force -XSS", 14: "SQL Injection"
+        }
+    },
+    "InSDN": {
+        "base_dir": "./InSDN/ae_datas",
+        "normal_file": "InSDN_normal.csv", # 83 features
+        "anomaly_prefix": "InSDN_anomaly_",
+        "merged_anomaly_file": "InSDN_anomaly.csv",
+        "plot_save_path": "./cnn_lstm/InSDN_cnn_lstm_distribution.png",
+        "attack_map": {
+            0: "BFA", 1: "BOTNET", 2: "DDoS", 3: "DoS",
+            4: "Probe", 5: "U2R", 6: "Web-Attack"
+        }
+    }
+}
+
+# --------------------------------------------------
+# 4. CNN-LSTM 유형별 평가 함수
+# --------------------------------------------------
+def evaluate_cnn_lstm_by_type(model, dataset_name, model_params, train_split_ratio=0.8):
+    """
+    TAAE 평가 스크립트의 구조를 차용하여 CNN-LSTM 모델의 유형별 성능을 평가합니다.
+    
+    :param model: 훈련된 CNN-LSTM 모델
+    :param dataset_name: "KDD99", "CSE-CIC-IDS2018", "InSDN" 중 하나
+    :param model_params: 모델 입력을 위한 딕셔너리 (예: {'timesteps': 10, 'features': 12})
+    :param train_split_ratio: 스케일러 학습 및 정상 테스트셋 분리 비율
+    """
+    
+    # 1. 설정 로드
+    try:
+        config = DATASET_CONFIG[dataset_name]
+    except KeyError:
+        print(f"❌ Error: No config found for dataset '{dataset_name}'")
+        return
+
+    base_dir = config["base_dir"]
+    normal_path = os.path.join(base_dir, config["normal_file"])
+    anomaly_prefix = config["anomaly_prefix"]
+    merged_file = config["merged_anomaly_file"]
+    attack_map = config["attack_map"]
+    plot_save_path = config["plot_save_path"] # 저장 경로 변경
+
+    # 2. Anomaly 파일 리스트 탐색
     anomaly_files = sorted([
         f for f in os.listdir(base_dir)
-        if f.startswith("InSDN_anomaly_") and f.endswith(".csv")
+        if f.startswith(anomaly_prefix) and f.endswith(".csv")
     ])
-
-    # ✅ 전체 anomaly 합본 파일도 함께 평가
-    anomaly_all_path = os.path.join(base_dir, "InSDN_anomaly.csv")
-    if os.path.exists(anomaly_all_path):
-        anomaly_files = ["InSDN_anomaly.csv"] + anomaly_files
-
-    print(f"\n📊 Found {len(anomaly_files)} anomaly datasets for InSDN evaluation")
+    merged_path = os.path.join(base_dir, merged_file)
+    if os.path.exists(merged_path):
+        anomaly_files = [merged_file] + anomaly_files
+    
+    print(f"\nEvaluating CNN-LSTM for dataset: {dataset_name.upper()}")
+    print(f"📊 Found {len(anomaly_files)} anomaly datasets for evaluation")
 
     results = []
 
-    # ✅ 정상 데이터 로드 및 절반 분리 (Train / Test)
+    # 3. 정상 데이터 로드, 클리닝, 분할 (스케일러 훈련용 80% / 테스트용 20%)
     df_normal = pd.read_csv(normal_path)
-    df_normal = df_normal.sample(frac=1, random_state=123).reset_index(drop=True)
-    split_point = int(len(df_normal) * 0.8)
-    df_normal_train = df_normal.iloc[:split_point]
-    df_normal_test = df_normal.iloc[split_point:]
+    df_normal = shuffle(df_normal, random_state=42)
+    split_point = int(len(df_normal) * train_split_ratio)
+    df_normal_train = df_normal.iloc[:split_point] # 스케일러 훈련용
+    df_normal_test = df_normal.iloc[split_point:] # 실제 테스트용
 
-    def _clean(df):
-        df = df.apply(pd.to_numeric, errors="coerce")
-        df = df.replace([np.inf, -np.inf], np.nan).fillna(0)
-        # 너무 큰 값 잘라내기 (예: 1e6 이상)
-        df = np.clip(df, -1e6, 1e6)
-        return df
+    df_normal_train = _clean_dataframe(df_normal_train)
+    df_normal_test = _clean_dataframe(df_normal_test)
+    
+    print(f"✅ Normal data: Train(for scaler)={len(df_normal_train):,}, Test(for eval)={len(df_normal_test):,}")
 
-    df_normal_train = _clean(df_normal_train)
-    df_normal_test = _clean(df_normal_test)
-
-    # 정규화 fit은 Train(normal)으로만 수행
+    # 4. 정규화 (Scaler)
     scaler = MinMaxScaler()
-    X_train = scaler.fit_transform(df_normal_train)
-    X_normal_test = scaler.transform(df_normal_test)
+    # 훈련 데이터(정상 80%) 기준으로 스케일러 피팅
+    scaler.fit(df_normal_train.values) 
+    
+    # 정상 *테스트*(20%) 데이터를 스케일링 및 Reshape
+    X_normal_test_flat = scaler.transform(df_normal_test.values)
+    X_normal_test_seq = reshape_for_sequence(X_normal_test_flat, **model_params)
+    y_normal_test = np.zeros(len(X_normal_test_seq))
 
-    # ✅ Train(normal) reconstruction error → threshold 계산
-    preds_train = model.predict(X_train, verbose=0)
-    train_errors = np.mean(np.square(X_train - preds_train), axis=1)
-    threshold = np.percentile(train_errors, percentile)
-    print(f"\n📏 Threshold ({percentile}th percentile): {threshold:.6f}")
+    # 5. 임계값(Threshold) 설정
+    threshold = 0.5
+    print(f"\n📏 Threshold (fixed for CNN-LSTM): {threshold}")
 
-    # 시각화를 위해 합본(merged) anomaly 데이터를 저장할 변수
-    df_merged_anomaly_for_plot = None 
+    probs_by_attack = {} # 시각화를 위한 확률 저장
+    numeric_keys = []
 
-    # --------------------------------------------------
-    # 각 anomaly_i.csv 에 대해 평가
-    # --------------------------------------------------
+    # 6. 각 Anomaly 파일별 평가
     for file in anomaly_files:
         anomaly_path = os.path.join(base_dir, file)
         df_anomaly = pd.read_csv(anomaly_path)
-        df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
+        df_anomaly = _clean_dataframe(df_anomaly) # 클리닝 적용
 
-        # ✅ label 컬럼이 있으면 제거
-        if "label" in df_anomaly.columns:
-            df_anomaly = df_anomaly.drop(columns=["label"])
+        if df_anomaly.empty:
+            print(f"\n⚠️ Warning: '{file}' is empty or became empty after cleaning. Skipping.")
+            continue
 
-        # InSDN_anomaly.csv (합본) 데이터를 시각화용으로 저장
-        if file == "InSDN_anomaly.csv" and df_merged_anomaly_for_plot is None:
-             df_merged_anomaly_for_plot = df_anomaly.copy()
+        # 비정상 데이터를 스케일링 및 Reshape
+        X_anomaly_flat = scaler.transform(df_anomaly.values)
+        X_anomaly_seq = reshape_for_sequence(X_anomaly_flat, **model_params)
+        y_anomaly = np.ones(len(X_anomaly_seq))
+        
+        # 테스트셋 구성 (Normal-Test + Anomaly)
+        X_test = np.concatenate([X_normal_test_seq, X_anomaly_seq])
+        y_test = np.concatenate([y_normal_test, y_anomaly])
 
-        X_anomaly = scaler.transform(df_anomaly)
-        X_test = np.concatenate([X_normal_test, X_anomaly])
-        y_test = np.concatenate([np.zeros(len(X_normal_test)), np.ones(len(X_anomaly))])
-
-        preds_test = model.predict(X_test, verbose=0)
-        test_errors = np.mean(np.square(X_test - preds_test), axis=1)
-        y_pred = (test_errors > threshold).astype(int)
+        # 예측 및 확률 계산
+        test_probs = model.predict(X_test, verbose=0).reshape(-1) # (N,) shape의 확률
+        y_pred = (test_probs > threshold).astype(int)
 
         # Metrics 계산
         acc = accuracy_score(y_test, y_pred)
@@ -278,354 +260,171 @@ def evaluate_taae_indsn(model, base_dir="./InSDN/ae_datas", features=117, percen
         rec = recall_score(y_test, y_pred, zero_division=0)
         f1 = f1_score(y_test, y_pred, zero_division=0)
 
+        # *** [수정] 예측 개수 계산 ***
         pred_normal = int(np.sum(y_pred == 0))
         pred_anomaly = int(np.sum(y_pred == 1))
+        # **************************
 
         print(f"\n🚨 {file}")
-        print(f"Samples: {len(X_test)} | Accuracy={acc:.6f}, Precision={prec:.6f}, Recall={rec:.6f}, F1={f1:.6f}")
+        print(f"Samples: {len(X_test)} (Normal: {len(y_normal_test)}, Anomaly: {len(y_anomaly)})")
+        print(f"Accuracy={acc:.6f}, Precision={prec:.6f}, Recall={rec:.6f}, F1={f1:.6f}")
+        
+        # *** [수정] 예측 개수 출력 ***
+        print(f"Predicted counts: Normal={pred_normal:,}, Anomaly={pred_anomaly:,}")
+        # **************************
 
+        # 6-1. 합본(Merged) 파일인 경우 Confusion Matrix 및 ROC Curve 생성
+        if file == merged_file:
+            # === Confusion Matrix ===
+            cm_save_path = f"./cnn_lstm/{dataset_name}_cnn_lstm_cm.png"
+            title = f'CNN-LSTM CM - {dataset_name.upper()}'
+            _plot_and_print_cm(y_test, y_pred, cm_save_path, ['Normal', 'Anomaly'], title)
+            print(f"📈 Saved confusion matrix → {cm_save_path}")
+
+            # === ROC Curve ===
+            fpr, tpr, _ = roc_curve(y_test, test_probs)
+            roc_auc = auc(fpr, tpr)
+            
+            roc_save_path = f"./cnn_lstm/{dataset_name}_cnn_lstm_roc.png"
+            plt.figure(figsize=(8, 6))
+            plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.4f})')
+            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            plt.title(f'CNN-LSTM ROC Curve - {dataset_name.upper()}')
+            plt.xlabel('False Positive Rate (FPR)')
+            plt.ylabel('True Positive Rate (TPR)')
+            plt.legend(loc="lower right")
+            plt.grid(True, linestyle="--", alpha=0.4)
+            plt.tight_layout()
+            plt.savefig(roc_save_path, dpi=300)
+            plt.close()
+            
+            print(f"📈 Saved ROC curve → {roc_save_path} (AUC = {roc_auc:.4f})")
+
+        # *** [수정] 결과에 예측 개수 추가 ***
         results.append({
-            "File": file,
-            "Samples": len(X_test),
-            "Accuracy": acc,
-            "Precision": prec,
-            "Recall": rec,
-            "F1": f1,
-            "Pred_Normal": pred_normal,
-            "Pred_Anomaly": pred_anomaly
+            "File": file, "Samples": len(X_test), "Accuracy": acc,
+            "Precision": prec, "Recall": rec, "F1": f1,
+            "Pred_Normal": pred_normal, "Pred_Anomaly": pred_anomaly
         })
+        # ********************************
 
-    # --------------------------------------------------
-    # 결과 저장
-    # --------------------------------------------------
+        # 7. 시각화용 데이터 저장 (합본 파일 제외)
+        if file != merged_file:
+            try:
+                num_str = file.replace(anomaly_prefix, "").replace(".csv", "")
+                attack_num = int(num_str)
+                
+                probs_anomaly_only = model.predict(X_anomaly_seq, verbose=0).reshape(-1)
+
+                attack_label = attack_map.get(attack_num, f"attack_{attack_num}")
+                probs_by_attack[attack_num] = (attack_label, probs_anomaly_only)
+                numeric_keys.append(attack_num)
+            except Exception as e:
+                print(f"Warning: Could not parse attack number from '{file}'. Skipping for plot. Error: {e}")
+
+    # 8. 결과 요약 저장
     df = pd.DataFrame(results)
-    save_path = os.path.join(base_dir, f"evaluation_mixed_summary_p{percentile}.csv")
-    df.to_csv(save_path, index=False)
-    print(f"\n📁 Saved summary → {save_path}")
+    summary_save_path = f"./cnn_lstm/{dataset_name}_cnn_lstm_summary.csv"
+    
+    df.to_csv(summary_save_path, index=False)
+    print(f"\n📁 Saved summary → {summary_save_path}")
     print(df.round(6))
 
-    # --------------------------------------------------
-    # 🔥 공격 유형별 Reconstruction Error 히스토그램 (Merged 제외)
-    # --------------------------------------------------
-    # (1) Normal error 계산
-    preds_normal = model.predict(X_normal_test, verbose=0)
-    errors_normal = np.mean(np.square(X_normal_test - preds_normal), axis=1)
+    # 9. 🔥 공격 유형별 출력 확률 히스토그램
+    if probs_by_attack:
+        plt.figure(figsize=(12, 7))
+        
+        # Normal (Test) 확률 계산
+        probs_normal_test = model.predict(X_normal_test_seq, verbose=0).reshape(-1)
+        
+        plt.hist(probs_normal_test, bins=100, alpha=0.6, label="Normal", color="green", density=True, range=(0,1))
 
-    # (2) 공격 유형별 reconstruction error 저장 (번호 -> 이름 매핑, merged 제외)
-    attack_name_map = {
-        0: "back",
-        1: "buffer_overflow",
-        2: "ftp_write",
-        3: "guess_passwd",
-        4: "imap",
-        5: "ipsweep",
-        6: "land",
-        7: "loadmodule",
-        8: "multihop",
-        9: "neptune",
-        10: "nmap",
-        11: "perl",
-        12: "phf",
-        13: "portsweep",
-        14: "rootkit",
-        15: "satan",
-        16: "spy",
-        17: "warezclient",
-        18: "warezmaster"
-    }
+        # 공격별 히스토그램
+        numeric_keys = sorted(set(numeric_keys))
+        n_attacks = len(numeric_keys)
+        palette = plt.cm.gist_rainbow(np.linspace(0, 1, max(3, n_attacks))) 
 
-    error_by_attack = {}
-    numeric_keys = []
+        for i, atk_num in enumerate(numeric_keys):
+            atk_name, probs = probs_by_attack[atk_num]
+            plt.hist(probs, bins=100, alpha=0.5, label=f"{atk_name}", color=palette[i % n_attacks], density=True, range=(0,1))
 
-    for file in anomaly_files:
-        if file == "InSDN_anomaly.csv":  # skip merged file entirely
-            continue
+        plt.axvline(threshold, color="blue", linestyle="--", label=f"Threshold ({threshold})")
 
-        # 파일명에서 숫자 추출 (예: InSDN_anomaly_3.csv -> 3)
-        try:
-            num_str = file.replace("InSDN_anomaly_", "").replace(".csv", "")
-            attack_num = int(num_str)
-        except Exception:
-            # 파일명 포맷이 다르면 건너뜀
-            continue
+        plt.xlabel("Model Output Probability (0.0=Normal, 1.0=Anomaly)")
+        plt.ylabel("Density")
+        plt.title(f"CNN-LSTM Output Probability Distribution - ({dataset_name.upper()})")
+        plt.legend(fontsize=8, loc="upper right", ncol=1)
+        plt.grid(True, linestyle="--", alpha=0.4)
+        plt.xlim(0.0, 1.0)
+        plt.tight_layout()
+        plt.savefig(plot_save_path, dpi=300)
+        plt.close()
 
-        path = os.path.join(base_dir, file)
-        df_anomaly = pd.read_csv(path)
-        df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
-
-        X_anomaly = scaler.transform(df_anomaly.values)
-        preds_anomaly = model.predict(X_anomaly, verbose=0)
-        errors_anomaly = np.mean(np.square(X_anomaly - preds_anomaly), axis=1)
-
-        # use mapped name if available, else fallback to numeric string
-        attack_label = attack_name_map.get(attack_num, f"attack_{attack_num}")
-        error_by_attack[attack_num] = (attack_label, errors_anomaly)
-        numeric_keys.append(attack_num)
-
-    # 정렬: 숫자 오름차순, 하지만 요청에 따라 0(back)이 있으면 맨 뒤로 보낸다
-    numeric_keys = sorted(set(numeric_keys))
-
-    # (3) 히스토그램 플롯 (Normal + 공격별)
-    plt.figure(figsize=(12,7))
-
-    # Normal 먼저
-    plt.hist(errors_normal, bins=200, alpha=0.6, label="Normal", color="green", density=True)
-
-    # 팔레트 (항목 수에 맞춤)
-    n_attacks = len(numeric_keys)
-    palette = plt.cm.tab20(np.linspace(0, 1, max(3, n_attacks)))  # 충분한 색 확보
-
-    for i, atk_num in enumerate(numeric_keys):
-        atk_name, errs = error_by_attack[atk_num]
-        plt.hist(errs, bins=200, alpha=0.5, label=f"{atk_name}", color=palette[i], density=True)
-
-    # Threshold
-    plt.axvline(threshold, color="blue", linestyle="--", label=f"Threshold ({threshold:.6f})")
-
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.xlabel("Reconstruction Error (log scale)")
-    plt.ylabel("Density (log scale)")
-    plt.title("Reconstruction Error per Attack Type (InSDN)")
-    plt.legend(fontsize=8, loc="upper right", ncol=1)
-    plt.grid(True, linestyle="--", alpha=0.4)
-    plt.tight_layout()
-    plt.savefig("./InSDN_distribution.png", dpi=300)
-    plt.close()
-
-    print("📊 Saved → ./InSDN_distribution.png")
-
-def evaluate_taae_cic(model, base_dir="./CIC2018/ae_datas_all_features", features=117, percentile=95):
-    normal_path = os.path.join(base_dir, "CIC_ae_normal.csv")
-
-    # anomaly_x.csv 리스트 추출
-    anomaly_files = sorted([
-        f for f in os.listdir(base_dir)
-        if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")
-    ])
-
-    # ✅ 전체 anomaly 합본 파일도 함께 평가
-    anomaly_all_path = os.path.join(base_dir, "CIC_anomaly.csv")
-    if os.path.exists(anomaly_all_path):
-        anomaly_files = ["CIC_anomaly.csv"] + anomaly_files
-
-    print(f"\n📊 Found {len(anomaly_files)} anomaly datasets for CIC evaluation")
-
-    results = []
-
-    # ✅ 정상 데이터 로드 및 절반 분리 (Train / Test)
-    df_normal = pd.read_csv(normal_path)
-    df_normal = df_normal.sample(frac=1, random_state=123).reset_index(drop=True)
-    split_point = int(len(df_normal) * 0.8)
-    df_normal_train = df_normal.iloc[:split_point]
-    df_normal_test = df_normal.iloc[split_point:]
-
-    def _clean(df):
-        df = df.apply(pd.to_numeric, errors="coerce")
-        df = df.replace([np.inf, -np.inf], np.nan).fillna(0)
-        # 너무 큰 값 잘라내기 (예: 1e6 이상)
-        df = np.clip(df, -1e6, 1e6)
-        return df
-
-    df_normal_train = _clean(df_normal_train)
-    df_normal_test = _clean(df_normal_test)
-
-    # 정규화 fit은 Train(normal)으로만 수행
-    scaler = MinMaxScaler()
-    X_train = scaler.fit_transform(df_normal_train)
-    X_normal_test = scaler.transform(df_normal_test)
-
-    # ✅ Train(normal) reconstruction error → threshold 계산
-    preds_train = model.predict(X_train, verbose=0)
-    train_errors = np.mean(np.square(X_train - preds_train), axis=1)
-    threshold = np.percentile(train_errors, percentile)
-    print(f"\n📏 Threshold ({percentile}th percentile): {threshold:.6f}")
-
-    # 시각화를 위해 합본(merged) anomaly 데이터를 저장할 변수
-    df_merged_anomaly_for_plot = None 
-
-    # --------------------------------------------------
-    # 각 anomaly_i.csv 에 대해 평가
-    # --------------------------------------------------
-    for file in anomaly_files:
-        anomaly_path = os.path.join(base_dir, file)
-        df_anomaly = pd.read_csv(anomaly_path)
-        df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
-
-        # ✅ label 컬럼이 있으면 제거
-        if "label" in df_anomaly.columns:
-            df_anomaly = df_anomaly.drop(columns=["label"])
-
-        # CIC_anomaly.csv (합본) 데이터를 시각화용으로 저장
-        if file == "CIC_anomaly.csv" and df_merged_anomaly_for_plot is None:
-             df_merged_anomaly_for_plot = df_anomaly.copy()
-
-        X_anomaly = scaler.transform(df_anomaly)
-        X_test = np.concatenate([X_normal_test, X_anomaly])
-        y_test = np.concatenate([np.zeros(len(X_normal_test)), np.ones(len(X_anomaly))])
-
-        preds_test = model.predict(X_test, verbose=0)
-        test_errors = np.mean(np.square(X_test - preds_test), axis=1)
-        y_pred = (test_errors > threshold).astype(int)
-
-        # Metrics 계산
-        acc = accuracy_score(y_test, y_pred)
-        prec = precision_score(y_test, y_pred, zero_division=0)
-        rec = recall_score(y_test, y_pred, zero_division=0)
-        f1 = f1_score(y_test, y_pred, zero_division=0)
-
-        pred_normal = int(np.sum(y_pred == 0))
-        pred_anomaly = int(np.sum(y_pred == 1))
-
-        print(f"\n🚨 {file}")
-        print(f"Samples: {len(X_test)} | Accuracy={acc:.6f}, Precision={prec:.6f}, Recall={rec:.6f}, F1={f1:.6f}")
-
-        results.append({
-            "File": file,
-            "Samples": len(X_test),
-            "Accuracy": acc,
-            "Precision": prec,
-            "Recall": rec,
-            "F1": f1,
-            "Pred_Normal": pred_normal,
-            "Pred_Anomaly": pred_anomaly
-        })
-
-    # --------------------------------------------------
-    # 결과 저장
-    # --------------------------------------------------
-    df = pd.DataFrame(results)
-    save_path = os.path.join(base_dir, f"evaluation_mixed_summary_p{percentile}.csv")
-    df.to_csv(save_path, index=False)
-    print(f"\n📁 Saved summary → {save_path}")
-    print(df.round(6))
-
-    # --------------------------------------------------
-    # 🔥 공격 유형별 Reconstruction Error 히스토그램 (Merged 제외)
-    # --------------------------------------------------
-    # (1) Normal error 계산
-    preds_normal = model.predict(X_normal_test, verbose=0)
-    errors_normal = np.mean(np.square(X_normal_test - preds_normal), axis=1)
-
-    # (2) 공격 유형별 reconstruction error 저장 (번호 -> 이름 매핑, merged 제외)
-    attack_name_map = {
-        1: "DDOS attack-HOIC",
-        2: "DDoS attacks-LOIC-HTTP",
-        3: "DoS attacks-Hulk",
-        4: "Bot",
-        5: "FTP-BruteForce",
-        6: "SSH-Bruteforce",
-        7: "Infiltration",
-        8: "DoS attacks-SlowHTTPTest",
-        9: "DoS attacks-GoldenEye",
-        10: "DoS attacks-Slowloris",
-        11: "DDOS attack-LOIC-UDP",
-        12: "Brute Force -Web",
-        13: "Brute Force -XSS",
-        14: "SQL Injection"
-    }
-
-    error_by_attack = {}
-    numeric_keys = []
-
-    for file in anomaly_files:
-        if file == "CIC_anomaly.csv":  # skip merged file entirely
-            continue
-
-        # 파일명에서 숫자 추출 (예: CIC_anomaly_3.csv -> 3)
-        try:
-            num_str = file.replace("CIC_anomaly_", "").replace(".csv", "")
-            attack_num = int(num_str)
-        except Exception:
-            # 파일명 포맷이 다르면 건너뜀
-            continue
-
-        path = os.path.join(base_dir, file)
-        df_anomaly = pd.read_csv(path)
-        df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
-
-        X_anomaly = scaler.transform(df_anomaly.values)
-        preds_anomaly = model.predict(X_anomaly, verbose=0)
-        errors_anomaly = np.mean(np.square(X_anomaly - preds_anomaly), axis=1)
-
-        # use mapped name if available, else fallback to numeric string
-        attack_label = attack_name_map.get(attack_num, f"attack_{attack_num}")
-        error_by_attack[attack_num] = (attack_label, errors_anomaly)
-        numeric_keys.append(attack_num)
-
-    # 정렬: 숫자 오름차순, 하지만 요청에 따라 0(back)이 있으면 맨 뒤로 보낸다
-    numeric_keys = sorted(set(numeric_keys))
-
-    # (3) 히스토그램 플롯 (Normal + 공격별)
-    plt.figure(figsize=(12,7))
-
-    # Normal 먼저
-    plt.hist(errors_normal, bins=200, alpha=0.6, label="Normal", color="green", density=True)
-
-    # 팔레트 (항목 수에 맞춤)
-    n_attacks = len(numeric_keys)
-    palette = plt.cm.tab20(np.linspace(0, 1, max(3, n_attacks)))  # 충분한 색 확보
-
-    for i, atk_num in enumerate(numeric_keys):
-        atk_name, errs = error_by_attack[atk_num]
-        plt.hist(errs, bins=200, alpha=0.5, label=f"{atk_name}", color=palette[i], density=True)
-
-    # Threshold
-    plt.axvline(threshold, color="blue", linestyle="--", label=f"Threshold ({threshold:.6f})")
-
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.xlabel("Reconstruction Error (log scale)")
-    plt.ylabel("Density (log scale)")
-    plt.title("Reconstruction Error per Attack Type (CIC)")
-    plt.legend(fontsize=8, loc="upper right", ncol=1)
-    plt.grid(True, linestyle="--", alpha=0.4)
-    plt.tight_layout()
-    plt.savefig("./CIC_distribution.png", dpi=300)
-    plt.close()
-
-    print("📊 Saved → ./CIC_distribution.png")
-
+        print(f"📊 Saved distribution plot → {plot_save_path}")
 
 # --------------------------------------------------
-# 모델 로드 및 평가 실행
+# 5. 모델 로드 및 평가 설정
+# --------------------------------------------------
+
+# main_cnnlstm_fl.py에서 훈련시킨 모델의 파라미터 및 가중치 경로
+MODEL_EVAL_CONFIG = {
+    "KDD99": {
+        "model_params": {"timesteps": 10, "features": 12},
+        "weights": "./Results/KDD99/cnnlstm/cnn_lstm_weights.h5" # KDD99 훈련 가중치
+    },
+    "CSE-CIC-IDS2018": {
+        "model_params": {"timesteps": 10, "features": 8},
+        "weights": "./cnn_lstm/cnn_lstm_weights.h5" # (경로가 다르다면 수정)
+    },
+    "InSDN": {
+        # 83 피처를 (10, 9) 등으로 훈련했다면 83 피처 csv 사용
+        "model_params": {"timesteps": 12, "features": 7}, # 83 -> 90 (패딩)
+        "weights": "Results/InSDN/cnnlstm/cnn_lstm_weights.h5" # (경로가 다르다면 수정)
+    }
+}
+
+# --------------------------------------------------
+# 6. 평가 실행
 # --------------------------------------------------
 if __name__ == "__main__":
-    # input_dim = 115  # ✅ KDD99 feature 수
-    # model = TransformerAAE(input_dim=input_dim)
-    # _ = model(tf.zeros((1, input_dim)), prior_labels=tf.zeros((1, 1)))  # build
-    # PRETRAIN_PATH = "Results/KDD99/rnep/rnep_frame_aae_transformer_weights.h5"
     
-    # input_dim = 83  # ✅ InSDN feature 수
-    # model = TransformerAAE(input_dim=input_dim)
-    # _ = model(tf.zeros((1, input_dim)), prior_labels=tf.zeros((1, 1)))  # build
-    # PRETRAIN_PATH = "Results/InSDN/rnep/rnep_frame_aae_transformer_weights.h5"
-    
-    input_dim = 78  # ✅ CIC2018 feature 수
-    model = TransformerAAE(input_dim=input_dim)
-    _ = model(tf.zeros((1, input_dim)), prior_labels=tf.zeros((1, 1)))  # build
-    PRETRAIN_PATH = "rnep_cic2018/rnep_frame_aae_transformer_weights.h5"
+    # --- ⚠️ 여기서 실행할 데이터셋을 선택하세요 ---
+    DATASET_TO_RUN = "InSDN" 
+    # (옵션: "KDD99", "CSE-CIC-IDS2018", "InSDN")
+    # -----------------------------------------
 
-    model.load_weights(PRETRAIN_PATH)
-    print(f"✅ Loaded pre-trained weights from {PRETRAIN_PATH}")
+    # CNN-LSTM 결과물 저장 디렉토리 생성
+    os.makedirs("./cnn_lstm", exist_ok=True)
 
-    PERCENTILE = 90
-    # evaluate_taae_kdd99(
-    #     model=model,
-    #     base_dir="./KDD99/KDD99_split",
-    #     features=input_dim,
-    #     percentile=PERCENTILE
-    # )
-    # evaluate_taae_indsn(
-    #     model=model,
-    #     base_dir="./InSDN/ae_datas",
-    #     features=input_dim,
-    #     percentile=PERCENTILE
-    # )
-    evaluate_taae_cic(
-        model=model,
-        base_dir="./CIC2018/ae_datas_all_features",
-        features=input_dim,
-        percentile=PERCENTILE
-    )
-    print("PERCENTILE =", PERCENTILE)
+    # 선택된 데이터셋의 설정 로드
+    if DATASET_TO_RUN not in MODEL_EVAL_CONFIG:
+        print(f"❌ Error: '{DATASET_TO_RUN}'에 대한 모델 설정이 MODEL_EVAL_CONFIG에 없습니다.")
+    else:
+        eval_cfg = MODEL_EVAL_CONFIG[DATASET_TO_RUN]
+        model_params = eval_cfg["model_params"]
+        weights_path = eval_cfg["weights"]
+
+        # 모델 빌드
+        model = CNN_LSTM(**model_params)
+        dummy_input_shape = (1, model_params["timesteps"], model_params["features"])
+        _ = model(tf.zeros(dummy_input_shape))
+        model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])
+
+        # 가중치 로드
+        if os.path.exists(weights_path):
+            model.load_weights(weights_path)
+            print(f"✅ Loaded pre-trained weights from {weights_path}")
+        else:
+            print(f"⚠️ WARNING: Weight file not found at {weights_path}. 모델이 훈련되지 않았습니다.")
+            exit()
+
+        # 평가 실행
+        evaluate_cnn_lstm_by_type(
+            model=model,
+            dataset_name=DATASET_TO_RUN,
+            model_params=model_params,
+            train_split_ratio=0.8 # 스케일러 훈련용 80% / 테스트용 20%
+        )
+
+        print(f"\n--- CNN-LSTM Evaluation Complete for {DATASET_TO_RUN} ---")
+

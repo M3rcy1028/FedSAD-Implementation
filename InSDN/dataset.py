@@ -201,7 +201,8 @@ def feature_selection_multi():
     normal_path = os.path.join(RAW_DIR, "InSDN_normal.csv")
     if os.path.exists(normal_path):
         df_normal = pd.read_csv(normal_path, low_memory=False)
-        df_normal_filtered = df_normal[SELECTED_FEATURES]
+        # df_normal_filtered = df_normal[SELECTED_FEATURES]
+        df_normal_filtered = df_normal
         save_path = os.path.join(SAVE_DIR, "InSDN_normal_48.csv")
         df_normal_filtered.to_csv(save_path, index=False)
         print(f"✅ 정상 데이터 저장 완료: {df_normal_filtered.shape} → {save_path}")
@@ -263,12 +264,12 @@ def split_and_save_labelwise():
     df["Label"] = df["Label"].astype(str).str.strip().str.upper()
 
     # 선택된 피처 필터링
-    features_to_keep = [col for col in SELECTED_FEATURES if col in df.columns]
-    missing = set(SELECTED_FEATURES) - set(features_to_keep)
-    if missing:
-        print(f"⚠️ 누락된 피처 {len(missing)}개: {missing}")
+    # features_to_keep = [col for col in SELECTED_FEATURES if col in df.columns]
+    # missing = set(SELECTED_FEATURES) - set(features_to_keep)
+    # if missing:
+    #     print(f"⚠️ 누락된 피처 {len(missing)}개: {missing}")
 
-    df = df[features_to_keep + ["Label"]]
+    # df = df[features_to_keep + ["Label"]]
 
     # Normal / Anomaly 분리
     df_normal = df[df["Label"].str.lower() == "normal"]
@@ -302,6 +303,8 @@ def split_and_save_labelwise():
     print(f" - Anomaly 총합: {len(df_anomaly)}개")
     print(f" - 라벨 수: {len(label_map)}개")
     print(f" - 저장 위치: {SAVE_DIR}")
+    print(df_normal.shape)
+    print(df_anomaly.shape)
 
 
 if __name__ == "__main__":

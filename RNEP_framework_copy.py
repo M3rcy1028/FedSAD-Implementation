@@ -10,11 +10,14 @@ ROC_PATH = "./rnep_frame_revised2/rnep_frame_roc.png"
 CSV_PATH = "./rnep_frame_revised2/rnep_frame_history"
 PNG_PATH = "./rnep_frame_revised2/rnep_frame_history.png"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1" 
+os.environ["CUDA_VISIBLE_DEVICES"] = "2" 
 
 def main():
     args = get_args()
-    X_train_scaled, X_test_scaled, y_test = get_datasets_insdn()
+    
+    # 🔽 [수정] get_datasets_cic가 5개 값을 반환
+    X_train_scaled, X_val_scaled, y_val, X_test_scaled, y_test = get_datasets_cic_val()
+    
     client_data = np.array_split(X_train_scaled, args.client_nums)
     
     # 서버 평가를 위한 모델/데이터 준비
@@ -32,8 +35,8 @@ def main():
     eval_server_args = {
         "model": central_model,
         "X_train_scaled": X_train_scaled,
-        "X_test_scaled": X_test_scaled,
-        "y_test": y_test,
+        "X_test_scaled": X_test_scaled, # 🔽 [수정] utils에서 분할된 (50%) 테스트셋
+        "y_test": y_test,               # 🔽 [수정] utils에서 분할된 (50%) 테스트 레이블
         "result_path": RESULT_PATH,
         "matrix_path": MATRIX_PATH,
     }
@@ -61,10 +64,13 @@ def main():
         # except Exception as e:
         #     print(f"[Client {cid_int}] Warning: failed to load weights from {PRETRAIN_PATH} — {e}")
         
+        # 🔽 [수정] FLClient 생성자에 X_val_scaled, y_val 추가
         return FLClient(
             cid_int,
             client_model,
             client_data[cid_int],
+            X_val_scaled,       # 🔽 [수정]
+            y_val,              # 🔽 [수정]
             X_test_scaled,
             y_test,
             epochs=args.client_epochs
@@ -84,7 +90,7 @@ def main():
         # num_parallel_clients=args.num_parallel_clients,   # 권장 1~2
         ray_init_args={"include_dashboard": False, "ignore_reinit_error": True},   
         # client_fn_eval=client_fn 
-        )
+    )
 
     # 최종 학습된 weight를 central_model에 적용
     if strategy.final_parameters is not None:
@@ -101,8 +107,8 @@ def main():
     eval_server(
         central_model,
         X_train_scaled,
-        X_test_scaled,
-        y_test,
+        X_test_scaled, # 🔽 [수정] 분할된 (50%) 테스트셋으로 최종 평가
+        y_test,        # 🔽 [수정] 분할된 (50%) 테스트 레이블로 최종 평가
         result_path=RESULT_PATH,
         matrix_path=MATRIX_PATH,
         roc_path=ROC_PATH

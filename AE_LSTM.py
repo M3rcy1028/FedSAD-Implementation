@@ -10,7 +10,7 @@ WEIGHT_PATH = "./ae_lstm/ae_lstm_weights.h5"
 RESULT_PATH = "./ae_lstm/ae_lstm_server.txt"
 ROC_PATH = "./ae_lstm/ae_lstm_roc.png"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 # ----------------------------
 # 결과 파일 초기화
@@ -94,6 +94,10 @@ def get_datasets_nsl_semi(
     df_normal = pd.read_csv(normal_csv)
     df_anomaly = pd.read_csv(anomaly_csv)
     df_normal = shuffle(df_normal, random_state=random_seed)
+
+    n_samples = 150_000
+    df_normal = df_normal.sample(n=min(len(df_normal), n_samples * 2), random_state=random_seed)
+    df_anomaly = df_anomaly.sample(n=min(len(df_anomaly), n_samples), random_state=random_seed)
 
     # 2️⃣ Split normal
     mid_idx = len(df_normal) // 2
@@ -405,9 +409,10 @@ def main():
     # _ = model(tf.zeros((1, 10, 12)))
     # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=13) # KDD
     # _ = model(tf.zeros((1, 10, 13))) # KDD99
-    model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=4) # CIC
-    _ = model(tf.zeros((1, 10, 4)))
-    # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=12, features=4) # KDD
+    # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=4) # CIC
+    # _ = model(tf.zeros((1, 10, 4)))
+    model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=12) # KDD
+    _ = model(tf.zeros((1, 10, 12)))
     # _ = model(tf.zeros((1, 12, 4))) # InSDN
     model.compile(
         optimizer=Adam(learning_rate=0.001),
@@ -518,9 +523,9 @@ def main():
         cid_int = int(cid)
         # client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=12, features=4)
         # _ = client_model(tf.zeros((1, 10, 13))) # KDD99
-        # _ = model(tf.zeros((1, 12, 4))) # InSDN
+        # _ = client_model(tf.zeros((1, 12, 4))) # InSDN
         client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=4)
-        _ = model(tf.zeros((1, 10, 4))) # CIC
+        _ = client_model(tf.zeros((1, 10, 4))) # CIC
 
         return FLClient(
             cid=cid_int,
@@ -547,7 +552,10 @@ def main():
     # ----------------------------
     # 최종 평가
     # ----------------------------
-    recon = model.predict(X_test, verbose=0)
+    preds = model.predict(X_test, verbose=0)
+    recon = preds["decoded"] 
+    # ----------------- END FIX -----------------
+    
     mse = np.mean(np.square(X_test - recon), axis=(1, 2))
     threshold = np.percentile(mse, 95)
     y_pred = (mse > threshold).astype(int)
@@ -559,13 +567,7 @@ def main():
     if hasattr(strategy, "final_parameters") and strategy.final_parameters is not None:
         final_weights = parameters_to_ndarrays(strategy.final_parameters)
         model.set_weights(final_weights)
-
-    save_and_plot_history(
-        history,
-        csv_path="./ae_lstm/ae_lstm_history",
-        png_path="./ae_lstm/ae_lstm_history.png",
-    )
-
+        
     print(f"\n[Final] Accuracy={acc:.4f}, Threshold={threshold:.6f}")
     model.save_weights(WEIGHT_PATH)
     print(f"✅ Model weights saved to {WEIGHT_PATH}")

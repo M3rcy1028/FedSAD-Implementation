@@ -21,36 +21,43 @@ class SaveEvaluationFedAvg(fl.server.strategy.FedAvg):
 
     # 🔒 라운드 0 시작 전에 서버가 “빌드된” 글로벌 파라미터를 브로드캐스트
     def initialize_parameters(self, client_manager):
-        assert self.eval_server_args is not None and "model" in self.eval_server_args, \
-            "eval_server_args['model']가 필요합니다."
+        # ...
         mdl = self.eval_server_args["model"]
 
-        # 모델이 빌드되지 않았다면 더미 입력으로 빌드
-        try:
-            _ = mdl.trainable_weights  # 접근만으로는 빌드 여부 확정 못함
-            if not mdl.weights:  # weights가 비면 빌드 안 된 상태
-                # timesteps/features는 상위 코드에서 전달해도 OK
-                pass
-        except Exception:
-            pass
-
-        # 안전하게 빌드 보장 (timesteps=10, features=13 가정)
+        # ...
         if not mdl.weights:
-            # _ = mdl(tf.zeros((1, 10, 13))) # KDD99
-            # _ = model(tf.zeros((1, 12, 4))) # InSDN
-            _ = model(tf.zeros((1, 10, 4))) # CIC
+            print("🧱 [Strategy] Building model for initial parameters...")
+            # ⬇️⬇️⬇️ [FIX] 'mdl' 변수를 사용합니다. ⬇️⬇️⬇️
+            try:
+                # Keras 모델의 input shape에서 timesteps, features를 동적으로 가져오기
+                input_shape = mdl.encoder.input_shape 
+                timesteps, features = input_shape[1], input_shape[2]
+                _ = mdl(tf.zeros((1, timesteps, features)))
+                print(f"✅ Model built with shape (1, {timesteps}, {features})")
+            except Exception as e:
+                print(f"🚨 Model build failed in strategy: {e}")
+                # fallback (하드코딩)
+                _ = mdl(tf.zeros((1, 10, 4))) 
+
 
         nd = mdl.get_weights()
         return fl.common.ndarrays_to_parameters(nd)
 
     def aggregate_fit(self, rnd, results, failures):
         aggregated_parameters, metrics = super().aggregate_fit(rnd, results, failures)
+        
         if aggregated_parameters is not None:
             self.final_parameters = aggregated_parameters
         else:
-            # ⛑️ fallback: 절대 빈 파라미터로 넘어가지 않게
+            # ⛑️ fallback: 
+            print(f"⚠️ [Round {rnd}] Aggregation failed, using fallback weights.")
             mdl = self.eval_server_args["model"]
-            aggregated_parameters = fl.common.ndarrays_to_parameters(mdl.get_weights())
+            current_weights_nd = mdl.get_weights()
+            aggregated_parameters = fl.common.ndarrays_to_parameters(current_weights_nd)
+            
+            # ⬇️⬇️⬇️ [FIX] fallback 시에도 final_parameters를 업데이트합니다. ⬇️⬇️⬇️
+            self.final_parameters = aggregated_parameters
+            
         return aggregated_parameters, metrics
 
     def evaluate(self, server_round: int, parameters: fl.common.Parameters):

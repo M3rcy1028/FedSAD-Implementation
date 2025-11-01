@@ -26,7 +26,7 @@ from tensorflow.keras.saving import register_keras_serializable
 
 import flwr as fl
 from flwr.server.strategy import FedAvg
-from flwr.common import Scalar
+from flwr.common import Scalar, parameters_to_ndarrays, ndarrays_to_parameters
 
 from arguments import get_args
 args = get_args()
@@ -202,6 +202,82 @@ def get_datasets_cic(random_seed=args.random_seed):
     print(f"y_test: Normal={np.sum(y_test==0)}, Anomaly={np.sum(y_test==1)}")
 
     return X_train, X_test, y_test
+
+def get_datasets_cic_val(random_seed=args.random_seed):
+    np.random.seed(random_seed)
+    random.seed(random_seed)
+
+    # (피처 선택 부분은 주석 처리됨 - 원본 유지)
+    
+    # 1. 정상 데이터 로드
+    normal_path = "./CIC2018/ae_datas_all_features/CIC_ae_normal.csv"
+    df_normal = pd.read_csv(normal_path, low_memory=False)
+    df_normal = df_normal.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
+    df_normal[df_normal < 0] = 0
+    df_normal = shuffle(df_normal, random_state=random_seed)
+
+    # 2. 이상 데이터 로드
+    anomaly_files = [
+        f"./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{i}.csv" for i in range(1, 15)
+    ]
+    anomaly_dfs = []
+    for path in anomaly_files:
+        if os.path.exists(path):
+            df_temp = pd.read_csv(path, low_memory=False)
+            anomaly_dfs.append(df_temp)
+        else:
+            print(f"⚠️ Warning: {path} not found, skipping.")
+    
+    df_anomaly = pd.concat(anomaly_dfs, ignore_index=True)
+    df_anomaly = shuffle(df_anomaly, random_state=random_seed)
+    df_anomaly = df_anomaly.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
+    df_anomaly[df_anomaly < 0] = 0
+
+    # 3. 개수 제한 (각 150,000개) 및 분할
+    n_samples = 150_000
+    df_normal = df_normal.sample(n=min(len(df_normal), n_samples * 2), random_state=random_seed)
+    df_anomaly = df_anomaly.sample(n=min(len(df_anomaly), n_samples), random_state=random_seed)
+
+    mid_idx = len(df_normal) // 2
+    df_normal_train = df_normal.iloc[:n_samples].copy() if len(df_normal) >= n_samples else df_normal.iloc[:mid_idx]
+    df_normal_test = df_normal.iloc[-n_samples:].copy() if len(df_normal) >= n_samples * 2 else df_normal.iloc[mid_idx:]
+
+    print(f"정상 데이터 총 {len(df_normal)}개 → Train {len(df_normal_train)}, Test Pool {len(df_normal_test)}")
+    print(f"이상 데이터 총 {len(df_anomaly)}개 (모두 Test Pool에 사용)")
+
+    # 4. MinMax 정규화
+    scaler = MinMaxScaler()
+    X_train = scaler.fit_transform(df_normal_train.values) # 훈련셋 (정상 100%)
+
+    # 테스트 풀 (정상 50% + 이상 100%)
+    df_test_pool = pd.concat([df_normal_test, df_anomaly], ignore_index=True)
+    X_test_pool = scaler.transform(df_test_pool.values)
+    y_test_pool = np.concatenate([
+        np.zeros(len(df_normal_test)),
+        np.ones(len(df_anomaly))
+    ])
+    
+    # 5. 셔플
+    X_test_pool, y_test_pool = shuffle(X_test_pool, y_test_pool, random_state=random_seed)
+    
+    # 6. 🔽 [신규] 테스트 풀을 검증(Validation)셋과 최종 테스트(Test)셋으로 50:50 분할
+    X_val, X_test, y_val, y_test = train_test_split(
+        X_test_pool, 
+        y_test_pool, 
+        test_size=0.5, 
+        random_state=random_seed,
+        stratify=y_test_pool # 0/1 비율을 유지하며 분할
+    )
+
+    print(f"최종 Train shape: {X_train.shape}")
+    print(f"최종 Val   shape: {X_val.shape}")
+    print(f"최종 Test  shape: {X_test.shape}")
+    print(f"y_val: Normal={np.sum(y_val==0)}, Anomaly={np.sum(y_val==1)}")
+    print(f"y_test: Normal={np.sum(y_test==0)}, Anomaly={np.sum(y_test==1)}")
+
+    # 7. 🔽 [수정] 5개 항목 반환
+    return X_train, X_val, y_val, X_test, y_test
+
 
 # InSDN
 def get_datasets_insdn(random_seed=args.random_seed):

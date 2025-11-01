@@ -11,7 +11,7 @@ MATRIX_PATH = "./cnn_lstm/cnn_lstm_cm.png"
 RESULT_PATH = "./cnn_lstm/cnn_lstm_server.txt"
 ROC_PATH = "./cnn_lstm/cnn_lstm_roc.png"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
 # ----------------------------
@@ -35,6 +35,10 @@ def get_datasets_nsl_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=10,
     df_normal = pd.read_csv("./NSL-KDD/KDD_normal.csv")
     df_anomaly = pd.read_csv("./NSL-KDD/KDD_anomaly.csv")
     df_normal = shuffle(df_normal, random_state=random_seed)
+
+    n_samples = 150_000
+    df_normal = df_normal.sample(n=min(len(df_normal), n_samples * 2), random_state=random_seed)
+    df_anomaly = df_anomaly.sample(n=min(len(df_anomaly), n_samples), random_state=random_seed)
 
     scaler = MinMaxScaler()
     mid_idx = len(df_normal) // 2
@@ -79,7 +83,7 @@ def get_datasets_cic_multi_supervised(
     random_seed=42,
     anomaly_ratio=0.2,
     timesteps=10,
-    features=2
+    features=8
 ):
     """
     CIC-IDS2018 AE 버전 (다중 anomaly 파일)을 지도학습용으로 불러옴.
@@ -96,27 +100,27 @@ def get_datasets_cic_multi_supervised(
     # ----------------------------
     # 주요 피처 (36개)
     # ----------------------------
-    SELECTED_FEATURES = [
-        "Flow Duration", "Tot Fwd Pkts", "Tot Bwd Pkts",
-        "TotLen Fwd Pkts", "TotLen Bwd Pkts",
-        "Fwd Pkt Len Max", "Fwd Pkt Len Mean",
-        "Bwd Pkt Len Max", "Bwd Pkt Len Mean",
-        "Flow Byts/s", "Flow Pkts/s",
-        "Flow IAT Mean", "Flow IAT Std",
-        "Fwd IAT Mean", "Fwd IAT Std",
-        "Bwd IAT Mean", "Bwd IAT Std",
-        "Pkt Len Min", "Pkt Len Max", "Pkt Len Mean", "Pkt Len Std", "Pkt Len Var",
-        "FIN Flag Cnt", "SYN Flag Cnt", "RST Flag Cnt", "PSH Flag Cnt", "ACK Flag Cnt", "URG Flag Cnt",
-        "Fwd Header Len", "Bwd Header Len",
-        "Down/Up Ratio", "Pkt Size Avg",
-        "Active Mean", "Active Std", "Idle Mean", "Idle Std",
-    ]
+    # SELECTED_FEATURES = [
+    #     "Flow Duration", "Tot Fwd Pkts", "Tot Bwd Pkts",
+    #     "TotLen Fwd Pkts", "TotLen Bwd Pkts",
+    #     "Fwd Pkt Len Max", "Fwd Pkt Len Mean",
+    #     "Bwd Pkt Len Max", "Bwd Pkt Len Mean",
+    #     "Flow Byts/s", "Flow Pkts/s",
+    #     "Flow IAT Mean", "Flow IAT Std",
+    #     "Fwd IAT Mean", "Fwd IAT Std",
+    #     "Bwd IAT Mean", "Bwd IAT Std",
+    #     "Pkt Len Min", "Pkt Len Max", "Pkt Len Mean", "Pkt Len Std", "Pkt Len Var",
+    #     "FIN Flag Cnt", "SYN Flag Cnt", "RST Flag Cnt", "PSH Flag Cnt", "ACK Flag Cnt", "URG Flag Cnt",
+    #     "Fwd Header Len", "Bwd Header Len",
+    #     "Down/Up Ratio", "Pkt Size Avg",
+    #     "Active Mean", "Active Std", "Idle Mean", "Idle Std",
+    # ]
 
     # ----------------------------
     # 1. 정상 CSV 불러오기
     # ----------------------------
     df_normal = pd.read_csv(normal_csv)
-    df_normal = df_normal[SELECTED_FEATURES].copy()
+    # df_normal = df_normal[SELECTED_FEATURES].copy()
 
     # ----------------------------
     # 2. 여러 anomaly CSV 자동 병합
@@ -126,7 +130,7 @@ def get_datasets_cic_multi_supervised(
         path = anomaly_pattern.format(i)
         if os.path.exists(path):
             df_temp = pd.read_csv(path)
-            df_temp = df_temp[SELECTED_FEATURES].copy()
+            # df_temp = df_temp[SELECTED_FEATURES].copy()
             anomaly_dfs.append(df_temp)
         else:
             print(f"⚠️ Warning: {path} not found, skipping.")
@@ -236,12 +240,12 @@ def get_datasets_kdd99_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=1
 
 # InSDN 데이터셋 전처리
 def get_datasets_insdn_supervised(
-    normal_csv="./InSDN/ae_datas/InSDN_normal_48.csv",
-    anomaly_csv="./InSDN/ae_datas/InSDN_anomaly_48.csv",
+    normal_csv="./InSDN/ae_datas/InSDN_normal.csv",
+    anomaly_csv="./InSDN/ae_datas/InSDN_anomaly.csv",
     random_seed=42,
     anomaly_ratio=0.2,
-    timesteps=8,     # 48 = 8 x 6
-    features=6
+    timesteps=12,     
+    features=7
 ):
     """
     InSDN 48-feature 지도학습 세트 (CNN-LSTM 입력용)
@@ -310,7 +314,7 @@ def get_datasets_insdn_supervised(
     # ---------------------------
     # (6) Reshape for CNN-LSTM
     # ---------------------------
-    def reshape_for_sequence_insdn(X, timesteps=8, features=6):
+    def reshape_for_sequence_insdn(X, timesteps=12, features=7):
         n_samples, n_feats = X.shape
         if n_feats < timesteps * features:
             pad = np.zeros((n_samples, timesteps * features - n_feats))
@@ -338,20 +342,20 @@ def main():
     #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
     # )
 
-    X_train, y_train, X_test, y_test = get_datasets_cic_multi_supervised(
-        normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
-        anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
-        num_anomaly_files=14,
-        anomaly_ratio=0.5,
-        timesteps=10,
-        features=2
-    )
+    # X_train, y_train, X_test, y_test = get_datasets_cic_multi_supervised(
+    #     normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
+    #     anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
+    #     num_anomaly_files=14,
+    #     anomaly_ratio=0.5,
+    #     timesteps=10,
+    #     features=8
+    # )
 
     # X_train, y_train, X_test, y_test = get_datasets_kdd99_supervised(
     #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
     # )
 
-    # X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=8, features=6)
+    X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=12, features=7)
 
     print("Train:", X_train.shape, y_train.shape)
     print("Test :", X_test.shape, y_test.shape)
@@ -359,11 +363,14 @@ def main():
     # ----------------------------
     # Global (Server) 모델 초기화
     # ----------------------------
-    model = CNN_LSTM(timesteps=10, features=12)
+    # model = CNN_LSTM(timesteps=10, features=12)
     # _ = model(tf.zeros((1, 10, 12))) # NSL
-    _ = model(tf.zeros((1, 10, 4))) # CIC
-    # _ = model(tf.zeros((1, 10, 13))) # KDD99
-    # _ = model(tf.zeros((1, 8, 6))) # InSDN
+    # model = CNN_LSTM(timesteps=10, features=8)
+    # _ = model(tf.zeros((1, 10, 8))) # CIC
+    # model = CNN_LSTM(timesteps=10, features=12)
+    # _ = model(tf.zeros((1, 10, 12))) # KDD99
+    model = CNN_LSTM(timesteps=12, features=7) # 83
+    _ = model(tf.zeros((1, 12, 7))) # InSDN
     model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])
     model.summary()
 
@@ -424,11 +431,14 @@ def main():
     # ----------------------------
     def client_fn(cid: str):
         cid_int = int(cid)
-        client_model = CNN_LSTM(timesteps=10, features=12)
+        # client_model = CNN_LSTM(timesteps=10, features=12)
         # _ = client_model(tf.zeros((1, 10, 12))) # NSL
-        _ = model(tf.zeros((1, 10, 4))) # CIC
-        # _ = model(tf.zeros((1, 10, 13))) # KDD99
-        # _ = model(tf.zeros((1, 8, 6))) # InSDN
+        # client_model = CNN_LSTM(timesteps=10, features=8)
+        # _ = client_model(tf.zeros((1, 10, 8))) # CIC
+        # client_model = CNN_LSTM(timesteps=10, features=12)
+        # _ = client_model(tf.zeros((1, 10, 12))) # KDD99
+        client_model = CNN_LSTM(timesteps=12, features=7)
+        _ = client_model(tf.zeros((1, 12, 7))) # InSDN
         client_model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])
 
         X_tr = client_data[cid_int]
@@ -470,20 +480,20 @@ def main():
         final_weights = parameters_to_ndarrays(strategy.final_parameters)
         model.set_weights(final_weights)
 
-    # ----------------------------
-    # 학습 결과 저장 및 시각화
-    # ----------------------------
-    save_and_plot_history(
-        history,
-        csv_path="./cnn_lstm/cnn_lstm_history",
-        png_path="./cnn_lstm/cnn_lstm_history.png",
-    )
+    # # ----------------------------
+    # # 학습 결과 저장 및 시각화
+    # # ----------------------------
+    # save_and_plot_history(
+    #     history,
+    #     csv_path="./cnn_lstm/cnn_lstm_history",
+    #     png_path="./cnn_lstm/cnn_lstm_history.png",
+    # )
 
-    # ----------------------------
-    # 최종 평가
-    # ----------------------------
-    loss, acc = model.evaluate(X_test, y_test, verbose=0)
-    print(f"\n[Final] Loss: {loss:.4f}  Acc: {acc:.4f}")
+    # # ----------------------------
+    # # 최종 평가
+    # # ----------------------------
+    # loss, acc = model.evaluate(X_test, y_test, verbose=0)
+    # print(f"\n[Final] Loss: {loss:.4f}  Acc: {acc:.4f}")
 
     model.save_weights(WEIGHT_PATH)
     print(f"\n✅ Model weights saved to {WEIGHT_PATH}")

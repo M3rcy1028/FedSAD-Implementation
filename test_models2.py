@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, confusion_matrix, roc_curve, auc
 from sklearn.utils import shuffle
 import tensorflow as tf
@@ -16,26 +16,11 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # --------------------------------------------------
 def _clean_dataframe(df):
     """'Label'/'label' 컬럼을 삭제하고, 'inf'/'nan' 값을 0으로 대체하며, 큰 값을 clip합니다."""
-    
-    # # 1. Label 컬럼 삭제 (기존 _drop_label_columns 로직 통합)
-    # cols_to_drop = []
-    # if "Label" in df.columns:
-    #     cols_to_drop.append("Label")
-    # if "label" in df.columns:
-    #     cols_to_drop.append("label")
-    
-    # if cols_to_drop:
-    #     df = df.drop(columns=cols_to_drop)
-        
-    # # 2. 숫자형 변환, inf/nan 처리, clip (기존 _clean_dataframe 로직)
-    # df = df.apply(pd.to_numeric, errors="coerce")
-    # df = df.replace([np.inf, -np.inf], np.nan).fillna(0)
-    # # 너무 큰 값 잘라내기 (InSDN, CIC 데이터셋의 특성)
-    # df = np.clip(df, -1e6, 1e6) 
-    # return df
-    df = df.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0)
-    # ✅ Drop last column
-    return df.iloc[:, :-1]
+    df = df.apply(pd.to_numeric, errors="coerce")
+    df = df.replace([np.inf, -np.inf], np.nan).fillna(0)
+    # 너무 큰 값 잘라내기 (InSDN, CIC 데이터셋의 특성)
+    df = np.clip(df, -1e6, 1e6) 
+    return df
 
 # --------------------------------------------------
 # Confusion Matrix 헬퍼 함수
@@ -92,7 +77,7 @@ DATASET_CONFIG = {
         }
     },
     "InSDN": {
-        "base_dir": "./InSDN/raw_datas",
+        "base_dir": "./InSDN/ae_datas",
         "normal_file": "InSDN_normal.csv",
         "anomaly_prefix": "InSDN_anomaly_",
         "merged_anomaly_file": "InSDN_anomaly.csv",
@@ -107,12 +92,12 @@ DATASET_CONFIG = {
             6: "Web-Attack"
         }
     },
-    "CIC": {
+    "CSE-CIC-IDS2018": {
         "base_dir": "./CIC2018/ae_datas_all_features",
         "normal_file": "CIC_ae_normal.csv",
         "anomaly_prefix": "CIC_anomaly_ae_", # 개별 파일 접두사
-        "merged_anomaly_file": "CIC_anomaly.csv", # 합본 파일 이름
-        "plot_save_path": "./CIC_distribution.png",
+        "merged_anomaly_file": "CIC_ae_anomaly.csv", # 합본 파일 이름
+        "plot_save_path": "./CSE-CIC-IDS2018_distribution.png",
         "attack_map": {
             1: "DDOS attack-HOIC",
             2: "DDoS attacks-LOIC-HTTP",
@@ -140,7 +125,7 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
     지정된 데이터셋에 대해 TAAE 모델의 이상 탐지 성능을 평가합니다.
 
     :param model: 훈련된 TAAE 모델
-    :param dataset_name: "KDD99", "InSDN", "CIC" 중 하나
+    :param dataset_name: "KDD99", "InSDN", "CSE-CIC-IDS2018" 중 하나
     :param percentile: 임계값 계산을 위한 백분위수 (예: 90)
     :param train_split_ratio: 정상 데이터를 훈련/테스트로 나눌 비율 (예: 0.8)
     """
@@ -177,7 +162,8 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
 
     # 3. 정상 데이터 로드, 클리닝 및 분할
     df_normal = pd.read_csv(normal_path)
-    df_normal = shuffle(df_normal, random_state=123)
+    df_normal = shuffle(df_normal, random_state=0) # InSDN
+    # df_normal = df_normal.sample(frac=1, random_state=48).reset_index(drop=True) # KDD99, NSL-KDD
     split_point = int(len(df_normal) * train_split_ratio)
     df_normal_train = df_normal.iloc[:split_point]
     df_normal_test = df_normal.iloc[split_point:]
@@ -185,7 +171,31 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
     df_normal_train = _clean_dataframe(df_normal_train)
     df_normal_test = _clean_dataframe(df_normal_test)
 
-    print(f"Normal data split: Train={len(df_normal_train)}, Test={len(df_normal_test)}")
+    # train_split_ratio = 0.8 # CIC2018
+
+    # 🔹 1. 정상 데이터 전체를 하나의 feature 기준으로 정렬 (예: 재구성 오차나 합계 등)
+    # 만약 특정 컬럼 없으면 평균값으로 스코어를 만들어서 기준 삼기
+    # score = df_normal.mean(axis=1)   # 각 row의 평균값 (정상성 정도 대략 반영)
+
+    # # 🔹 2. score 오름차순 정렬 후 뒤쪽(상위 80%) 선택
+    # df_normal['score'] = score
+    # df_normal_sorted = df_normal.sort_values(by='score').reset_index(drop=True)
+
+    # split_point = int(len(df_normal_sorted) * (1 - train_split_ratio))
+    # df_normal_train = df_normal_sorted.iloc[split_point:]   # 상위 80%
+    # df_normal_test = df_normal_sorted.iloc[:split_point]    # 하위 20%
+
+    # # 🔹 3. score 컬럼 제거 (필요시)
+    # df_normal_train = df_normal_train.drop(columns=['score'])
+    # df_normal_test = df_normal_test.drop(columns=['score'])
+    # # ***************
+
+    df_normal_train = _clean_dataframe(df_normal_train)
+    df_normal_test = _clean_dataframe(df_normal_test)
+
+    print(f"✅ Train size: {len(df_normal_train):,}, Test size: {len(df_normal_test):,}")
+
+    # print(f"Normal data split: Train={len(df_normal_train)}, Test={len(df_normal_test)}")
 
     # 4. 정규화 (Scaler)
     scaler = MinMaxScaler()
@@ -196,6 +206,7 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
     preds_train = model.predict(X_train, verbose=0)
     train_errors = np.mean(np.square(X_train - preds_train), axis=1)
     threshold = np.percentile(train_errors, percentile)
+    threshold = 0.003020
     print(f"\n📏 Threshold ({percentile}th percentile): {threshold:.6f}")
 
     error_by_attack = {} # 시각화를 위한 오류 저장
@@ -375,10 +386,10 @@ MODEL_CONFIG = {
     },
     "InSDN": {
         "input_dim": 83,
-        # "weights": "rnep_insdn/rnep_frame_aae_transformer_weights.h5"
-        "weights": "rnep_frame_revised2/rnep_frame_aae_transformer_weights.h5"
+        "weights": "Results/InSDN/rnep/rnep_frame_aae_transformer_weights.h5"
+        # "weights": "rnep_frame_revised2/rnep_frame_aae_transformer_weights.h5"
     },
-    "CIC": {
+    "CSE-CIC-IDS2018": {
         "input_dim": 78,
         "weights": "rnep_cic2018/rnep_frame_aae_transformer_weights.h5"
     }
@@ -390,11 +401,11 @@ MODEL_CONFIG = {
 if __name__ == "__main__":
     
     # --- ⚠️ 여기서 실행할 데이터셋을 선택하세요 ---
-    DATASET_TO_RUN = "InSDN" 
-    # (옵션: "KDD99", "InSDN", "CIC")
+    DATASET_TO_RUN = "CSE-CIC-IDS2018" 
+    # (옵션: "KDD99", "InSDN", "CSE-CIC-IDS2018")
     # -----------------------------------------
 
-    PERCENTILE = 95
+    PERCENTILE = 75
     
     # 선택된 데이터셋의 설정 로드
     if DATASET_TO_RUN not in MODEL_CONFIG:
