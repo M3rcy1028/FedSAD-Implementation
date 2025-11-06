@@ -1,0 +1,11 @@
+{
+  "analysis": 1,
+  "backdoor": 2,
+  "dos": 3,
+  "exploits": 4,
+  "fuzzers": 5,
+  "generic": 6,
+  "reconnaissance": 7,
+  "shellcode": 8,
+  "worms": 9
+}

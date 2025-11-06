@@ -158,6 +158,18 @@ DATASET_CONFIG = {
             0: "BFA", 1: "BOTNET", 2: "DDoS", 3: "DoS",
             4: "Probe", 5: "U2R", 6: "Web-Attack"
         }
+    },
+    "UNSW_NB15": {
+        "base_dir": "./UNSW_NB15/ae_datas",
+        "normal_file": "UNSW_NB15_normal.csv", # 42 features
+        "anomaly_prefix": "UNSW_NB15_anomaly_",
+        "merged_anomaly_file": "UNSW_NB15_anomaly.csv",
+        "plot_save_path": "./cnn_lstm/UNSW_NB15_cnn_lstm_distribution.png",
+        "attack_map": {
+            0: "analysis", 1: "backdoor", 2: "dos", 3: "exploits",
+            4: "fuzzers", 5: "generic", 6: "Web-reconnaissance",
+            6: "shellcode", 7: "worms"
+        }
     }
 }
 
@@ -204,7 +216,7 @@ def evaluate_cnn_lstm_by_type(model, dataset_name, model_params, train_split_rat
 
     # 3. 정상 데이터 로드, 클리닝, 분할 (스케일러 훈련용 80% / 테스트용 20%)
     df_normal = pd.read_csv(normal_path)
-    df_normal = shuffle(df_normal, random_state=42)
+    df_normal = shuffle(df_normal, random_state=123)
     split_point = int(len(df_normal) * train_split_ratio)
     df_normal_train = df_normal.iloc[:split_point] # 스케일러 훈련용
     df_normal_test = df_normal.iloc[split_point:] # 실제 테스트용
@@ -380,6 +392,11 @@ MODEL_EVAL_CONFIG = {
         # 83 피처를 (10, 9) 등으로 훈련했다면 83 피처 csv 사용
         "model_params": {"timesteps": 12, "features": 7}, # 83 -> 90 (패딩)
         "weights": "Results/InSDN/cnnlstm/cnn_lstm_weights.h5" # (경로가 다르다면 수정)
+    },
+    "UNSW_NB15": {
+        # 83 피처를 (10, 9) 등으로 훈련했다면 83 피처 csv 사용
+        "model_params": {"timesteps": 6, "features": 7}, # 83 -> 90 (패딩)
+        "weights": "Results/UNSW_NB15/cnnlstm/cnn_lstm_weights.h5" # (경로가 다르다면 수정)
     }
 }
 
@@ -389,7 +406,7 @@ MODEL_EVAL_CONFIG = {
 if __name__ == "__main__":
     
     # --- ⚠️ 여기서 실행할 데이터셋을 선택하세요 ---
-    DATASET_TO_RUN = "InSDN" 
+    DATASET_TO_RUN = "UNSW_NB15" 
     # (옵션: "KDD99", "CSE-CIC-IDS2018", "InSDN")
     # -----------------------------------------
 

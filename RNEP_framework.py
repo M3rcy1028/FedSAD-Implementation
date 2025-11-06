@@ -10,11 +10,11 @@ ROC_PATH = "./rnep_frame_revised/rnep_frame_roc.png"
 CSV_PATH = "./rnep_frame_revised/rnep_frame_history"
 PNG_PATH = "./rnep_frame_revised/rnep_frame_history.png"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0, 1" 
+os.environ["CUDA_VISIBLE_DEVICES"] = "1, 2" 
 
 def main():
     args = get_args()
-    X_train_scaled, X_test_scaled, y_test = get_datasets_cic()
+    X_train_scaled, X_test_scaled, y_test = get_datasets_unsw()
     client_data = np.array_split(X_train_scaled, args.client_nums)
     
     # 서버 평가를 위한 모델/데이터 준비

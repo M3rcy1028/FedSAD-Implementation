@@ -10,7 +10,7 @@ WEIGHT_PATH = "./ae_lstm/ae_lstm_weights.h5"
 RESULT_PATH = "./ae_lstm/ae_lstm_server.txt"
 ROC_PATH = "./ae_lstm/ae_lstm_roc.png"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 # ----------------------------
 # 결과 파일 초기화
@@ -100,9 +100,9 @@ def get_datasets_nsl_semi(
     df_anomaly = df_anomaly.sample(n=min(len(df_anomaly), n_samples), random_state=random_seed)
 
     # 2️⃣ Split normal
-    mid_idx = len(df_normal) // 2
-    df_normal_train = df_normal.iloc[:mid_idx]
-    df_normal_test = df_normal.iloc[mid_idx:]
+    split_point = int(len(df_normal) * 0.8)
+    df_normal_train = df_normal.iloc[:split_point] # 스케일러 훈련용
+    df_normal_test = df_normal.iloc[split_point:] # 실제 테스트용
 
     # 3️⃣ Scale
     scaler = MinMaxScaler()
@@ -170,59 +170,49 @@ def get_datasets_cic_multi_semi(
     random_seed=42,
     anomaly_ratio=0.2,
     timesteps=10,
-    features=4,
+    features=8,  
 ):
     """
-    Semi-supervised CIC-IDS2018 dataset for AE-LSTM
-    - 정상: 50% train / 50% test
-    - 이상: 여러 CSV 병합 후 anomaly_ratio 만큼만 train에 투입
-    - 스케일러는 정상-train에만 fit, 나머지는 transform
-    - 리셰이프는 (timesteps, features)로 패딩/절단 안전 처리
-    Return:
-        X_train_seq, y_train_cls, X_test_seq, y_test
+    Semi-supervised CIC-IDS2018 dataset for AE-LSTM (수정된 버전)
+    - CNN-LSTM 버전처럼 피처 선택 로직을 제거하여 안정화
+    - (가정) CSV 파일들은 이미 동일한 컬럼을 가지고 있음
     """
     np.random.seed(random_seed)
     random.seed(random_seed)
 
-    # 1) InSDN 유사 피처(필요 시 조정)
-    SELECTED_FEATURES = [
-        "Flow Duration", "Tot Fwd Pkts", "Tot Bwd Pkts",
-        "TotLen Fwd Pkts", "TotLen Bwd Pkts",
-        "Fwd Pkt Len Max", "Fwd Pkt Len Mean",
-        "Bwd Pkt Len Max", "Bwd Pkt Len Mean",
-        "Flow Byts/s", "Flow Pkts/s",
-        "Flow IAT Mean", "Flow IAT Std",
-        "Fwd IAT Mean", "Fwd IAT Std",
-        "Bwd IAT Mean", "Bwd IAT Std",
-        "Pkt Len Min", "Pkt Len Max", "Pkt Len Mean", "Pkt Len Std", "Pkt Len Var",
-        "FIN Flag Cnt", "SYN Flag Cnt", "RST Flag Cnt", "PSH Flag Cnt", "ACK Flag Cnt", "URG Flag Cnt",
-        "Fwd Header Len", "Bwd Header Len",
-        "Down/Up Ratio", "Pkt Size Avg",
-        "Active Mean", "Active Std", "Idle Mean", "Idle Std",
-    ]
+    # 1) 피처 선택 로직 (제거됨)
+    # SELECTED_FEATURES = [...] (제거)
 
-    # 2) 정상 로드 + 안전 컬럼 선택
-    df_normal_raw = pd.read_csv(normal_csv, low_memory=False)
-    cols_exist = [c for c in SELECTED_FEATURES if c in df_normal_raw.columns]
-    if len(cols_exist) == 0:
-        raise ValueError("선택한 피처가 정상 CSV에 없습니다. 컬럼명을 확인하세요.")
-    df_normal = df_normal_raw[cols_exist].copy()
+    # 2) 정상 로드
+    try:
+        df_normal = pd.read_csv(normal_csv, low_memory=False)
+    except FileNotFoundError:
+        print(f"❌ Error: Normal file not found at {normal_csv}")
+        return
+    # 복잡한 피처 선택 로직 (제거됨)
+    # cols_exist = ... (제거)
+    # df_normal = df_normal_raw[cols_exist].copy() (제거)
 
-    # 3) 이상 여러 파일 병합 + 동일 컬럼만 사용
+    # 3) 이상 여러 파일 병합
     anomaly_dfs = []
     for i in range(1, num_anomaly_files + 1):
         path = anomaly_pattern.format(i)
         if os.path.exists(path):
             df_tmp = pd.read_csv(path, low_memory=False)
-            use_cols = [c for c in cols_exist if c in df_tmp.columns]
-            # 정상과 공통 컬럼만 사용
-            df_tmp = df_tmp[use_cols].copy()
+            # 복잡한 피처 선택 로직 (제거됨)
+            # use_cols = ... (제거)
+            # df_tmp = df_tmp[use_cols].copy() (제거)
             anomaly_dfs.append(df_tmp)
         else:
             print(f"⚠️ Warning: {path} not found, skipping.")
+    
     if not anomaly_dfs:
         raise ValueError("병합할 anomaly 파일이 없습니다.")
     df_anomaly = pd.concat(anomaly_dfs, axis=0, ignore_index=True)
+
+    # (참고) pd.concat은 공통 컬럼만 합치므로, 만약 파일 간 컬럼이 다르면
+    # 이 시점에서 이미 일부 컬럼이 NaN이 되거나 유실될 수 있습니다.
+    # -> 모든 CSV의 컬럼이 동일하다고 가정합니다.
 
     # 4) NaN/inf 처리
     for df in (df_normal, df_anomaly):
@@ -260,25 +250,25 @@ def get_datasets_cic_multi_semi(
 
     # 9) 셔플
     X_train, y_train_cls = shuffle(X_train, y_train_cls, random_state=random_seed)
-    X_test,  y_test      = shuffle(X_test,  y_test,      random_state=random_seed)
+    X_test,  y_test       = shuffle(X_test,  y_test,      random_state=random_seed)
 
-    # 10) AE-LSTM 입력 리셰이프 (패딩/절단 안전)
+    # 10) AE-LSTM 입력 리셰이프 (기존 함수 사용)
     X_train_seq = reshape_for_sequence(X_train, timesteps=timesteps, features=features)
     X_test_seq  = reshape_for_sequence(X_test,  timesteps=timesteps, features=features)
 
     # 11) 로그
-    print(f"✅ [CIC-IDS2018 Semi] Normal={len(df_normal)}, Anomaly={len(df_anomaly)}")
+    original_features = X_train.shape[1]
+    print(f"✅ [CIC-IDS2018 Semi] Normal={len(df_normal):,}, Anomaly={len(df_anomaly):,}")
     print(f"Train: {X_train_seq.shape}, Test: {X_test_seq.shape} "
-          f"(flatten={X_train.shape[1]} → {timesteps}x{features})")
+          f"(flatten={original_features} -> {timesteps}x{features})")
     print(f"Anomaly ratio (train): {anomaly_ratio}")
 
     return X_train_seq, y_train_cls, X_test_seq, y_test
-
 # InSDN
 def get_datasets_insdn_semi(
-    normal_csv="./InSDN/ae_datas/InSDN_normal_48.csv",
-    anomaly_csv="./InSDN/ae_datas/InSDN_anomaly_48.csv",
-    random_seed=86,
+    normal_csv="./InSDN/ae_datas/InSDN_normal.csv",
+    anomaly_csv="./InSDN/ae_datas/InSDN_anomaly.csv",
+    random_seed=123,
     anomaly_ratio=0.05,
 ):
     """
@@ -366,6 +356,96 @@ def get_datasets_insdn_semi(
 
     return X_train, y_train_cls, X_test, y_test
 
+def get_datasets_unsw_semi(
+    normal_csv="./UNSW_NB15/ae_datas/UNSW_NB15_normal.csv",
+    anomaly_csv="./UNSW_NB15/ae_datas/UNSW_NB15_anomaly.csv",
+    random_seed=123,
+    anomaly_ratio=0.05,
+):
+    """
+    Semi-supervised InSDN dataset for AE-LSTM
+    ---------------------------------------------------------
+    - 정상(normal) 데이터: 50% train, 50% test
+    - 이상(anomaly) 데이터: 일부(anomaly_ratio)만 train에 혼합
+    - AE-LSTM 입력용으로 정규화된 48 feature 벡터 반환
+    ---------------------------------------------------------
+    Return:
+        X_train (normal + small anomaly)
+        y_train_cls (0/1 for classifier head)
+        X_test (normal + anomaly)
+        y_test  (0/1 for evaluation)
+    """
+    np.random.seed(random_seed)
+    random.seed(random_seed)
+
+    # ---------------------------
+    # (1) Load
+    # ---------------------------
+    df_normal = pd.read_csv(normal_csv, low_memory=False)
+    df_anomaly = pd.read_csv(anomaly_csv, low_memory=False)
+
+    # ---------------------------
+    # (2) Clean
+    # ---------------------------
+    def _clean(df):
+        return (
+            df.apply(pd.to_numeric, errors="coerce")
+              .replace([np.inf, -np.inf], np.nan)
+              .fillna(0)
+        )
+
+    df_normal = _clean(df_normal)
+    df_anomaly = _clean(df_anomaly)
+
+    # ---------------------------
+    # (3) Split normal 50/50
+    # ---------------------------
+    df_normal = shuffle(df_normal, random_state=random_seed)
+    split_point = int(len(df_normal) * 0.8)
+    df_normal_train = df_normal.iloc[:split_point] # 스케일러 훈련용
+    df_normal_test = df_normal.iloc[split_point:] # 실제 테스트용
+
+    # ---------------------------
+    # (4) Scaling
+    # ---------------------------
+    scaler = MinMaxScaler()
+    X_normal_train = scaler.fit_transform(df_normal_train.values)
+    X_normal_test  = scaler.transform(df_normal_test.values)
+    X_anomaly_all  = scaler.transform(df_anomaly.values)
+
+    # ---------------------------
+    # (5) Split anomaly data
+    # ---------------------------
+    n_anom_train = int(len(X_anomaly_all) * anomaly_ratio)
+    X_anomaly_train = X_anomaly_all[:n_anom_train]
+    X_anomaly_test  = X_anomaly_all[n_anom_train:]
+
+    # ---------------------------
+    # (6) Compose datasets
+    # ---------------------------
+    X_train = np.concatenate([X_normal_train, X_anomaly_train], axis=0)
+    y_train_cls = np.concatenate([
+        np.zeros(len(X_normal_train)),
+        np.ones(len(X_anomaly_train))
+    ])
+
+    X_test = np.concatenate([X_normal_test, X_anomaly_test], axis=0)
+    y_test = np.concatenate([
+        np.zeros(len(X_normal_test)),
+        np.ones(len(X_anomaly_test))
+    ])
+
+    X_train, y_train_cls = shuffle(X_train, y_train_cls, random_state=random_seed)
+    X_test,  y_test      = shuffle(X_test,  y_test,      random_state=random_seed)
+
+    # ---------------------------
+    # (7) Log info
+    # ---------------------------
+    print(f"[UNSW_NB15 Semi] Train: {X_train.shape}, Test: {X_test.shape}")
+    print(f"y_train_cls: {y_train_cls.shape}, y_test: {y_test.shape}")
+    print(f"Anomaly ratio (train): {anomaly_ratio}")
+
+    return X_train, y_train_cls, X_test, y_test
 
 # ----------------------------
 # 메인 함수
@@ -383,20 +463,23 @@ def main():
     # X_test = reshape_for_sequence(X_test, timesteps=10, features=12)
 
     # X_train, y_train_cls, X_test, y_test = get_datasets_insdn_semi()
-    # X_train = reshape_for_sequence(X_train, timesteps=12, features=4) # InSDN
-    # X_test = reshape_for_sequence(X_test, timesteps=12, features=4)
+    # X_train = reshape_for_sequence(X_train, timesteps=12, features=7) # InSDN
+    # X_test = reshape_for_sequence(X_test, timesteps=12, features=7)
 
-    X_train, y_train_cls, X_test, y_test = get_datasets_cic_multi_semi(
-        normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
-        anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
-        num_anomaly_files=14,
-        anomaly_ratio=0.1,
-        timesteps=10,
-        features=4
-    )
-    X_train = reshape_for_sequence(X_train, timesteps=10, features=4) # CIC2018
-    X_test = reshape_for_sequence(X_test, timesteps=10, features=4)
+    # X_train, y_train_cls, X_test, y_test = get_datasets_cic_multi_semi(
+    #     normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
+    #     anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
+    #     num_anomaly_files=14,
+    #     anomaly_ratio=0.1,
+    #     timesteps=10,
+    #     features=8
+    # )
+    # X_train = reshape_for_sequence(X_train, timesteps=10, features=8) # CIC2018
+    # X_test = reshape_for_sequence(X_test, timesteps=10, features=8)
     
+    X_train, y_train_cls, X_test, y_test = get_datasets_unsw_semi() # UNSW
+    X_train = reshape_for_sequence(X_train, timesteps=6, features=7)
+    X_test = reshape_for_sequence(X_test, timesteps=6, features=7)
     
     # 클라이언트 분할 시 classifier 라벨도 같이 나눔
     client_data = np.array_split(X_train, args.client_nums)
@@ -409,11 +492,14 @@ def main():
     # _ = model(tf.zeros((1, 10, 12)))
     # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=13) # KDD
     # _ = model(tf.zeros((1, 10, 13))) # KDD99
-    # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=4) # CIC
-    # _ = model(tf.zeros((1, 10, 4)))
-    model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=12) # KDD
-    _ = model(tf.zeros((1, 10, 12)))
-    # _ = model(tf.zeros((1, 12, 4))) # InSDN
+    # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=8) # CIC
+    # _ = model(tf.zeros((1, 10, 8)))
+    # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=12) # KDD
+    # _ = model(tf.zeros((1, 10, 12)))
+    # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=12, features=7) # NSL
+    # _ = model(tf.zeros((1, 12, 7))) # InSDN
+    model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=6, features=7) # UNSW
+    _ = model(tf.zeros((1, 6, 7)))
     model.compile(
         optimizer=Adam(learning_rate=0.001),
         loss={"decoded": "mse", "pred": "binary_crossentropy"},
@@ -521,11 +607,14 @@ def main():
     # ----------------------------
     def client_fn(cid: str):
         cid_int = int(cid)
-        # client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=12, features=4)
+        # client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=13)
         # _ = client_model(tf.zeros((1, 10, 13))) # KDD99
-        # _ = client_model(tf.zeros((1, 12, 4))) # InSDN
-        client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=4)
-        _ = client_model(tf.zeros((1, 10, 4))) # CIC
+        # client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=12, features=7)
+        # _ = client_model(tf.zeros((1, 12, 7))) # InSDN
+        # client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=8)
+        # _ = client_model(tf.zeros((1, 10, 8))) # CIC
+        client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=6, features=7) # UNSW
+        _ = client_model(tf.zeros((1, 6, 7)))
 
         return FLClient(
             cid=cid_int,

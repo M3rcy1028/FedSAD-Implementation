@@ -333,6 +333,94 @@ def get_datasets_insdn_supervised(
 
     return X_train_seq, y_train, X_test_seq, y_test
 
+def get_datasets_unsw_supervised(
+    normal_csv="./UNSW_NB15/ae_datas/UNSW_NB15_normal.csv",
+    anomaly_csv="./UNSW_NB15/ae_datas/UNSW_NB15_anomaly.csv",
+    random_seed=42,
+    anomaly_ratio=0.2,
+    timesteps=6,     
+    features=7
+):
+    np.random.seed(random_seed)
+    random.seed(random_seed)
+
+    # ---------------------------
+    # (1) Load & clean
+    # ---------------------------
+    df_normal = pd.read_csv(normal_csv, low_memory=False)
+    df_anomaly = pd.read_csv(anomaly_csv, low_memory=False)
+
+    def _clean(df):
+        return df.apply(pd.to_numeric, errors="coerce") \
+                 .replace([np.inf, -np.inf], np.nan) \
+                 .fillna(0)
+    df_normal = _clean(df_normal)
+    df_anomaly = _clean(df_anomaly)
+
+    # ---------------------------
+    # (2) Split normal data
+    # ---------------------------
+    df_normal = shuffle(df_normal, random_state=random_seed)
+    
+    split_point = int(len(df_normal) * 0.8)
+    df_normal_train = df_normal.iloc[:split_point] # 스케일러 훈련용
+    df_normal_test = df_normal.iloc[split_point:] # 실제 테스트용
+
+    # ---------------------------
+    # (3) Scaling
+    # ---------------------------
+    scaler = MinMaxScaler()
+    X_normal_train = scaler.fit_transform(df_normal_train.values)
+    X_normal_test  = scaler.transform(df_normal_test.values)
+    X_anomaly_all  = scaler.transform(df_anomaly.values)
+
+    # ---------------------------
+    # (4) Select anomalies for train/test
+    # ---------------------------
+    n_anom_train = int(len(X_anomaly_all) * anomaly_ratio)
+    X_anomaly_train = X_anomaly_all[:n_anom_train]
+    X_anomaly_test  = X_anomaly_all[n_anom_train:]
+
+    # ---------------------------
+    # (5) Combine & label
+    # ---------------------------
+    X_train = np.concatenate([X_normal_train, X_anomaly_train], axis=0)
+    y_train = np.concatenate([
+        np.zeros(len(X_normal_train), dtype=int),
+        np.ones(len(X_anomaly_train), dtype=int)
+    ])
+
+    X_test = np.concatenate([X_normal_test, X_anomaly_test], axis=0)
+    y_test = np.concatenate([
+        np.zeros(len(X_normal_test), dtype=int),
+        np.ones(len(X_anomaly_test), dtype=int)
+    ])
+
+    X_train, y_train = shuffle(X_train, y_train, random_state=random_seed)
+    X_test,  y_test  = shuffle(X_test,  y_test,  random_state=random_seed)
+
+    # ---------------------------
+    # (6) Reshape for CNN-LSTM
+    # ---------------------------
+    def reshape_for_sequence_insdn(X, timesteps=12, features=7):
+        n_samples, n_feats = X.shape
+        if n_feats < timesteps * features:
+            pad = np.zeros((n_samples, timesteps * features - n_feats))
+            X = np.concatenate([X, pad], axis=1)
+        X = X[:, :timesteps * features]
+        return X.reshape(-1, timesteps, features)
+
+    X_train_seq = reshape_for_sequence_insdn(X_train, timesteps, features)
+    X_test_seq  = reshape_for_sequence_insdn(X_test,  timesteps, features)
+
+    # ---------------------------
+    # (7) Summary
+    # ---------------------------
+    print(f"[UNSW Supervised] Train: {X_train_seq.shape}, Test: {X_test_seq.shape}")
+    print(f"y_train: {y_train.shape}, y_test: {y_test.shape}, anomaly_ratio(train)={anomaly_ratio}")
+
+    return X_train_seq, y_train, X_test_seq, y_test
+
 # ----------------------------
 # 메인 실행 함수
 # ----------------------------
@@ -355,7 +443,10 @@ def main():
     #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
     # )
 
-    X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=12, features=7)
+    # X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=12, features=7)
+
+    # UNSW_NB15
+    X_train, y_train, X_test, y_test = get_datasets_unsw_supervised(timesteps=6, features=7)
 
     print("Train:", X_train.shape, y_train.shape)
     print("Test :", X_test.shape, y_test.shape)
@@ -369,8 +460,10 @@ def main():
     # _ = model(tf.zeros((1, 10, 8))) # CIC
     # model = CNN_LSTM(timesteps=10, features=12)
     # _ = model(tf.zeros((1, 10, 12))) # KDD99
-    model = CNN_LSTM(timesteps=12, features=7) # 83
-    _ = model(tf.zeros((1, 12, 7))) # InSDN
+    # model = CNN_LSTM(timesteps=12, features=7) # 83
+    # _ = model(tf.zeros((1, 12, 7))) # InSDN
+    model = CNN_LSTM(timesteps=6, features=7) # 42
+    _ = model(tf.zeros((1, 6, 7))) # UNSW
     model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])
     model.summary()
 
@@ -437,8 +530,10 @@ def main():
         # _ = client_model(tf.zeros((1, 10, 8))) # CIC
         # client_model = CNN_LSTM(timesteps=10, features=12)
         # _ = client_model(tf.zeros((1, 10, 12))) # KDD99
-        client_model = CNN_LSTM(timesteps=12, features=7)
-        _ = client_model(tf.zeros((1, 12, 7))) # InSDN
+        # client_model = CNN_LSTM(timesteps=12, features=7)
+        # _ = client_model(tf.zeros((1, 12, 7))) # InSDN
+        client_model = CNN_LSTM(timesteps=6, features=7) # 42
+        _ = client_model(tf.zeros((1, 6, 7))) # UNSW
         client_model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])
 
         X_tr = client_data[cid_int]
@@ -498,6 +593,6 @@ def main():
     model.save_weights(WEIGHT_PATH)
     print(f"\n✅ Model weights saved to {WEIGHT_PATH}")
 
-
+ 
 if __name__ == "__main__":
     main()
