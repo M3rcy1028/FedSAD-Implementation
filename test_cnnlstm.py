@@ -136,7 +136,7 @@ DATASET_CONFIG = {
         }
     },
     "CSE-CIC-IDS2018": {
-        "base_dir": "./CIC2018/ae_datas_all_features",
+        "base_dir": "./CIC2018/ae_datas_sampled",
         "normal_file": "CIC_ae_normal.csv",
         "anomaly_prefix": "CIC_anomaly_ae_",
         "merged_anomaly_file": "CIC_ae_anomaly.csv",
@@ -386,7 +386,7 @@ MODEL_EVAL_CONFIG = {
     },
     "CSE-CIC-IDS2018": {
         "model_params": {"timesteps": 10, "features": 8},
-        "weights": "./cnn_lstm/cnn_lstm_weights.h5" # (경로가 다르다면 수정)
+        "weights": "Results/CSE-CIC-IDS2018/cnnlstm/cnn_lstm_weights.h5" # (경로가 다르다면 수정)
     },
     "InSDN": {
         # 83 피처를 (10, 9) 등으로 훈련했다면 83 피처 csv 사용
@@ -406,7 +406,7 @@ MODEL_EVAL_CONFIG = {
 if __name__ == "__main__":
     
     # --- ⚠️ 여기서 실행할 데이터셋을 선택하세요 ---
-    DATASET_TO_RUN = "UNSW_NB15" 
+    DATASET_TO_RUN = "CSE-CIC-IDS2018" 
     # (옵션: "KDD99", "CSE-CIC-IDS2018", "InSDN")
     # -----------------------------------------
 

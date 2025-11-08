@@ -164,10 +164,10 @@ def reshape_for_sequence(X, timesteps=10, features=2):
     return Xp.reshape(-1, timesteps, features)
 
 def get_datasets_cic_multi_semi(
-    normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
-    anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
+    normal_csv="./CIC2018/ae_datas_sampled/CIC_ae_normal.csv",
+    anomaly_pattern="./CIC2018/ae_datas_sampled/CIC_anomaly_ae_{}.csv",
     num_anomaly_files=14,
-    random_seed=42,
+    random_seed=123,
     anomaly_ratio=0.2,
     timesteps=10,
     features=8,  
@@ -179,36 +179,16 @@ def get_datasets_cic_multi_semi(
     """
     np.random.seed(random_seed)
     random.seed(random_seed)
-
-    # 1) 피처 선택 로직 (제거됨)
-    # SELECTED_FEATURES = [...] (제거)
-
     # 2) 정상 로드
     try:
         df_normal = pd.read_csv(normal_csv, low_memory=False)
     except FileNotFoundError:
         print(f"❌ Error: Normal file not found at {normal_csv}")
         return
-    # 복잡한 피처 선택 로직 (제거됨)
-    # cols_exist = ... (제거)
-    # df_normal = df_normal_raw[cols_exist].copy() (제거)
 
     # 3) 이상 여러 파일 병합
-    anomaly_dfs = []
-    for i in range(1, num_anomaly_files + 1):
-        path = anomaly_pattern.format(i)
-        if os.path.exists(path):
-            df_tmp = pd.read_csv(path, low_memory=False)
-            # 복잡한 피처 선택 로직 (제거됨)
-            # use_cols = ... (제거)
-            # df_tmp = df_tmp[use_cols].copy() (제거)
-            anomaly_dfs.append(df_tmp)
-        else:
-            print(f"⚠️ Warning: {path} not found, skipping.")
-    
-    if not anomaly_dfs:
-        raise ValueError("병합할 anomaly 파일이 없습니다.")
-    df_anomaly = pd.concat(anomaly_dfs, axis=0, ignore_index=True)
+    anomlay_path = "./CIC2018/ae_datas_sampled/CIC_ae_anomaly.csv"
+    df_anomaly = pd.read_csv(anomlay_path, low_memory=False)
 
     # (참고) pd.concat은 공통 컬럼만 합치므로, 만약 파일 간 컬럼이 다르면
     # 이 시점에서 이미 일부 컬럼이 NaN이 되거나 유실될 수 있습니다.
@@ -219,11 +199,11 @@ def get_datasets_cic_multi_semi(
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
         df.fillna(0, inplace=True)
 
-    # 5) 정상 50/50 split
+    # 5) 정상 80% split
     df_normal = shuffle(df_normal, random_state=random_seed)
-    mid_idx = len(df_normal) // 2
-    df_normal_train = df_normal.iloc[:mid_idx]
-    df_normal_test  = df_normal.iloc[mid_idx:]
+    split_point = int(len(df_normal) * 0.8)
+    df_normal_train = df_normal.iloc[:split_point]
+    df_normal_test = df_normal.iloc[split_point:]
 
     # 6) 스케일링 (정상-train에만 fit)
     scaler = MinMaxScaler()
@@ -466,20 +446,20 @@ def main():
     # X_train = reshape_for_sequence(X_train, timesteps=12, features=7) # InSDN
     # X_test = reshape_for_sequence(X_test, timesteps=12, features=7)
 
-    # X_train, y_train_cls, X_test, y_test = get_datasets_cic_multi_semi(
-    #     normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
-    #     anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
-    #     num_anomaly_files=14,
-    #     anomaly_ratio=0.1,
-    #     timesteps=10,
-    #     features=8
-    # )
+    X_train, y_train_cls, X_test, y_test = get_datasets_cic_multi_semi(
+        normal_csv="./CIC2018/ae_datas_sampled/CIC_ae_normal.csv",
+        anomaly_pattern="./CIC2018/ae_datas_sampled/CIC_anomaly_ae_{}.csv",
+        num_anomaly_files=14,
+        anomaly_ratio=0.2,
+        timesteps=10,
+        features=8
+    )
     # X_train = reshape_for_sequence(X_train, timesteps=10, features=8) # CIC2018
     # X_test = reshape_for_sequence(X_test, timesteps=10, features=8)
     
-    X_train, y_train_cls, X_test, y_test = get_datasets_unsw_semi() # UNSW
-    X_train = reshape_for_sequence(X_train, timesteps=6, features=7)
-    X_test = reshape_for_sequence(X_test, timesteps=6, features=7)
+    # X_train, y_train_cls, X_test, y_test = get_datasets_unsw_semi() # UNSW
+    # X_train = reshape_for_sequence(X_train, timesteps=6, features=7)
+    # X_test = reshape_for_sequence(X_test, timesteps=6, features=7)
     
     # 클라이언트 분할 시 classifier 라벨도 같이 나눔
     client_data = np.array_split(X_train, args.client_nums)
@@ -492,14 +472,14 @@ def main():
     # _ = model(tf.zeros((1, 10, 12)))
     # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=13) # KDD
     # _ = model(tf.zeros((1, 10, 13))) # KDD99
-    # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=8) # CIC
-    # _ = model(tf.zeros((1, 10, 8)))
+    model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=8) # CIC
+    _ = model(tf.zeros((1, 10, 8)))
     # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=12) # KDD
     # _ = model(tf.zeros((1, 10, 12)))
     # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=12, features=7) # NSL
     # _ = model(tf.zeros((1, 12, 7))) # InSDN
-    model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=6, features=7) # UNSW
-    _ = model(tf.zeros((1, 6, 7)))
+    # model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=6, features=7) # UNSW
+    # _ = model(tf.zeros((1, 6, 7)))
     model.compile(
         optimizer=Adam(learning_rate=0.001),
         loss={"decoded": "mse", "pred": "binary_crossentropy"},
@@ -611,10 +591,10 @@ def main():
         # _ = client_model(tf.zeros((1, 10, 13))) # KDD99
         # client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=12, features=7)
         # _ = client_model(tf.zeros((1, 12, 7))) # InSDN
-        # client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=8)
-        # _ = client_model(tf.zeros((1, 10, 8))) # CIC
-        client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=6, features=7) # UNSW
-        _ = client_model(tf.zeros((1, 6, 7)))
+        client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=10, features=8)
+        _ = client_model(tf.zeros((1, 10, 8))) # CIC
+        # client_model = AE_LSTM(input_dim=X_train.shape[-1], timesteps=6, features=7) # UNSW
+        # _ = client_model(tf.zeros((1, 6, 7)))
 
         return FLClient(
             cid=cid_int,

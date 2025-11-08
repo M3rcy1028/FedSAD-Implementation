@@ -77,10 +77,10 @@ def get_datasets_nsl_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=10,
 
 # CIC 2018 데이터셋 전처리
 def get_datasets_cic_multi_supervised(
-    normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
-    anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
+    normal_csv="./CIC2018/ae_datas_sampled/CIC_ae_normal.csv",
+    anomaly_pattern="./CIC2018/v/CIC_anomaly_ae_{}.csv",
     num_anomaly_files=14,
-    random_seed=42,
+    random_seed=123,
     anomaly_ratio=0.2,
     timesteps=10,
     features=8
@@ -96,45 +96,16 @@ def get_datasets_cic_multi_supervised(
 
     np.random.seed(random_seed)
     random.seed(random_seed)
-
-    # ----------------------------
-    # 주요 피처 (36개)
-    # ----------------------------
-    # SELECTED_FEATURES = [
-    #     "Flow Duration", "Tot Fwd Pkts", "Tot Bwd Pkts",
-    #     "TotLen Fwd Pkts", "TotLen Bwd Pkts",
-    #     "Fwd Pkt Len Max", "Fwd Pkt Len Mean",
-    #     "Bwd Pkt Len Max", "Bwd Pkt Len Mean",
-    #     "Flow Byts/s", "Flow Pkts/s",
-    #     "Flow IAT Mean", "Flow IAT Std",
-    #     "Fwd IAT Mean", "Fwd IAT Std",
-    #     "Bwd IAT Mean", "Bwd IAT Std",
-    #     "Pkt Len Min", "Pkt Len Max", "Pkt Len Mean", "Pkt Len Std", "Pkt Len Var",
-    #     "FIN Flag Cnt", "SYN Flag Cnt", "RST Flag Cnt", "PSH Flag Cnt", "ACK Flag Cnt", "URG Flag Cnt",
-    #     "Fwd Header Len", "Bwd Header Len",
-    #     "Down/Up Ratio", "Pkt Size Avg",
-    #     "Active Mean", "Active Std", "Idle Mean", "Idle Std",
-    # ]
-
     # ----------------------------
     # 1. 정상 CSV 불러오기
     # ----------------------------
     df_normal = pd.read_csv(normal_csv)
-    # df_normal = df_normal[SELECTED_FEATURES].copy()
 
     # ----------------------------
     # 2. 여러 anomaly CSV 자동 병합
     # ----------------------------
-    anomaly_dfs = []
-    for i in range(1, num_anomaly_files + 1):
-        path = anomaly_pattern.format(i)
-        if os.path.exists(path):
-            df_temp = pd.read_csv(path)
-            # df_temp = df_temp[SELECTED_FEATURES].copy()
-            anomaly_dfs.append(df_temp)
-        else:
-            print(f"⚠️ Warning: {path} not found, skipping.")
-    df_anomaly = pd.concat(anomaly_dfs, ignore_index=True)
+    anomlay_path = "./CIC2018/ae_datas_sampled/CIC_ae_anomaly.csv"
+    df_anomaly = pd.read_csv(anomlay_path, low_memory=False)
 
     # ----------------------------
     # 3. NaN / inf 처리
@@ -146,10 +117,11 @@ def get_datasets_cic_multi_supervised(
     # ----------------------------
     # 4. 정상 데이터 split
     # ----------------------------
+    # 5) 정상 80% split
     df_normal = shuffle(df_normal, random_state=random_seed)
-    mid_idx = len(df_normal) // 2
-    df_normal_train = df_normal.iloc[:mid_idx]
-    df_normal_test = df_normal.iloc[mid_idx:]
+    split_point = int(len(df_normal) * 0.8)
+    df_normal_train = df_normal.iloc[:split_point]
+    df_normal_test = df_normal.iloc[split_point:]
 
     # ----------------------------
     # 5. 스케일링
@@ -430,14 +402,14 @@ def main():
     #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
     # )
 
-    # X_train, y_train, X_test, y_test = get_datasets_cic_multi_supervised(
-    #     normal_csv="./CIC2018/ae_datas_all_features/CIC_ae_normal.csv",
-    #     anomaly_pattern="./CIC2018/ae_datas_all_features/CIC_anomaly_ae_{}.csv",
-    #     num_anomaly_files=14,
-    #     anomaly_ratio=0.5,
-    #     timesteps=10,
-    #     features=8
-    # )
+    X_train, y_train, X_test, y_test = get_datasets_cic_multi_supervised(
+        normal_csv="./CIC2018/ae_datas_sampled/CIC_ae_normal.csv",
+        anomaly_pattern="./CIC2018/ae_datas_sampled/CIC_anomaly_ae_{}.csv",
+        num_anomaly_files=14,
+        anomaly_ratio=0.5,
+        timesteps=10,
+        features=8
+    )
 
     # X_train, y_train, X_test, y_test = get_datasets_kdd99_supervised(
     #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
@@ -446,7 +418,7 @@ def main():
     # X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=12, features=7)
 
     # UNSW_NB15
-    X_train, y_train, X_test, y_test = get_datasets_unsw_supervised(timesteps=6, features=7)
+    # X_train, y_train, X_test, y_test = get_datasets_unsw_supervised(timesteps=6, features=7)
 
     print("Train:", X_train.shape, y_train.shape)
     print("Test :", X_test.shape, y_test.shape)
@@ -456,14 +428,14 @@ def main():
     # ----------------------------
     # model = CNN_LSTM(timesteps=10, features=12)
     # _ = model(tf.zeros((1, 10, 12))) # NSL
-    # model = CNN_LSTM(timesteps=10, features=8)
-    # _ = model(tf.zeros((1, 10, 8))) # CIC
+    model = CNN_LSTM(timesteps=10, features=8)
+    _ = model(tf.zeros((1, 10, 8))) # CIC
     # model = CNN_LSTM(timesteps=10, features=12)
     # _ = model(tf.zeros((1, 10, 12))) # KDD99
     # model = CNN_LSTM(timesteps=12, features=7) # 83
     # _ = model(tf.zeros((1, 12, 7))) # InSDN
-    model = CNN_LSTM(timesteps=6, features=7) # 42
-    _ = model(tf.zeros((1, 6, 7))) # UNSW
+    # model = CNN_LSTM(timesteps=6, features=7) # 42
+    # _ = model(tf.zeros((1, 6, 7))) # UNSW
     model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])
     model.summary()
 
@@ -526,14 +498,14 @@ def main():
         cid_int = int(cid)
         # client_model = CNN_LSTM(timesteps=10, features=12)
         # _ = client_model(tf.zeros((1, 10, 12))) # NSL
-        # client_model = CNN_LSTM(timesteps=10, features=8)
-        # _ = client_model(tf.zeros((1, 10, 8))) # CIC
+        client_model = CNN_LSTM(timesteps=10, features=8)
+        _ = client_model(tf.zeros((1, 10, 8))) # CIC
         # client_model = CNN_LSTM(timesteps=10, features=12)
         # _ = client_model(tf.zeros((1, 10, 12))) # KDD99
         # client_model = CNN_LSTM(timesteps=12, features=7)
         # _ = client_model(tf.zeros((1, 12, 7))) # InSDN
-        client_model = CNN_LSTM(timesteps=6, features=7) # 42
-        _ = client_model(tf.zeros((1, 6, 7))) # UNSW
+        # client_model = CNN_LSTM(timesteps=6, features=7) # 42
+        # _ = client_model(tf.zeros((1, 6, 7))) # UNSW
         client_model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])
 
         X_tr = client_data[cid_int]
