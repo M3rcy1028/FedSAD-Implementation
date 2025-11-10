@@ -303,7 +303,7 @@ class FLClient(fl.client.NumPyClient):
 
     def fit(self, parameters, config):
         self.model.set_weights(parameters) # 서버의 최신 가중치를 가져와 학습함
-        self.model.compile(optimizer=Adam(0.0001))
+        self.model.compile(optimizer=Adam(0.00001))
         self.model.fit(self.X_train, self.X_train,
                        epochs=self.epochs,
                        batch_size=BATCH_SIZE,

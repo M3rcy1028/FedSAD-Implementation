@@ -10,7 +10,7 @@ ROC_PATH = "./rnep_frame_revised/rnep_frame_roc.png"
 CSV_PATH = "./rnep_frame_revised/rnep_frame_history"
 PNG_PATH = "./rnep_frame_revised/rnep_frame_history.png"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2" 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2" 
 
 def main():
     args = get_args()
@@ -25,7 +25,7 @@ def main():
     central_model.compile(optimizer=Adam(0.0001), loss="mse")
 
     # 🔹 서버 모델만 pretrain weight 로드
-    PRETRAIN_PATH = "rnep_frame_251108_CIC/rnep_frame_aae_transformer_weights.h5"
+    PRETRAIN_PATH = "rnep_frame_251110_CIC/rnep_frame_aae_transformer_weights.h5"
     central_model.load_weights(PRETRAIN_PATH)
     print(f"[Server] Loaded pre-trained weights from {PRETRAIN_PATH}")
 
@@ -54,7 +54,7 @@ def main():
         client_model = TransformerAAE(input_dim)
         _ = client_model(tf.zeros((1, input_dim)), prior_labels=tf.zeros((1,1)))
         
-        PRETRAIN_PATH = "rnep_frame_251108_CIC/rnep_frame_aae_transformer_weights.h5"
+        PRETRAIN_PATH = "rnep_frame_251110_CIC/rnep_frame_aae_transformer_weights.h5"
         try:
             client_model.load_weights(PRETRAIN_PATH)
             print(f"[Client {cid_int}] Loaded pre-trained weights from {PRETRAIN_PATH}")

@@ -63,6 +63,19 @@ def _plot_and_print_cm(y_test, y_pred, save_path, labels, title):
 # 데이터셋별 설정
 # --------------------------------------------------
 DATASET_CONFIG = {
+    "NSL-KDD": {
+        "base_dir": "./NSL-KDD",
+        "normal_file": "KDD_normal.csv",
+        "anomaly_prefix": "KDD_anomaly_",
+        "merged_anomaly_file": "KDD_anomaly.csv",
+        "plot_save_path": "./KDD99_distribution.png",
+        "attack_map": {
+            0: "back", 1: "buffer_overflow", 2: "ftp_write", 3: "guess_passwd",
+            4: "imap", 5: "ipsweep", 6: "land", 7: "loadmodule", 8: "multihop",
+            9: "neptune", 10: "nmap", 11: "perl", 12: "phf", 13: "portsweep",
+            14: "rootkit", 15: "satan", 16: "spy", 17: "warezclient", 18: "warezmaster"
+        }
+    },
     "KDD99": {
         "base_dir": "./KDD99/KDD99_split",
         "normal_file": "KDD99_normal.csv",
@@ -174,7 +187,7 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
 
     # 3. 정상 데이터 로드, 클리닝 및 분할
     df_normal = pd.read_csv(normal_path)
-    df_normal = shuffle(df_normal, random_state=123) # InSDN
+    df_normal = shuffle(df_normal, random_state=48) # InSDN
     # df_normal = df_normal.sample(frac=1, random_state=48).reset_index(drop=True) # KDD99, NSL-KDD
     split_point = int(len(df_normal) * train_split_ratio)
     df_normal_train = df_normal[:split_point]
@@ -183,31 +196,7 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
     df_normal_train = _clean_dataframe(df_normal_train)
     df_normal_test = _clean_dataframe(df_normal_test)
 
-    # train_split_ratio = 0.8 # CIC2018
-
-    # 🔹 1. 정상 데이터 전체를 하나의 feature 기준으로 정렬 (예: 재구성 오차나 합계 등)
-    # 만약 특정 컬럼 없으면 평균값으로 스코어를 만들어서 기준 삼기
-    # score = df_normal.mean(axis=1)   # 각 row의 평균값 (정상성 정도 대략 반영)
-
-    # # 🔹 2. score 오름차순 정렬 후 뒤쪽(상위 80%) 선택
-    # df_normal['score'] = score
-    # df_normal_sorted = df_normal.sort_values(by='score').reset_index(drop=True)
-
-    # split_point = int(len(df_normal_sorted) * (1 - train_split_ratio))
-    # df_normal_train = df_normal_sorted.iloc[split_point:]   # 상위 80%
-    # df_normal_test = df_normal_sorted.iloc[:split_point]    # 하위 20%
-
-    # # 🔹 3. score 컬럼 제거 (필요시)
-    # df_normal_train = df_normal_train.drop(columns=['score'])
-    # df_normal_test = df_normal_test.drop(columns=['score'])
-    # # ***************
-
-    df_normal_train = _clean_dataframe(df_normal_train)
-    df_normal_test = _clean_dataframe(df_normal_test)
-
     print(f"✅ Train size: {len(df_normal_train):,}, Test size: {len(df_normal_test):,}")
-
-    # print(f"Normal data split: Train={len(df_normal_train)}, Test={len(df_normal_test)}")
 
     # 4. 정규화 (Scaler)
     scaler = MinMaxScaler()
@@ -218,7 +207,7 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
     preds_train = model.predict(X_train, verbose=0)
     train_errors = np.mean(np.square(X_train - preds_train), axis=1)
     threshold = np.percentile(train_errors, percentile)
-    # threshold = 0.003020
+    # threshold = 0.006781
     print(f"\n📏 Threshold ({percentile}th percentile): {threshold:.6f}")
 
     error_by_attack = {} # 시각화를 위한 오류 저장
@@ -294,13 +283,24 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
             plt.close()
             
             print(f"📈 Saved ROC curve → {roc_save_path} (AUC = {roc_auc:.4f})")
+            
+            try:
+                df_roc_data = pd.DataFrame({
+                    'y_true': y_test,
+                    'anomaly_score': test_errors
+                })
+                roc_data_save_path = f"./{dataset_name}_roc_data.csv"
+                df_roc_data.to_csv(roc_data_save_path, index=False)
+                print(f"📈 Saved ROC curve raw data -> {roc_data_save_path} (rows: {len(df_roc_data)})")
+            except Exception as e:
+                print(f"⚠️ Warning: FAILED to save ROC raw data. Error: {e}")
 
-        results.append({
-            "File": file, "Samples": len(X_test), "Accuracy": acc,
-            "Precision": prec, "Recall": rec, "F1": f1,
-            "Pred_Normal": pred_normal, "Pred_Anomaly": pred_anomaly
-        })
-
+            results.append({
+                "File": file, "Samples": len(X_test), "Accuracy": acc,
+                "Precision": prec, "Recall": rec, "F1": f1,
+                "Pred_Normal": pred_normal, "Pred_Anomaly": pred_anomaly
+            })
+        
         # 7. 시각화용 데이터 저장 (합본 파일 제외)
         if file != merged_file:
             try:
@@ -316,7 +316,7 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
                 numeric_keys.append(attack_num)
             except Exception as e:
                 print(f"Warning: Could not parse attack number from '{file}'. Skipping for plot. Error: {e}")
-
+    
     # 8. 결과 저장
     df = pd.DataFrame(results)
     summary_save_path = f"./{dataset_name}_summary.csv"
@@ -360,6 +360,7 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
         plt.close()
 
         print(f"📊 Saved distribution plot → {plot_save_path}")
+        
 
 # --------------------------------------------------
 # 모델 로드 설정 (훈련된 모델 클래스 'TransformerAAE'가 필요합니다)
@@ -392,22 +393,25 @@ except ImportError:
 
 
 MODEL_CONFIG = {
+    "NSL-KDD": {
+        "input_dim": 119,
+        "weights": "Results/NSL-KDD/rnep/rnep_aae_transformer_weights.h5"
+    }, # P= 98
     "KDD99": {
         "input_dim": 115,
-        "weights": "Results/KDD99/rnep/rnep_frame_aae_transformer_weights.h5"
+        "weights": "Results/KDD99/rnep/rnep_frame_kdd_weights.h5"
     }, # P= 95
     "InSDN": {
         "input_dim": 83,
-        "weights": "Results/InSDN/rnep/rnep_frame_aae_transformer_weights.h5"
-        # "weights": "rnep_frame_revised2/rnep_frame_aae_transformer_weights.h5"
-    }, # P= 90
+        "weights": "Results/InSDN/rnep/rnep_frame_insdn_weights.h5"
+    }, # P= 82
     "CSE-CIC-IDS2018": {
         "input_dim": 78,
-        "weights": "rnep_frame_251108_CIC/rnep_frame_aae_transformer_weights.h5"
+        "weights": "rnep_frame_251108_CIC/rnep_frame_cic_weights.h5"
     }, # P= 90
     "UNSW_NB15": {
         "input_dim": 43,
-        "weights": "Results/UNSW_NB15/rnep/rnep_frame_aae_transformer_weights.h5"
+        "weights": "Results/UNSW_NB15/rnep/rnep_frame_unsw_weights.h5"
     } # P= 90
 }
 
@@ -417,11 +421,11 @@ MODEL_CONFIG = {
 if __name__ == "__main__":
     
     # --- ⚠️ 여기서 실행할 데이터셋을 선택하세요 ---
-    DATASET_TO_RUN = "CSE-CIC-IDS2018" 
+    DATASET_TO_RUN = "NSL-KDD" 
     # (옵션: "KDD99", "CSE-CIC-IDS2018", "InSDN")
     # -----------------------------------------
 
-    PERCENTILE = 82
+    PERCENTILE = 98
     
     # 선택된 데이터셋의 설정 로드
     if DATASET_TO_RUN not in MODEL_CONFIG:

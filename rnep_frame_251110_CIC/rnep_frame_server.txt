@@ -1,0 +1,78 @@
+[Server Evaluation Report]
+
+[Round 0] Server Evaluation Report
+Accuracy: 0.7956
+              precision    recall  f1-score   support
+
+      Normal       0.77      0.85      0.81    200000
+     Anomaly       0.83      0.74      0.78    200000
+
+    accuracy                           0.80    400000
+   macro avg       0.80      0.80      0.79    400000
+weighted avg       0.80      0.80      0.79    400000
+
+[Round 1] Server Evaluation Report
+Accuracy: 0.8674
+              precision    recall  f1-score   support
+
+      Normal       0.88      0.85      0.87    200000
+     Anomaly       0.86      0.88      0.87    200000
+
+    accuracy                           0.87    400000
+   macro avg       0.87      0.87      0.87    400000
+weighted avg       0.87      0.87      0.87    400000
+
+[Round 2] Server Evaluation Report
+Accuracy: 0.8675
+              precision    recall  f1-score   support
+
+      Normal       0.88      0.85      0.87    200000
+     Anomaly       0.86      0.88      0.87    200000
+
+    accuracy                           0.87    400000
+   macro avg       0.87      0.87      0.87    400000
+weighted avg       0.87      0.87      0.87    400000
+
+[Round 3] Server Evaluation Report
+Accuracy: 0.8675
+              precision    recall  f1-score   support
+
+      Normal       0.88      0.85      0.87    200000
+     Anomaly       0.86      0.88      0.87    200000
+
+    accuracy                           0.87    400000
+   macro avg       0.87      0.87      0.87    400000
+weighted avg       0.87      0.87      0.87    400000
+
+[Round 4] Server Evaluation Report
+Accuracy: 0.8676
+              precision    recall  f1-score   support
+
+      Normal       0.88      0.85      0.87    200000
+     Anomaly       0.86      0.89      0.87    200000
+
+    accuracy                           0.87    400000
+   macro avg       0.87      0.87      0.87    400000
+weighted avg       0.87      0.87      0.87    400000
+
+[Round 5] Server Evaluation Report
+Accuracy: 0.8676
+              precision    recall  f1-score   support
+
+      Normal       0.88      0.85      0.87    200000
+     Anomaly       0.86      0.89      0.87    200000
+
+    accuracy                           0.87    400000
+   macro avg       0.87      0.87      0.87    400000
+weighted avg       0.87      0.87      0.87    400000
+
+📊 [Server Classification Report]
+              precision    recall  f1-score   support
+
+      Normal       0.88      0.85      0.87    200000
+     Anomaly       0.86      0.89      0.87    200000
+
+    accuracy                           0.87    400000
+   macro avg       0.87      0.87      0.87    400000
+weighted avg       0.87      0.87      0.87    400000
+

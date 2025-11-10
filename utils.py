@@ -264,7 +264,7 @@ def get_datasets_cic_sam(random_seed=args.random_seed):
     # ---------------------------
     # (1) 정상 데이터 로드 & 정리
     # ---------------------------
-    normal_path = "./CIC2018/ae_datas_sampled/CIC_ae_normal.csv"
+    normal_path = "./CIC2018/sampled_2/CIC_ae_normal.csv"
     df_normal = pd.read_csv(normal_path, low_memory=False)
 
     # 공통 피처만 사용 (파일에 존재하는 컬럼만 선택)
@@ -291,7 +291,7 @@ def get_datasets_cic_sam(random_seed=args.random_seed):
     #         print(f"⚠️ Warning: {path} not found, skipping.")
 
     # df_anomaly = pd.concat(anomaly_dfs, ignore_index=True)
-    anomlay_path = "./CIC2018/ae_datas_sampled/CIC_ae_anomaly.csv"
+    anomlay_path = "./CIC2018/sampled_2/CIC_ae_anomaly.csv"
     df_anomaly = pd.read_csv(anomlay_path, low_memory=False)
 
     df_anomaly = shuffle(df_anomaly, random_state=random_seed)
