@@ -187,7 +187,7 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
 
     # 3. 정상 데이터 로드, 클리닝 및 분할
     df_normal = pd.read_csv(normal_path)
-    df_normal = shuffle(df_normal, random_state=48) # InSDN
+    df_normal = shuffle(df_normal, random_state=123) # InSDN
     # df_normal = df_normal.sample(frac=1, random_state=48).reset_index(drop=True) # KDD99, NSL-KDD
     split_point = int(len(df_normal) * train_split_ratio)
     df_normal_train = df_normal[:split_point]
@@ -207,8 +207,8 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
     preds_train = model.predict(X_train, verbose=0)
     train_errors = np.mean(np.square(X_train - preds_train), axis=1)
     threshold = np.percentile(train_errors, percentile)
-    # threshold = 0.006781
-    print(f"\n📏 Threshold ({percentile}th percentile): {threshold:.6f}")
+    # threshold = 0.000069
+    print(f"\n📏 Threshold ({percentile}th percentile): {threshold:.20f}")
 
     error_by_attack = {} # 시각화를 위한 오류 저장
     numeric_keys = []
@@ -407,8 +407,8 @@ MODEL_CONFIG = {
     }, # P= 82
     "CSE-CIC-IDS2018": {
         "input_dim": 78,
-        "weights": "rnep_frame_251108_CIC/rnep_frame_cic_weights.h5"
-    }, # P= 90
+        "weights": "Results/CSE-CIC-IDS2018/rnep/rnep_frame_cic_weights.h5"
+    }, # P= 90, 0.000069
     "UNSW_NB15": {
         "input_dim": 43,
         "weights": "Results/UNSW_NB15/rnep/rnep_frame_unsw_weights.h5"
@@ -421,11 +421,11 @@ MODEL_CONFIG = {
 if __name__ == "__main__":
     
     # --- ⚠️ 여기서 실행할 데이터셋을 선택하세요 ---
-    DATASET_TO_RUN = "NSL-KDD" 
+    DATASET_TO_RUN = "UNSW_NB15" 
     # (옵션: "KDD99", "CSE-CIC-IDS2018", "InSDN")
     # -----------------------------------------
 
-    PERCENTILE = 98
+    PERCENTILE = 90
     
     # 선택된 데이터셋의 설정 로드
     if DATASET_TO_RUN not in MODEL_CONFIG:

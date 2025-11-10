@@ -70,8 +70,8 @@ DATA_FILES_TO_PLOT = {
     "InSDN": "./Results/InSDN_roc_data.csv",
     "KDD99": "./Results/KDD99_roc_data.csv",
     "UNSW_NB15": "./Results/UNSW_NB15_roc_data.csv",
-    # "CSE-CIC-IDS2018": "./Results/CSE-CIC-IDS2018_roc_data.csv"
-    # NSL-KDD
+    "CSE-CIC-IDS2018": "./Results/CSE-CIC-IDS2018_roc_data.csv",
+    "NSL-KDD" : "./Results/NSL-KDD_roc_data.csv"
 }
 
 # 저장할 최종 이미지 파일 이름
@@ -89,8 +89,7 @@ def create_combined_roc_plot():
     
     # 2. "무작위 추측" 기준선 (대각선)
     # (사용자님이 첨부한 InSDN 이미지 스타일 참조)
-    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', 
-             label='No Skill (AUC = 0.5)')
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
 
     # 3. 각 데이터셋의 ROC 곡선 계산 및 플롯
     # matplotlib의 기본 컬러 사이클 사용
@@ -135,7 +134,7 @@ def create_combined_roc_plot():
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate (FPR)')
     plt.ylabel('True Positive Rate (TPR)')
-    plt.title('ROC Curves Comparison by Dataset')
+    plt.title('ROC Curves')
     plt.legend(loc="lower right")
     plt.grid(True, linestyle="--", alpha=0.4)
     plt.tight_layout()
@@ -155,7 +154,7 @@ cm_data_to_plot =  [
 # --- 실행 ---
 if __name__ == "__main__":
     
-    plot_specific_cm(cm_data_to_plot, ['Normal', 'Anomaly'], 
-                    f"Confusion Matrix ({dataname})", 
-                    f"cm_{dataname}.png")
-    # create_combined_roc_plot()
+    # plot_specific_cm(cm_data_to_plot, ['Normal', 'Anomaly'], 
+    #                 f"Confusion Matrix ({dataname})", 
+    #                 f"cm_{dataname}.png")
+    create_combined_roc_plot()
