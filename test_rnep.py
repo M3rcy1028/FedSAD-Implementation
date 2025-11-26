@@ -421,7 +421,7 @@ MODEL_CONFIG = {
 if __name__ == "__main__":
     
     # --- ⚠️ 여기서 실행할 데이터셋을 선택하세요 ---
-    DATASET_TO_RUN = "UNSW_NB15" 
+    DATASET_TO_RUN = "KDD99" 
     # (옵션: "KDD99", "CSE-CIC-IDS2018", "InSDN")
     # -----------------------------------------
 
@@ -456,7 +456,7 @@ if __name__ == "__main__":
             print(f"✅ Loaded pre-trained weights from {weights_path}")
         else:
             print(f"⚠️ WARNING: Weight file not found at {weights_path}. 모델이 훈련되지 않았습니다.")
-
+        model.summary()
         # 평가 실행
         evaluate_dataset(
             model=model,

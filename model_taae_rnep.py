@@ -182,7 +182,7 @@ class GradientReversal(layers.Layer):
 class TransformerAAE(tf.keras.Model):
     def __init__(self, input_dim, latent_dim=64, embed_dim=128, num_heads=4, ff_dim=128,
                  num_encoder_layers=3, num_decoder_layers=3,
-                 dropout_rate=DROPOUT, beta=1.0, grl_lambda=1.0):
+                 dropout_rate=DROPOUT, beta=0.3, grl_lambda=1.0): # CIC는 0.3으로 조정함
         super().__init__()
         self.latent_dim = latent_dim
         self.beta = beta

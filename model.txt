@@ -1,0 +1,166 @@
+<RNEP>
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense (Dense)               multiple                  14848     
+                                                                 
+ reshape (Reshape)           multiple                  0         
+                                                                 
+ multi_head_attention (Mult  multiple                  263808    
+ iHeadAttention)                                                 
+                                                                 
+ layer_normalization (Layer  multiple                  256       
+ Normalization)                                                  
+                                                                 
+ dropout (Dropout)           multiple                  0         
+                                                                 
+ sequential (Sequential)     (1, 1, 128)               33024     
+                                                                 
+ layer_normalization_1 (Lay  multiple                  256       
+ erNormalization)                                                
+                                                                 
+ dropout_1 (Dropout)         multiple                  0         
+                                                                 
+ multi_head_attention_1 (Mu  multiple                  263808    
+ ltiHeadAttention)                                               
+                                                                 
+ layer_normalization_2 (Lay  multiple                  256       
+ erNormalization)                                                
+                                                                 
+ dropout_2 (Dropout)         multiple                  0         
+                                                                 
+ sequential_1 (Sequential)   (1, 1, 128)               33024     
+                                                                 
+ layer_normalization_3 (Lay  multiple                  256       
+ erNormalization)                                                
+                                                                 
+ dropout_3 (Dropout)         multiple                  0         
+                                                                 
+ multi_head_attention_2 (Mu  multiple                  263808    
+ ltiHeadAttention)                                               
+                                                                 
+ layer_normalization_4 (Lay  multiple                  256       
+ erNormalization)                                                
+                                                                 
+ dropout_4 (Dropout)         multiple                  0         
+                                                                 
+ sequential_2 (Sequential)   (1, 1, 128)               33024     
+                                                                 
+ layer_normalization_5 (Lay  multiple                  256       
+ erNormalization)                                                
+                                                                 
+ dropout_5 (Dropout)         multiple                  0         
+                                                                 
+ flatten (Flatten)           multiple                  0         
+                                                                 
+ dense_7 (Dense)             multiple                  8256      
+                                                                 
+ dense_8 (Dense)             multiple                  8320      
+                                                                 
+ reshape_1 (Reshape)         multiple                  0         
+                                                                 
+ multi_head_attention_3 (Mu  multiple                  263808    
+ ltiHeadAttention)                                               
+                                                                 
+ layer_normalization_6 (Lay  multiple                  256       
+ erNormalization)                                                
+                                                                 
+ dropout_6 (Dropout)         multiple                  0         
+                                                                 
+ sequential_3 (Sequential)   (1, 1, 128)               33024     
+                                                                 
+ layer_normalization_7 (Lay  multiple                  256       
+ erNormalization)                                                
+                                                                 
+ dropout_7 (Dropout)         multiple                  0         
+                                                                 
+ multi_head_attention_4 (Mu  multiple                  263808    
+ ltiHeadAttention)                                               
+                                                                 
+ layer_normalization_8 (Lay  multiple                  256       
+ erNormalization)                                                
+                                                                 
+ dropout_8 (Dropout)         multiple                  0         
+                                                                 
+ sequential_4 (Sequential)   (1, 1, 128)               33024     
+                                                                 
+ layer_normalization_9 (Lay  multiple                  256       
+ erNormalization)                                                
+                                                                 
+ dropout_9 (Dropout)         multiple                  0         
+                                                                 
+ multi_head_attention_5 (Mu  multiple                  263808    
+ ltiHeadAttention)                                               
+                                                                 
+ layer_normalization_10 (La  multiple                  256       
+ yerNormalization)                                               
+                                                                 
+ dropout_10 (Dropout)        multiple                  0         
+                                                                 
+ sequential_5 (Sequential)   (1, 1, 128)               33024     
+                                                                 
+ layer_normalization_11 (La  multiple                  256       
+ yerNormalization)                                               
+                                                                 
+ dropout_11 (Dropout)        multiple                  0         
+                                                                 
+ dense_15 (Dense)            multiple                  14835     
+                                                                 
+ gradient_reversal (Gradien  multiple                  1         
+ tReversal)                                                      
+                                                                 
+ sequential_6 (Sequential)   (1, 1)                    16641     
+                                                                 
+=================================================================
+Total params: 1846965 (7.05 MB)
+Trainable params: 1846964 (7.05 MB)
+Non-trainable params: 1 (4.00 Byte)
+_________________________________________________________________
+
+
+<CNN-LSTM>
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ conv1d (Conv1D)             multiple                  1600      
+                                                                 
+ conv1d_1 (Conv1D)           multiple                  12352     
+                                                                 
+ max_pooling1d (MaxPooling1  multiple                  0         
+ D)                                                              
+                                                                 
+ dropout (Dropout)           multiple                  0         
+                                                                 
+ flatten (Flatten)           multiple                  0         
+                                                                 
+ lstm (LSTM)                 multiple                  229888    
+                                                                 
+ dense (Dense)               multiple                  16512     
+                                                                 
+ dropout_1 (Dropout)         multiple                  0         
+                                                                 
+ dense_1 (Dense)             multiple                  129       
+                                                                 
+=================================================================
+Total params: 260481 (1017.50 KB)
+Trainable params: 260481 (1017.50 KB)
+Non-trainable params: 0 (0.00 Byte)
+_________________________________________________________________
+
+<AE-LSTM>
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ Encoder (Sequential)        (None, 64)                123712    
+                                                                 
+ Decoder (Sequential)        (1, 10, 8)                137032    
+                                                                 
+ Classifier (Sequential)     (1, 1)                    6273      
+                                                                 
+=================================================================
+Total params: 267017 (1.02 MB)
+Trainable params: 267017 (1.02 MB)
+Non-trainable params: 0 (0.00 Byte)
+_________________________________________________________________
+
+

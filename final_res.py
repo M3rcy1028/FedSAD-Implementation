@@ -145,16 +145,17 @@ def create_combined_roc_plot():
 
     print(f"\n✅ 통합 ROC 곡선 차트가 '{SAVE_PATH}'에 저장되었습니다.")
 
-dataname = "NSL-KDD"
+dataname = "UNSW-NB15"
+# dataname = "CSE-CIC-IDS2018"
 cm_data_to_plot =  [
-                [11899, 390],  # Actual Normal (TN, FP)
-                [3451, 56676]    # Actual Anomaly (FN, TP)
+                [1419, 19],  # Actual Normal (TN, FP)
+                [0, 805]    # Actual Anomaly (FN, TP)
             ]
 
 # --- 실행 ---
 if __name__ == "__main__":
     
-    # plot_specific_cm(cm_data_to_plot, ['Normal', 'Anomaly'], 
-    #                 f"Confusion Matrix ({dataname})", 
-    #                 f"cm_{dataname}.png")
-    create_combined_roc_plot()
+    plot_specific_cm(cm_data_to_plot, ['Normal', 'Anomaly'], 
+                    f"Confusion Matrix ({dataname})", 
+                    f"cm_{dataname}.png")
+    # create_combined_roc_plot()

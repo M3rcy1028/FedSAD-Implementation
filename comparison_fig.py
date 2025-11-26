@@ -4,27 +4,27 @@ import matplotlib.pyplot as plt
 from io import StringIO
 
 # KDD99
-data = """Attack_Type\tOurs\tCNN_LSTM\tAE_LSTM
-back\t0.233772\t0.99818\t0.9995
-buffer_overflow\t1\t0.7\t0.4333
-ftp_write\t1\t0\t0
-guess_passwd\t1\t0.98113\t0.9811
-imap\t1\t0.16667\t0.6667
-ipsweep\t1\t0.94681\t0.9574
-land\t1\t0.04762\t0.0476
-loadmodule\t1\t0.33333\t0.1111
-multihop\t1\t0.57143\t0.1429
-neptune\t1\t0.99828\t0.9999
-nmap\t1\t1\t1
-perl\t1\t0\t0
-phf\t1\t0\t0
-portsweep\t1\t0.99038\t0.9865
-rootkit\t1\t0\t0
-satan\t1\t0.99153\t0.9922
-spy\t1\t0\t0
-warezclient\t0.94902\t0.05196\t0.0049
-warezmaster\t1\t0.9\t0
-"""
+# data = """Attack_Type\tOurs\tCNN_LSTM\tAE_LSTM
+# back\t0.233772\t0.99818\t0.9995
+# buffer_overflow\t1\t0.7\t0.4333
+# ftp_write\t1\t0\t0
+# guess_passwd\t1\t0.98113\t0.9811
+# imap\t1\t0.16667\t0.6667
+# ipsweep\t1\t0.94681\t0.9574
+# land\t1\t0.04762\t0.0476
+# loadmodule\t1\t0.33333\t0.1111
+# multihop\t1\t0.57143\t0.1429
+# neptune\t1\t0.99828\t0.9999
+# nmap\t1\t1\t1
+# perl\t1\t0\t0
+# phf\t1\t0\t0
+# portsweep\t1\t0.99038\t0.9865
+# rootkit\t1\t0\t0
+# satan\t1\t0.99153\t0.9922
+# spy\t1\t0\t0
+# warezclient\t0.94902\t0.05196\t0.0049
+# warezmaster\t1\t0.9\t0
+# """
 
 # InSDN
 # data = """Attack_Type\tOurs\tCNN_LSTM\tAE_LSTM
@@ -68,6 +68,70 @@ warezmaster\t1\t0.9\t0
 # SQL Injection\t0.6092\t0.02299\t0.00000
 # """
 
+# # CSE-CIC-IDS2018 (Unified)
+# data = """Attack_Type\tOurs\tMM-FEWSHOTS-IDS\tMV-IDS
+# DDOS attack-HOIC\t1.0000\t1.0000\t1.0000
+# DDoS attacks-LOIC-HTTP\t0.7435\t0.9333\t0.9997
+# DoS attacks-Hulk\t1.0000\t0.4000\t1.0000
+# Bot\t1.0000\t1.0000\t1.0000
+# FTP-BruteForce\t1.0000\t1.00000\t1.0000
+# SSH-Bruteforce\t1.0000\t1.00000\t0.9914
+# Infiltration\t0.0104\t0.3000\t1.0000
+# DoS attacks-SlowHTTPTest\t1.0000\t1.00000\t1.0000
+# DoS attacks-GoldenEye\t1.0000\t0.8333\t1.00000
+# DoS attacks-Slowloris\t1.0000\t0.9000\t1.0000
+# DDOS attack-LOIC-UDP\t1.0000\t0.9667\t1.0000
+# Brute Force -Web\t0.8120\t0.9667\t0.9262
+# Brute Force -XSS\t0.9351\t1.0000\t0.9348
+# SQL Injection\t0.6666\t1.0000\t0.5882
+# """
+
+# # UNSW-NB15 (Unified)
+# data = """Attack_Type\tOurs\tMM-FEWSHOTS-IDS\tMV-IDS
+# analysis\t1.0000\t1.0000\t0.8421
+# backdoor\t1.0000\t1.0000\t0.9924
+# dos\t1.0000\t0.9667\t0.9841
+# exploits\t1.0000\t1.0000\t0.9784
+# fuzzers\t1.0000\t0.9667\t0.5639
+# generic\t1.0000\t1.0000\t0.9927
+# reconnaissance\t1.0000\t1.0000\t0.9674
+# shellcode\t1.00000\t1.0000\t0.9801
+# worms\t1.00000\t1.00000\t1.0000
+# """
+
+# CSE-CIC-IDS2018 (TAAE vs GSAD vs Unified)
+# data = """Attack_Type\tTAAE\tGSAD\tUnified
+# DDOS attack-HOIC\t1.0000\t1.0000\t1.0000
+# DDoS attacks-LOIC-HTTP\t0.4647\t1.0000\t0.7435
+# DoS attacks-Hulk\t1.0000\t1.0000\t1.0000
+# Bot\t1.0000\t0.9357\t1.0000
+# FTP-BruteForce\t1.0000\t1.00000\t1.0000
+# SSH-Bruteforce\t1.0000\t1.00000\t1.0000
+# Infiltration\t0.3568\t0.0069\t0.0104
+# DoS attacks-SlowHTTPTest\t1.0000\t1.00000\t1.0000
+# DoS attacks-GoldenEye\t1.0000\t1.0000\t1.00000
+# DoS attacks-Slowloris\t1.0000\t1.0000\t1.0000
+# DDOS attack-LOIC-UDP\t1.0000\t1.0000\t1.0000
+# # Brute Force -Web\t0.6727\t0.6015\t0.8120
+# Brute Force -XSS\t0.3008\t0.9722\t0.9351
+# SQL Injection\t0.6092\t1.0000\t0.6666
+# """
+
+# # UNSW-NB15 (TAAE vs GSAD vs Unified)
+data = """Attack_Type\tTAAE\tGSAD\tUnified
+analysis\t0.9986\t1.0000\t1.0000
+backdoor\t0.9929\t1.0000\t1.0000
+dos\t0.9934\t1.0000\t1.0000
+exploits\t0.9969\t1.0000\t1.0000
+fuzzers\t0.9993\t0.9667\t1.0000
+generic\t0.9994\t1.0000\t1.0000
+reconnaissance\t0.9989\t1.0000\t1.0000
+shellcode\t1.00000\t1.0000\t1.0000
+worms\t1.00000\t1.00000\t1.0000
+"""
+
+
+
 df = pd.read_csv(StringIO(data), sep="\t")
 
 labels = df['Attack_Type'].tolist()
@@ -76,9 +140,13 @@ width = 0.25
 
 fig, ax = plt.subplots(figsize=(18, 6))
 
-bars1 = ax.bar([i - width for i in x], df['Ours'], width, label='Ours')
-bars2 = ax.bar(x, df['CNN_LSTM'], width, label='CNN_LSTM')
-bars3 = ax.bar([i + width for i in x], df['AE_LSTM'], width, label='AE_LSTM')
+bars1 = ax.bar([i - width for i in x], df['TAAE'], width, label='TAAE')
+bars2 = ax.bar(x, df['GSAD'], width, label='GSAD')
+bars3 = ax.bar([i + width for i in x], df['Unified'], width, label='Unified')
+
+# bars1 = ax.bar([i - width for i in x], df['Ours'], width, label='Ours')
+# bars2 = ax.bar(x, df['MM-FEWSHOTS-IDS'], width, label='MM-FEWSHOTS-IDS')
+# bars3 = ax.bar([i + width for i in x], df['MV-IDS'], width, label='MV-IDS')
 
 def fmt(val):
     s = f"{val:.4f}"
@@ -100,9 +168,10 @@ ax.set_xticks(list(x))
 ax.set_xticklabels(labels, rotation=30, ha='right')
 
 ax.set_ylabel('Recall')
-ax.set_title('Recall per Attack Type (KDD99)', pad=20)
+# ax.set_title('Recall per Attack Type (CSE-CIC-IDS2018)', pad=20)
+ax.set_title('Recall per Attack Type (UNSW-NB15)', pad=20)
 ax.set_ylim(0, 1.15)
-ax.legend(loc='center right')
+ax.legend(loc='lower right')
 # ax.legend()
 
 plt.tight_layout(rect=[0, 0, 1, 0.95])

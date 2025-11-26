@@ -11,7 +11,7 @@ MATRIX_PATH = "./cnn_lstm/cnn_lstm_cm.png"
 RESULT_PATH = "./cnn_lstm/cnn_lstm_server.txt"
 ROC_PATH = "./cnn_lstm/cnn_lstm_roc.png"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 
 # ----------------------------
@@ -215,7 +215,7 @@ def get_datasets_insdn_supervised(
     normal_csv="./InSDN/ae_datas/InSDN_normal.csv",
     anomaly_csv="./InSDN/ae_datas/InSDN_anomaly.csv",
     random_seed=42,
-    anomaly_ratio=0.2,
+    anomaly_ratio=0.4,
     timesteps=12,     
     features=7
 ):
@@ -246,9 +246,9 @@ def get_datasets_insdn_supervised(
     # (2) Split normal data
     # ---------------------------
     df_normal = shuffle(df_normal, random_state=random_seed)
-    mid_idx = len(df_normal) // 2
-    df_normal_train = df_normal.iloc[:mid_idx]
-    df_normal_test  = df_normal.iloc[mid_idx:]
+    split_point = int(len(df_normal) * 0.8)
+    df_normal_train = df_normal.iloc[:split_point] # 스케일러 훈련용
+    df_normal_test = df_normal.iloc[split_point:] # 실제 테스트용
 
     # ---------------------------
     # (3) Scaling
@@ -402,20 +402,20 @@ def main():
     #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
     # )
 
-    X_train, y_train, X_test, y_test = get_datasets_cic_multi_supervised(
-        normal_csv="./CIC2018/ae_datas_sampled/CIC_ae_normal.csv",
-        anomaly_pattern="./CIC2018/ae_datas_sampled/CIC_anomaly_ae_{}.csv",
-        num_anomaly_files=14,
-        anomaly_ratio=0.5,
-        timesteps=10,
-        features=8
-    )
+    # X_train, y_train, X_test, y_test = get_datasets_cic_multi_supervised(
+    #     normal_csv="./CIC2018/ae_datas_sampled/CIC_ae_normal.csv",
+    #     anomaly_pattern="./CIC2018/ae_datas_sampled/CIC_anomaly_ae_{}.csv",
+    #     num_anomaly_files=14,
+    #     anomaly_ratio=0.5,
+    #     timesteps=10,
+    #     features=8
+    # )
 
     # X_train, y_train, X_test, y_test = get_datasets_kdd99_supervised(
     #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
     # )
 
-    # X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=12, features=7)
+    X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=12, features=7)
 
     # UNSW_NB15
     # X_train, y_train, X_test, y_test = get_datasets_unsw_supervised(timesteps=6, features=7)
@@ -428,12 +428,12 @@ def main():
     # ----------------------------
     # model = CNN_LSTM(timesteps=10, features=12)
     # _ = model(tf.zeros((1, 10, 12))) # NSL
-    model = CNN_LSTM(timesteps=10, features=8)
-    _ = model(tf.zeros((1, 10, 8))) # CIC
+    # model = CNN_LSTM(timesteps=10, features=8)
+    # _ = model(tf.zeros((1, 10, 8))) # CIC
     # model = CNN_LSTM(timesteps=10, features=12)
     # _ = model(tf.zeros((1, 10, 12))) # KDD99
-    # model = CNN_LSTM(timesteps=12, features=7) # 83
-    # _ = model(tf.zeros((1, 12, 7))) # InSDN
+    model = CNN_LSTM(timesteps=12, features=7) # 83
+    _ = model(tf.zeros((1, 12, 7))) # InSDN
     # model = CNN_LSTM(timesteps=6, features=7) # 42
     # _ = model(tf.zeros((1, 6, 7))) # UNSW
     model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])
@@ -498,12 +498,12 @@ def main():
         cid_int = int(cid)
         # client_model = CNN_LSTM(timesteps=10, features=12)
         # _ = client_model(tf.zeros((1, 10, 12))) # NSL
-        client_model = CNN_LSTM(timesteps=10, features=8)
-        _ = client_model(tf.zeros((1, 10, 8))) # CIC
+        # client_model = CNN_LSTM(timesteps=10, features=8)
+        # _ = client_model(tf.zeros((1, 10, 8))) # CIC
         # client_model = CNN_LSTM(timesteps=10, features=12)
         # _ = client_model(tf.zeros((1, 10, 12))) # KDD99
-        # client_model = CNN_LSTM(timesteps=12, features=7)
-        # _ = client_model(tf.zeros((1, 12, 7))) # InSDN
+        client_model = CNN_LSTM(timesteps=12, features=7)
+        _ = client_model(tf.zeros((1, 12, 7))) # InSDN
         # client_model = CNN_LSTM(timesteps=6, features=7) # 42
         # _ = client_model(tf.zeros((1, 6, 7))) # UNSW
         client_model.compile(optimizer=Adam(0.0001), loss="binary_crossentropy", metrics=["accuracy"])

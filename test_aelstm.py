@@ -512,6 +512,9 @@ if __name__ == "__main__":
             print(f"⚠️ WARNING: Weight file not found at {weights_path}. 모델이 훈련되지 않았습니다.")
             exit()
 
+        model.summary()
+        exit()
+
         # 평가 실행
         evaluate_aelstm_by_type(
             model=model,
