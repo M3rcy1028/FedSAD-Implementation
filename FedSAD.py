@@ -2,13 +2,13 @@ from arguments import get_args
 from utils import *
 from model_taae_rnep import SaveEvaluationRNEP, TransformerAAE, FLClient  # FLClient class can be used if imported
 
-os.makedirs("./rnep_frame_revised", exist_ok=True)
-WEIGHT_PATH = "./rnep_frame_revised/rnep_frame_aae_transformer_weights.h5"
-MATRIX_PATH = "./rnep_frame_revised/rnep_frame_cm.png"
-RESULT_PATH = "./rnep_frame_revised/rnep_frame_server.txt"
-ROC_PATH = "./rnep_frame_revised/rnep_frame_roc.png"
-CSV_PATH = "./rnep_frame_revised/rnep_frame_history"
-PNG_PATH = "./rnep_frame_revised/rnep_frame_history.png"
+os.makedirs("./FedSAD_Results", exist_ok=True)
+WEIGHT_PATH = "./FedSAD_Results/fedsad_weights.h5"
+MATRIX_PATH = "./FedSAD_Results/fedsad_cm.png"
+RESULT_PATH = "./FedSAD_Results/fedsad_server.txt"
+ROC_PATH = "./FedSAD_Results/fedsad_roc.png"
+CSV_PATH = "./FedSAD_Results/fedsad_history"
+PNG_PATH = "./FedSAD_Results/fedsad_history.png"
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2" 
 
@@ -23,11 +23,6 @@ def main():
     central_model = TransformerAAE(input_dim)
     _ = central_model(tf.zeros((1, input_dim)), prior_labels=tf.zeros((1,1)))
     central_model.compile(optimizer=Adam(0.0001), loss="mse")
-
-    # 🔹 서버 모델만 pretrain weight 로드
-    # PRETRAIN_PATH = "rnep_frame_251110_CIC/rnep_frame_aae_transformer_weights.h5"
-    # central_model.load_weights(PRETRAIN_PATH)
-    # print(f"[Server] Loaded pre-trained weights from {PRETRAIN_PATH}")
 
     eval_server_args = {
         "model": central_model,
@@ -53,13 +48,6 @@ def main():
         cid_int = int(cid)
         client_model = TransformerAAE(input_dim)
         _ = client_model(tf.zeros((1, input_dim)), prior_labels=tf.zeros((1,1)))
-        
-        # PRETRAIN_PATH = "rnep_frame_251110_CIC/rnep_frame_aae_transformer_weights.h5"
-        # try:
-        #     client_model.load_weights(PRETRAIN_PATH)
-        #     print(f"[Client {cid_int}] Loaded pre-trained weights from {PRETRAIN_PATH}")
-        # except Exception as e:
-        #     print(f"[Client {cid_int}] Warning: failed to load weights from {PRETRAIN_PATH} — {e}")
         
         return FLClient(
             cid_int,

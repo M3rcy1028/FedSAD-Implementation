@@ -338,7 +338,7 @@ class FLClient(fl.client.NumPyClient):
         print(report)
 
         # ✅ 파일 저장
-        with open("./rnep_frame_revised/client.txt", "a") as f:
+        with open("./FedSAD_Results/client.txt", "a") as f:
             f.write(f"\n--- Client {self.cid} Evaluation ---\n")
             f.write(f"Accuracy: {acc:.4f}\n")
             f.write(report + "\n")
