@@ -18,3 +18,23 @@ This repository provides the core logic for the FedSAD model, including comparis
 ├── utils.py            # Utility functions for data processing and logging
 └── FedSAD_ModelSummary.txt # Detailed model architecture summary
 ```
+
+## Environment & Dependencies
+
+This project is developed and tested with **Python 3.9.23**. To ensure reproducibility, please use the specific versions of the core libraries listed below.
+
+### Python Version
+- **Python 3.9.23**
+
+### Core Packages
+| Package | Version | Description |
+| :--- | :--- | :--- |
+| **tensorflow** | 2.14.1 | Primary framework for TAAE-RNEP model |
+| **flwr** | 1.19.0 | Federated Learning (Flower) orchestration |
+| **numpy** | 1.25.2 | Numerical computing and array operations |
+| **pandas** | 2.3.1 | Data manipulation and analysis |
+| **scikit-learn** | 1.6.1 | Anomaly detection metrics and utilities |
+
+```
+pip install tensorflow==2.14.1 flwr==1.19.0 scikit-learn==1.6.1 pandas==2.3.1 numpy==1.25.2
+```
