@@ -614,3 +614,98 @@ def save_report(y_test,y_pred, result_path,labels=['Normal', 'Anomaly'],
     with open(result_path, "a") as f:
         f.write(f"\n📊 [{title}]\n")
         f.write(server_report + "\n")
+
+def sanitize_numeric(df: pd.DataFrame, exclude: Optional[List[str]] = None) -> pd.DataFrame:
+    clean = df.copy()
+    exclude = exclude or []
+    
+    # 문자열 컬럼들을 숫자로 매핑
+    if 'proto' in clean.columns:
+        proto_mapping = {
+            'tcp': 6, 'udp': 17, 'icmp': 1, 'igmp': 2, 'sctp': 132,
+            'ospf': 89, 'unas': 0, 'others': 255, 'pipe': 99
+        }
+        clean['proto'] = clean['proto'].map(proto_mapping).fillna(0).astype(int)
+    
+    if 'state' in clean.columns:
+        state_mapping = {
+            'FIN': 1, 'CON': 2, 'ECO': 3, 'REQ': 4, 'RST': 5, 
+            'PAR': 6, 'URN': 7, 'no': 0, 'CLO': 8, 'TXD': 9,
+            'ACC': 10, 'INT': 11
+        }
+        clean['state'] = clean['state'].map(state_mapping).fillna(0).astype(int)
+    
+    target_cols = [c for c in clean.columns if c not in exclude]
+    if target_cols:
+        numeric = (
+            clean[target_cols]
+            .apply(pd.to_numeric, errors="coerce")
+            .replace([np.inf, -np.inf], np.nan)
+            .fillna(0)
+        )
+        numeric[numeric < 0] = 0
+        clean[target_cols] = numeric
+    return clean
+
+def fedsad_data_preprocessing(taae_normal_file, taae_anomaly_file,
+                              gsad_normal_file,gsad_anomaly_file, SCALER ):
+     # TAAE 데이터 로드 (학습용) - timestamp 없이 처리
+    df_taae_normal_raw = pd.read_csv(taae_normal_file)
+    print(f"[INFO] TAAE normal data loaded: {len(df_taae_normal_raw)} rows")
+
+    # TAAE 학습/테스트 분할 
+    df_taae_normal_train_raw = df_taae_normal_raw.sample(frac=0.8, random_state=123).copy()
+    df_taae_normal_test = df_taae_normal_raw.drop(df_taae_normal_raw.sample(frac=0.8, random_state=123).index).copy()
+
+    # GSAD 데이터도 로드 (테스트용)
+    df_gsad_normal_raw = pd.read_csv(gsad_normal_file)
+    df_gsad_normal_raw["Timestamp"] = pd.to_datetime(df_gsad_normal_raw["Timestamp"], dayfirst=True, errors="coerce")
+    df_gsad_normal_raw = df_gsad_normal_raw[df_gsad_normal_raw["Timestamp"].notna()].copy()
+    df_gsad_normal_raw.sort_values("Timestamp", inplace=True)
+
+    print(f"[INFO] GSAD normal data loaded: {len(df_gsad_normal_raw)} rows")
+
+    # GSAD 테스트 데이터 준비 
+    df_gsad_normal_test = df_gsad_normal_raw.drop(df_gsad_normal_raw.sample(frac=0.8, random_state=123).index).copy()
+
+    df_gsad_normal_test = sanitize_numeric(df_gsad_normal_test, exclude=["Timestamp"])
+    df_gsad_normal_test.set_index("Timestamp", inplace=True)
+    df_gsad_normal_test.sort_index(inplace=True)
+
+    # TAAE 테스트 데이터 준비 (timestamp 없이)
+    df_taae_normal_test = df_taae_normal_test.copy()
+    df_taae_normal_test.reset_index(drop=True, inplace=True)
+
+    # TAAE scaler/feature 준비 (이미 전처리된 데이터 사용)
+    taae_train_features = sanitize_numeric(df_taae_normal_train_raw)
+    if not taae_train_features.empty:
+        # TAAE_FEATURE_COLUMNS = list(taae_train_features.columns)
+        SCALER.fit(taae_train_features.values)
+        train_normal_scaled = SCALER.transform(taae_train_features.values)
+        print(f"[INFO] TAAE scaler fitted on {train_normal_scaled.shape[1]} features")
+
+    # TAAE Anomaly 데이터 로드 (timestamp 없이)
+    df_taae_anomaly_list = []
+    for fpath in taae_anomaly_file:
+        df_tmp = pd.read_csv(fpath)
+        df_taae_anomaly_list.append(df_tmp)
+
+    df_taae_anomaly_test = pd.concat(df_taae_anomaly_list, ignore_index=True)
+    df_taae_anomaly_test.reset_index(drop=True, inplace=True)
+
+    # GSAD Anomaly 데이터 로드
+    df_gsad_anomaly_list = []
+    for fpath in gsad_anomaly_file:
+        df_tmp = pd.read_csv(fpath)
+        df_tmp["Timestamp"] = pd.to_datetime(df_tmp["Timestamp"], dayfirst=True, errors="coerce")
+        df_tmp = df_tmp[df_tmp["Timestamp"].notna()].copy()
+        df_gsad_anomaly_list.append(df_tmp)
+
+    df_gsad_anomaly_test = pd.concat(df_gsad_anomaly_list, ignore_index=True)
+    df_gsad_anomaly_test = sanitize_numeric(df_gsad_anomaly_test, exclude=["Timestamp"])
+    df_gsad_anomaly_test.set_index("Timestamp", inplace=True)
+    df_gsad_anomaly_test.sort_index(inplace=True)
+
+    print(f"[INFO] GSAD Normal test rows: {len(df_gsad_normal_test)} | GSAD Anomaly test rows: {len(df_gsad_anomaly_test)}")
+    print(f"[INFO] TAAE Normal test rows: {len(df_taae_normal_test)} | TAAE Anomaly test rows: {len(df_taae_anomaly_test)}")
+    return df_gsad_normal_test, df_gsad_anomaly_test, df_taae_normal_test, df_taae_anomaly_test, train_normal_scaled

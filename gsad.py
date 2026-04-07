@@ -11,7 +11,7 @@ from tqdm import tqdm
 import argparse
 from utils import *
 
-RESULT_DIR = "results/GSAD"
+RESULT_DIR = "results/GSAD_25"
 STAT_FILE_PATH=os.path.join(RESULT_DIR,"normal_stats.pkl")
 MATRIX_PATH=os.path.join(RESULT_DIR,"gsad_cm.png")
 REPORT_PATH=os.path.join(RESULT_DIR,"gsad_server.txt")
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--time_window", type=str, default="1T")
-    parser.add_argument("--threshold_std", type=float, default=3)
+    parser.add_argument("--threshold_std", type=float, default=0.25)
 
     parser.add_argument("--ae_data_dir", type=str,
                         default="/data/SDP_Dataset/Unified_model/cic_graph")

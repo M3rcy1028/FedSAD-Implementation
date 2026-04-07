@@ -2,8 +2,17 @@
     Define Variational + Transformer AE model architecture
 '''
 from utils import *
-from arguments import get_args
-args = get_args()
+import argparse
+#TODO arguments 수정 필요
+# from arguments import get_args
+# args = get_args()
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--batch_size", type=int, default=32)
+parser.add_argument("--dropout_rate", type=float, default=0.3)
+parser.add_argument("--percentile", type=float, default=95)
+args = parser.parse_args()
 
 BATCH_SIZE = args.batch_size
 DROPOUT = args.dropout_rate
