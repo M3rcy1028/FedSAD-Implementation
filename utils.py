@@ -27,10 +27,17 @@ from tensorflow.keras.saving import register_keras_serializable
 import flwr as fl
 from flwr.server.strategy import FedAvg
 from flwr.common import Scalar, parameters_to_ndarrays, ndarrays_to_parameters
+import argparse
 
-from arguments import get_args
-args = get_args()
+#TODO arguments 수정 필요
+# from arguments import get_args
+# args = get_args()
+parser = argparse.ArgumentParser()
 
+parser.add_argument("--random_seed", type=int, default=42)
+parser.add_argument("--percentile", type=float, default=95)
+
+args = parser.parse_args()
 # For datasets
 def get_datasets_nsl(random_seed=args.random_seed):
     np.random.seed(random_seed)
@@ -527,7 +534,7 @@ def eval_server(model, X_train_scaled, X_test_scaled, y_test, result_path, matri
         target_names=["Normal", "Anomaly"],
         zero_division=0
     )
-    
+    #TODO modify save_report function
     print("\n📊 [Server Classification Report]\n")
     print(server_report)
 
@@ -591,3 +598,19 @@ def save_and_plot_history(history, csv_path, png_path):
     plt.savefig(png_path)
     plt.close()
     print(f"Loss plot saved to {png_path}")
+
+def save_report(y_test,y_pred, result_path,labels=['Normal', 'Anomaly'], 
+                    title="Classification Report"):
+    server_report = classification_report(
+        y_test, y_pred,
+        target_names=labels,
+        zero_division=0,
+        digits=4 
+    )
+
+    print("\n📊 [Server Classification Report]\n")
+    print(server_report)
+
+    with open(result_path, "a") as f:
+        f.write(f"\n📊 [{title}]\n")
+        f.write(server_report + "\n")
