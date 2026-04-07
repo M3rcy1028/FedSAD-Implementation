@@ -19,9 +19,9 @@ REPORT_PATH=os.path.join(RESULT_DIR,"gsad_server.txt")
 os.makedirs(RESULT_DIR,exist_ok=True)
 
 # ===============================
-#   Graph-based Feature Extraction
+#   GSAD-based Feature Extraction
 # ===============================
-def create_graph_from_window(df_window):
+def create_gsad_from_window(df_window):
     if df_window.empty:
         return None
 
@@ -36,7 +36,7 @@ def create_graph_from_window(df_window):
     return G
 
 
-def extract_graph_features(G):
+def extract_gsad_features(G):
     if G is None or G.number_of_nodes() == 0:
         return {'num_nodes': 0, 'num_edges': 0, 'density': 0, 'avg_degree': 0}
 
@@ -168,10 +168,10 @@ def run_anomaly_detection(args, normal_file, anomaly_files):
     df_anomaly.sort_index(inplace=True)
 
     for _, df_window in tqdm(df_anomaly.groupby(pd.Grouper(freq=args.time_window))):
-        G = create_graph_from_window(df_window)
+        G = create_gsad_from_window(df_window)
         if not G:
             continue
-        y_pred.append(check(extract_graph_features(G)))
+        y_pred.append(check(extract_gsad_features(G)))
         y_true.append(1)
 
     

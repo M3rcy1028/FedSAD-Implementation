@@ -11,6 +11,7 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 from sklearn.utils import shuffle
 from taae import TransformerAAE
+from gsad import create_gsad_from_window, extract_gsad_features
 import argparse
 from tqdm import tqdm
 from utils import *
@@ -59,30 +60,30 @@ def build_and_load_taae(n_features: int,taae_model_path):
         TAAE_MODEL = None
 
 
-def create_gsad_from_window(df_window):
-    if df_window.empty:
-        return None
-    nodes = df_window['Dst Port'].unique()
-    from itertools import combinations
-    G = nx.Graph()
-    G.add_nodes_from(nodes)
-    if len(nodes) > 1:
-        for node_pair in combinations(nodes, 2):
-            G.add_edge(*node_pair)
-    return G
+# def create_gsad_from_window(df_window):
+#     if df_window.empty:
+#         return None
+#     nodes = df_window['Dst Port'].unique()
+#     from itertools import combinations
+#     G = nx.Graph()
+#     G.add_nodes_from(nodes)
+#     if len(nodes) > 1:
+#         for node_pair in combinations(nodes, 2):
+#             G.add_edge(*node_pair)
+#     return G
 
-def extract_gsad_features(G):
-    if G is None or G.number_of_nodes() == 0:
-        return {'num_nodes':0,'num_edges':0,'density':0,'avg_degree':0}
-    density = nx.density(G)
-    degrees = [val for (_, val) in G.degree()]
-    avg_degree = np.mean(degrees) if len(degrees) else 0
-    return {
-        'num_nodes': G.number_of_nodes(),
-        'num_edges': G.number_of_edges(),
-        'density': density,
-        'avg_degree': avg_degree
-    }
+# def extract_gsad_features(G):
+#     if G is None or G.number_of_nodes() == 0:
+#         return {'num_nodes':0,'num_edges':0,'density':0,'avg_degree':0}
+#     density = nx.density(G)
+#     degrees = [val for (_, val) in G.degree()]
+#     avg_degree = np.mean(degrees) if len(degrees) else 0
+#     return {
+#         'num_nodes': G.number_of_nodes(),
+#         'num_edges': G.number_of_edges(),
+#         'density': density,
+#         'avg_degree': avg_degree
+#     }
 
 
 def gsad_model_predict(feat):
@@ -339,6 +340,7 @@ if __name__ == "__main__":
                         default="results/GSAD_25/normal_stats.pkl")
     parser.add_argument("--threshold_std", type=float, default=0.25)
 
+    args = parser.parse_args()
     # TAAE data path
     taae_normal_file = f"{args.taae_data_dir}/CIC_ae_normal.csv"
     taae_anomaly_files = [f"{args.taae_data_dir}/" + f for f in os.listdir(args.taae_data_dir) if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")]
@@ -359,7 +361,7 @@ if __name__ == "__main__":
     TAAE_FEATURE_COLUMNS=taae_normal_test.columns.tolist()
 
     # Load TAAE model
-    build_and_load_taae(len(TAAE_FEATURE_COLUMNS))
+    build_and_load_taae(len(TAAE_FEATURE_COLUMNS), args.taae_model_path)
 
     # Dynamically calculate threshold
     calculate_taae_threshold()
