@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 import torch
 import os
-
+import argparse
 from MVIDS.kg_builder import make_kg_provider
 from MVIDS.load_data import load_dataset
 from MVIDS.train import test_loop, train_loop
@@ -105,8 +105,6 @@ def run(args):
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str, default='unsw')
     parser.add_argument('--epochs', type=int, default=100)
