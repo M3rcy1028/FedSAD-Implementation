@@ -73,9 +73,9 @@ def compute_stats_from_df(df, time_window):
     features = []
 
     for _, df_window in df.groupby(pd.Grouper(freq=time_window)):
-        G = create_graph_from_window(df_window)
+        G = create_gsad_from_window(df_window)
         if G:
-            features.append(extract_graph_features(G))
+            features.append(extract_gsad_features(G))
 
     if not features:
         empty = pd.Series({'num_nodes': 0, 'num_edges': 0,
@@ -154,10 +154,10 @@ def run_anomaly_detection(args, normal_file, anomaly_files):
 
     # normal
     for _, df_window in tqdm(df_test.groupby(pd.Grouper(freq=args.time_window))):
-        G = create_graph_from_window(df_window)
+        G = create_gsad_from_window(df_window)
         if not G:
             continue
-        y_pred.append(check(extract_graph_features(G)))
+        y_pred.append(check(extract_gsad_features(G)))
         y_true.append(0)
 
     # anomaly
