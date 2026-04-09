@@ -11,13 +11,6 @@ from tqdm import tqdm
 import argparse
 from utils import *
 
-RESULT_DIR = "results/GSAD_25"
-STAT_FILE_PATH=os.path.join(RESULT_DIR,"normal_stats.pkl")
-MATRIX_PATH=os.path.join(RESULT_DIR,"gsad_cm.png")
-REPORT_PATH=os.path.join(RESULT_DIR,"gsad_server.txt")
-
-os.makedirs(RESULT_DIR,exist_ok=True)
-
 # ===============================
 #   GSAD-based Feature Extraction
 # ===============================
@@ -94,7 +87,7 @@ def compute_stats_from_df(df, time_window):
 # ===============================
 #   Training
 # ===============================
-def train_single_model(args, normal_file):
+def train_single_model(args, normal_file,savefile_path):
     if not os.path.exists(normal_file):
         raise FileNotFoundError(f"❌ {normal_file} not found")
 
@@ -110,11 +103,11 @@ def train_single_model(args, normal_file):
     normal_stats = normal_stats[["num_nodes", "num_edges", "density", "avg_degree"]]
 
 
-    with open(STAT_FILE_PATH, "wb") as f:
+    with open(savefile_path, "wb") as f:
         pickle.dump(normal_stats, f)
 
     print("\n=== Train ===")
-    print(f"Saved to: {STAT_FILE_PATH}")
+    print(f"Saved to: {savefile_path}")
     print(normal_stats)
 
     return normal_stats
@@ -174,9 +167,7 @@ def run_anomaly_detection(args, normal_file, anomaly_files):
         y_pred.append(check(extract_gsad_features(G)))
         y_true.append(1)
 
-    
-    save_report(y_true,y_pred,REPORT_PATH)
-    plt_confusion_matrix(y_true,y_pred,MATRIX_PATH)
+    return y_true, y_pred
 
 
 # ===============================
@@ -191,7 +182,14 @@ if __name__ == "__main__":
     parser.add_argument("--ae_data_dir", type=str,
                         default="/data/SDP_Dataset/Unified_model/cic_graph")
     parser.add_argument("--normal_file", type=str, default=None)
+    parser.add_argument("--result_path", type=str, default="results/CSE-CIC-IDS2018/gsad")
+    
     args = parser.parse_args()
+
+    os.makedirs(args.result_path,exist_ok=True)
+    model_path=os.path.join(args.result_path, "normal_stats.pkl")
+    report_path=os.path.join(args.result_path,"gsad_server.txt")
+    matrix_path=os.path.join(args.result_path,"gsad_cm.png")
 
     normal_file = args.normal_file or os.path.join(args.ae_data_dir, "CIC_ae_normal.csv")
 
@@ -201,5 +199,9 @@ if __name__ == "__main__":
         if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")
     ]
 
-    train_single_model(args, normal_file)
-    run_anomaly_detection(args, normal_file, anomaly_files)
+    train_single_model(args, normal_file,model_path)
+    y_true,y_pred=run_anomaly_detection(args, normal_file, anomaly_files)
+
+    
+    save_report(y_true,y_pred,report_path)
+    plt_confusion_matrix(y_true,y_pred,matrix_path)
