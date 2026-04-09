@@ -116,9 +116,9 @@ def train_single_model(args, normal_file,savefile_path):
 # ===============================
 #   Evaluation
 # ===============================
-def run_anomaly_detection(args, normal_file, anomaly_files):
+def run_anomaly_detection(args, normal_file, anomaly_files, model_path):
 
-    with open(STAT_FILE_PATH, "rb") as f:
+    with open(model_path, "rb") as f:
         normal_stats = pickle.load(f)
 
     df_normal = pd.read_csv(normal_file)
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     ]
 
     train_single_model(args, normal_file,model_path)
-    y_true,y_pred=run_anomaly_detection(args, normal_file, anomaly_files)
+    y_true,y_pred=run_anomaly_detection(args, normal_file, anomaly_files, model_path)
 
     
     save_report(y_true,y_pred,report_path)
