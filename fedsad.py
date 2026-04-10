@@ -18,14 +18,14 @@ from utils import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2" 
 
-RESULT_DIR = "results/FedSAD"
+# RESULT_DIR = "results/FedSAD"
 
-os.makedirs(RESULT_DIR,exist_ok=True)
+# os.makedirs(RESULT_DIR,exist_ok=True)
 TF_DEVICE='/CPU:0'
 
-RESULT_FILE_PATH=os.path.join(RESULT_DIR,"fedsad.pkl")
-MATRIX_PATH=os.path.join(RESULT_DIR,"fedsad_cm.png")
-REPORT_PATH=os.path.join(RESULT_DIR,"fedsad_server.txt")
+# RESULT_FILE_PATH=os.path.join(RESULT_DIR,"fedsad.pkl")
+# MATRIX_PATH=os.path.join(RESULT_DIR,"fedsad_cm.png")
+# REPORT_PATH=os.path.join(RESULT_DIR,"fedsad_server.txt")
 
 TIME_WINDOW = '1T'
 RANDOM_STATE = 123
@@ -58,33 +58,6 @@ def build_and_load_taae(n_features: int,taae_model_path):
     except Exception as e:
         print(f"[WARN] Failed to load RNEP model: {e}")
         TAAE_MODEL = None
-
-
-# def create_gsad_from_window(df_window):
-#     if df_window.empty:
-#         return None
-#     nodes = df_window['Dst Port'].unique()
-#     from itertools import combinations
-#     G = nx.Graph()
-#     G.add_nodes_from(nodes)
-#     if len(nodes) > 1:
-#         for node_pair in combinations(nodes, 2):
-#             G.add_edge(*node_pair)
-#     return G
-
-# def extract_gsad_features(G):
-#     if G is None or G.number_of_nodes() == 0:
-#         return {'num_nodes':0,'num_edges':0,'density':0,'avg_degree':0}
-#     density = nx.density(G)
-#     degrees = [val for (_, val) in G.degree()]
-#     avg_degree = np.mean(degrees) if len(degrees) else 0
-#     return {
-#         'num_nodes': G.number_of_nodes(),
-#         'num_edges': G.number_of_edges(),
-#         'density': density,
-#         'avg_degree': avg_degree
-#     }
-
 
 def gsad_model_predict(feat):
     """Compute DS mass based on graph feature deviation."""
@@ -335,12 +308,19 @@ if __name__ == "__main__":
     parser.add_argument("--gsad_data_dir", type=str,
                         default="/data/SDP_Dataset/Unified_model/cic_graph")
     parser.add_argument("--taae_model_path", type=str,
-                        default="results/CSE-CIC-IDS2018/fedsad/fedsad_cic_weights.h5")
+                        default="results/CSE-CIC-IDS2018/taae/taae_cic_weights.h5")
     parser.add_argument("--gsad_model_path", type=str,
-                        default="results/GSAD_25/normal_stats.pkl")
+                        default="results/CSE-CIC-IDS2018/gsad/normal_stats.pkl")
     parser.add_argument("--threshold_std", type=float, default=0.25)
-
+    parser.add_argument("--result_path",type=str,
+                        default="results/CSE-CIC-IDS2018/fedsad")
     args = parser.parse_args()
+
+    os.makedirs(args.result_path, exist_ok=True)
+    model_path=os.path.join(args.result_path,"fedsad.pkl")
+    matrix_path=os.path.join(args.result_path,"fedsad_cm.png")
+    report_path=os.path.join(args.result_path,"fedsad_server.txt")
+
     # TAAE data path
     taae_normal_file = f"{args.taae_data_dir}/CIC_ae_normal.csv"
     taae_anomaly_files = [f"{args.taae_data_dir}/" + f for f in os.listdir(args.taae_data_dir) if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")]
@@ -380,11 +360,11 @@ if __name__ == "__main__":
     y_true = normal_test + anomaly_test
     results = normal_results + anomaly_results
 
-    save_report(y_true, y_pred, REPORT_PATH)
-    plt_confusion_matrix(y_true, y_pred, MATRIX_PATH)
+    save_report(y_true, y_pred, report_path)
+    plt_confusion_matrix(y_true, y_pred, matrix_path)
 
-    with open(RESULT_FILE_PATH, "wb") as f:
+    with open(model_path, "wb") as f:
         pickle.dump(results, f)
 
-    print(f"\nSaved ensemble results to {RESULT_FILE_PATH}")
+    print(f"\nSaved ensemble results to {model_path}")
 
