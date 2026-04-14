@@ -26,3 +26,6 @@
 KDD99/KDD99_encoded.csv
 *.csv
 KDD99/KDD99_encoded.csv
+FedSAD_env
+results
+*/*/__pycache__

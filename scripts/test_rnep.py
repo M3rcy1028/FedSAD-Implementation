@@ -5,7 +5,7 @@ from sklearn.preprocessing import MinMaxScaler, RobustScaler
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, confusion_matrix, roc_curve, auc
 from sklearn.utils import shuffle
 import tensorflow as tf
-from model_taae_rnep import TransformerAAE  # 이 모델 클래스가 필요합니다.
+from taae import TransformerAAE  # 이 모델 클래스가 필요합니다.
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -369,7 +369,7 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8):
 # 'model_taae_rnep' 모듈이 없으면 실행되지 않으므로, 
 # 실제 사용 시에는 TransformerAAE 클래스가 정의된 파일을 import 해야 합니다.
 try:
-    from model_taae_rnep import TransformerAAE
+    from taae import TransformerAAE
 except ImportError:
     print("="*50)
     print("⚠️ WARNING: 'model_taae_rnep' 모듈을 찾을 수 없습니다.")

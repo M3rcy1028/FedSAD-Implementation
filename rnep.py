@@ -1,6 +1,6 @@
 from arguments import get_args
 from utils import *
-from model_taae_rnep import SaveEvaluationRNEP, TransformerAAE, FLClient  # FLClient class can be used if imported
+from taae import SaveEvaluationRNEP, TransformerAAE, FLClient  # FLClient class can be used if imported
 
 os.makedirs("./FedSAD_Results", exist_ok=True)
 WEIGHT_PATH = "./FedSAD_Results/fedsad_weights.h5"
