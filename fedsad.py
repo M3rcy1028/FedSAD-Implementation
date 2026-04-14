@@ -1,46 +1,43 @@
 import os
 import pickle
+import time
 from datetime import datetime
+from typing import List, Optional
+
 import numpy as np
 import networkx as nx
 import pandas as pd
+from tqdm import tqdm
+import tensorflow as tf
+
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.preprocessing import MinMaxScaler
-from typing import List, Optional
-import tensorflow as tf
-from tensorflow.keras.models import load_model
 from sklearn.utils import shuffle
+
+# Custom module imports
+from tensorflow.keras.models import load_model
 from taae import TransformerAAE
 from gsad import create_gsad_from_window, extract_gsad_features
-import argparse
-from tqdm import tqdm
 from utils import *
+from arguments import get_args
+args = get_args()
 
+# GPU Configuration
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2" 
-
-# RESULT_DIR = "results/FedSAD"
-
-# os.makedirs(RESULT_DIR,exist_ok=True)
 TF_DEVICE='/CPU:0'
 
-# RESULT_FILE_PATH=os.path.join(RESULT_DIR,"fedsad.pkl")
-# MATRIX_PATH=os.path.join(RESULT_DIR,"fedsad_cm.png")
-# REPORT_PATH=os.path.join(RESULT_DIR,"fedsad_server.txt")
-
+# Global constants for evaluation
 TIME_WINDOW = '1T'
 RANDOM_STATE = 123
+THRESHOLD_PERCENTILE = 82  
 
-
-
+# Global model and scaler instances
 SCALER = MinMaxScaler()
 TAAE_FEATURE_COLUMNS = []
 TRAIN_NORMAL_SCALED = None
-
 GSAD_MODEL=None
 TAAE_MODEL = None 
-
 TAAE_THRESHOLD = None  
-THRESHOLD_PERCENTILE = 82  
 
 def build_and_load_taae(n_features: int,taae_model_path):
     """Load simplified TAAE model"""
@@ -208,25 +205,36 @@ def combine_dempster_shafer(m1, m2):
 
 
 def evaluate(df_gsad, df_taae, label):
-    """Process TAAE data aligned with GSAD time windows"""
-
+    """실시간성 측정을 위해 파이프라인별 시간 측정 로직이 추가된 버전"""
     gb_gsad = df_gsad.groupby(pd.Grouper(freq=TIME_WINDOW))
 
     taae_idx = 0
     total_taae_rows = len(df_taae)
-
     results = []
     y_true, y_pred = [], []
 
-    for window_time, df_gsad_window in tqdm(gb_gsad, desc=f"{label} Test"):
+    # --- 시간 측정을 위한 리스트 ---
+    gsad_times = []
+    taae_times = []
+    fusion_times = []
+    total_pipeline_times = []
 
-        # Skip empty windows
+    for window_time, df_gsad_window in tqdm(gb_gsad, desc=f"{label} Test"):
         if df_gsad_window.empty:
             continue
 
-        gsad_window_size = len(df_gsad_window)
+        # 전체 파이프라인 시작 시간
+        start_total = time.perf_counter()
 
-        # Sample TAAE data to match GSAD window size
+        # 1. GSAD 파이프라인 (특징 추출 + 예측)
+        G = create_gsad_from_window(df_gsad_window)
+        feat = extract_gsad_features(G)
+        start_gsad = time.perf_counter()
+        m_gsad = gsad_model_predict(feat)
+        end_gsad = time.perf_counter()
+        
+        # 2. TAAE 파이프라인 (윈도우 샘플링 + 예측)
+        gsad_window_size = len(df_gsad_window)
         if taae_idx + gsad_window_size <= total_taae_rows:
             df_taae_window = df_taae.iloc[taae_idx:taae_idx + gsad_window_size].copy()
             taae_idx += gsad_window_size
@@ -236,35 +244,44 @@ def evaluate(df_gsad, df_taae, label):
             df_taae_part2 = df_taae.iloc[:remaining].copy()
             df_taae_window = pd.concat([df_taae_part1, df_taae_part2], ignore_index=True)
             taae_idx = remaining
-
-        if df_taae_window.empty:
-            continue
-
-        # Extract GSAD features
-        G = create_gsad_from_window(df_gsad_window)
-        feat = extract_gsad_features(G)
-
-        m_gsad = gsad_model_predict(feat)
+        start_taae = time.perf_counter()
         m_taae = taae_model_predict(df_taae_window)
+        end_taae = time.perf_counter()
 
-        # Combine both models using DS theory
+        # 3. DS Fusion (결합 + 최종 결정)
+        start_fusion = time.perf_counter()
         m_comb = combine_dempster_shafer(m_gsad, m_taae)
-
         pred = 1 if m_comb["anomaly"] > m_comb["normal"] else 0
+        end_fusion = time.perf_counter()
+
+        end_total = time.perf_counter()
+
+        # 각 단계별 소요 시간 기록
+        gsad_times.append(end_gsad - start_gsad)
+        taae_times.append(end_taae - start_taae)
+        fusion_times.append(end_fusion - start_fusion)
+        total_pipeline_times.append(end_total - start_total)
 
         y_pred.append(pred)
         y_true.append(0 if label == "Normal" else 1)
-
         results.append({
             "window_time": window_time,
-            "gsad_window_size": len(df_gsad_window),
-            "taae_window_size": len(df_taae_window),
-            "m_gsad": m_gsad,
-            "m_taae": m_taae,
-            "m_comb": m_comb,
-            "pred": pred,
-            "label": label
+            "m_gsad": m_gsad, "m_taae": m_taae, "m_comb": m_comb,
+            "pred": pred, "label": label
         })
+
+    # --- 결과 출력 (Revision용 통계) ---
+    avg_total = np.mean(total_pipeline_times) * 1000
+    std_total = np.std(total_pipeline_times) * 1000 # 표준편차 계산 (ms 단위)
+    
+    print(f"\n⏱️  [{label}] Detailed Latency Analysis (per {TIME_WINDOW} window)")
+    print(f"  - GSAD Step:    {np.mean(gsad_times)*1000:.4f} ± {np.std(gsad_times)*1000:.4f} ms")
+    print(f"  - TAAE Step:    {np.mean(taae_times)*1000:.4f} ± {np.std(taae_times)*1000:.4f} ms")
+    print(f"  - DS Fusion:      {np.mean(fusion_times)*1000:.4f} ± {np.std(fusion_times)*1000:.4f} ms")
+    print("-" * 60)
+    # 전체 파이프라인 평균 ± 표준편차
+    print(f"  - Total Pipeline Time: {avg_total:.4f} ± {std_total:.4f} ms") 
+    print(f"  - Throughput:          {1/(avg_total/1000):.2f} windows/sec")
 
     return y_pred, y_true, results
 
@@ -300,22 +317,6 @@ def calculate_taae_threshold():
 
 
 if __name__ == "__main__":
-    global gsad_model
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("--taae_data_dir", type=str,
-                        default="/data/SDP_Dataset/Unified_model/cic_rnep")
-    parser.add_argument("--gsad_data_dir", type=str,
-                        default="/data/SDP_Dataset/Unified_model/cic_graph")
-    parser.add_argument("--taae_model_path", type=str,
-                        default="results/CSE-CIC-IDS2018/taae/taae_cic_weights.h5")
-    parser.add_argument("--gsad_model_path", type=str,
-                        default="results/CSE-CIC-IDS2018/gsad/normal_stats.pkl")
-    parser.add_argument("--threshold_std", type=float, default=0.25)
-    parser.add_argument("--result_path",type=str,
-                        default="results/CSE-CIC-IDS2018/fedsad")
-    args = parser.parse_args()
-
     os.makedirs(args.result_path, exist_ok=True)
     model_path=os.path.join(args.result_path,"fedsad.pkl")
     matrix_path=os.path.join(args.result_path,"fedsad_cm.png")
