@@ -18,8 +18,8 @@ from sklearn.utils import shuffle
 from tensorflow.keras.models import load_model
 from taae import TransformerAAE
 from gsad import create_gsad_from_window, extract_gsad_features
-from utils import *
-from arguments import get_args
+from utils import fedsad_data_preprocessing, sanitize_numeric, plt_confusion_matrix, save_report
+from arguments import get_args, dataset_configs
 args = get_args()
 
 # GPU Configuration
@@ -39,7 +39,7 @@ GSAD_MODEL=None
 TAAE_MODEL = None 
 TAAE_THRESHOLD = None  
 
-def build_and_load_taae(n_features: int,taae_model_path):
+def build_and_load_taae(n_features: int,taae_model_path: str):
     """Load simplified TAAE model"""
     global TAAE_MODEL
 
@@ -315,23 +315,36 @@ def calculate_taae_threshold():
         TAAE_THRESHOLD = 0.00008
         print(f"[INFO] Using default RNEP threshold: {TAAE_THRESHOLD}")
 
-
 if __name__ == "__main__":
-    os.makedirs(args.result_path, exist_ok=True)
-    model_path=os.path.join(args.result_path,"fedsad.pkl")
-    matrix_path=os.path.join(args.result_path,"fedsad_cm.png")
-    report_path=os.path.join(args.result_path,"fedsad_server.txt")
+
+    # args = get_args()
+
+    config = dataset_configs.get(args.eval_dataset.lower())
+    if not config:
+        print(f"[ERROR] Dataset '{args.eval_dataset}' is not supported.")
+        exit(1)
+
+    os.makedirs(config["result_path"], exist_ok=True)
+    model_path = os.path.join(config["result_path"], "fedsad.pkl")
+    matrix_path = os.path.join(config["result_path"], "fedsad_cm.png")
+    report_path = os.path.join(config["result_path"], "fedsad_server.txt")
 
     # TAAE data path
-    taae_normal_file = f"{args.taae_data_dir}/CIC_ae_normal.csv"
-    taae_anomaly_files = [f"{args.taae_data_dir}/" + f for f in os.listdir(args.taae_data_dir) if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")]
+    taae_normal_file = os.path.join(config["taae_dir"], config["normal_file"])
+    taae_anomaly_files = [
+        os.path.join(config["taae_dir"], f) for f in os.listdir(config["taae_dir"]) 
+        if f.startswith(config["anomaly_prefix"]) and f.endswith(".csv")
+    ]
 
     # GSAD data path
-    gsad_normal_file = f"{args.gsad_data_dir}/CIC_ae_normal.csv"
-    gsad_anomaly_files = [f"{args.gsad_data_dir}/" + f for f in os.listdir(args.gsad_data_dir) if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")]
+    gsad_normal_file = os.path.join(config["gsad_dir"], config["normal_file"])
+    gsad_anomaly_files = [
+        os.path.join(config["gsad_dir"], f) for f in os.listdir(config["gsad_dir"]) 
+        if f.startswith(config["anomaly_prefix"]) and f.endswith(".csv")
+    ]
 
     # Load models
-    with open(args.gsad_model_path, "rb") as f:
+    with open(config["gsad_model"], "rb") as f:
         GSAD_MODEL = pickle.load(f)
 
     gsad_normal_test, gsad_anomaly_test, taae_normal_test, taae_anomaly_test, TRAIN_NORMAL_SCALED= fedsad_data_preprocessing( taae_normal_file,
@@ -342,7 +355,7 @@ if __name__ == "__main__":
     TAAE_FEATURE_COLUMNS=taae_normal_test.columns.tolist()
 
     # Load TAAE model
-    build_and_load_taae(len(TAAE_FEATURE_COLUMNS), args.taae_model_path)
+    build_and_load_taae(len(TAAE_FEATURE_COLUMNS), config["taae_model"])
 
     # Dynamically calculate threshold
     calculate_taae_threshold()
