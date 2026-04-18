@@ -1,6 +1,13 @@
-from arguments import get_args
-from utils import *
-from model_aae import SaveEvaluationFedAvg, TransformerAAE, FLClient  # FLClient class can be used if imported
+import os
+import numpy as np
+import flwr as fl
+import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
+from flwr.common import parameters_to_ndarrays
+from utils.get_datasets import get_datasets_cic, eval_server
+from utils.metrics import save_and_plot_history
+from utils.arguments import get_args
+from taae import SaveEvaluationFedAvg, TransformerAAE, FLClient  # FLClient class can be used if imported
 
 WEIGHT_PATH = "./avg/avg_vae_transformer_weights.h5"
 MATRIX_PATH = "./avg/avg_cm.png"
@@ -79,7 +86,6 @@ def main():
 
     # 최종 학습된 weight를 global_model에 적용
     if strategy.final_parameters is not None:
-        from flwr.common import parameters_to_ndarrays
         final_weights = parameters_to_ndarrays(strategy.final_parameters)
         global_model.set_weights(final_weights)
     

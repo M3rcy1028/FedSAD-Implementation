@@ -1,9 +1,18 @@
 '''
     Define Variational + Transformer AE model architecture
 '''
-from utils import *
-from arguments import get_args
-args = get_args()
+import numpy as np
+import random
+from typing import List, Tuple, Dict, Optional
+from sklearn.metrics import classification_report, confusion_matrix, mean_squared_error, roc_curve, roc_auc_score
+from tensorflow.keras.saving import register_keras_serializable
+import tensorflow as tf
+from tensorflow.keras import layers
+from tensorflow.keras.optimizers import Adam
+import flwr as fl
+from utils.arguments import get_taae_args
+
+args = get_taae_args()
 
 BATCH_SIZE = args.batch_size
 DROPOUT = args.dropout_rate

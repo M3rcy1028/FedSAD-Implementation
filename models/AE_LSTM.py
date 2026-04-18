@@ -1,7 +1,16 @@
-from arguments import get_args
-from utils import *
+import os
+import random
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.utils import shuffle
+import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
+from flwr.common import parameters_to_ndarrays
+from sklearn.metrics import classification_report, confusion_matrix
+import flwr as fl
 from model_aelstm import SaveEvaluationFedAvg, AE_LSTM, FLClient  # 비지도 AE-LSTM
-
+from utils.arguments import get_args
 # ----------------------------
 # 경로 설정
 # ----------------------------
@@ -129,7 +138,7 @@ def get_datasets_nsl_semi(
     X_test,  y_test      = shuffle(X_test,  y_test,      random_state=random_seed)
 
     # 6️⃣ Reshape for AE-LSTM (3D input)
-    X_train_seq = reshape_for_sequence_nsl(X_train, timesteps=timesteps, features=features)
+    X_train_seq = reshape_for_sequence_nsl(X_train, timesteps=timesteps, features=features) #TODO reshape_for_sequence_nsl 정의 필요
     X_test_seq  = reshape_for_sequence_nsl(X_test, timesteps=timesteps, features=features)
 
     print(f"[NSL-KDD Semi] Train: {X_train_seq.shape}, Test: {X_test_seq.shape}")
@@ -137,13 +146,6 @@ def get_datasets_nsl_semi(
     return X_train_seq, y_train_cls, X_test_seq, y_test
 
 # CIC
-import os
-import random
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.utils import shuffle
-
 def reshape_for_sequence(X, timesteps=10, features=2):
     """
     X: (n_samples, n_features_flat)

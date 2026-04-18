@@ -3,8 +3,13 @@ Unsupervised AE-LSTM model
  - Learns only normal data
  - Detects anomalies using reconstruction error
 '''
-from utils import *
-from arguments import get_args
+import numpy as np
+import tensorflow as tf
+import flwr as fl
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras import layers
+from sklearn.metrics import classification_report, confusion_matrix
+from utils.arguments import get_args
 args = get_args()
 
 BATCH_SIZE = 8

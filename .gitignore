@@ -4,7 +4,7 @@
 /FedAVG.py
 /NSL-KDD
 /RNEP.py
-/__pycache__
+**/__pycache__/
 /avg
 /cache_gpu.py
 /client.txt
@@ -27,9 +27,5 @@ KDD99/KDD99_encoded.csv
 KDD99/KDD99_encoded.csv
 FedSAD_env
 results
-*/*/__pycache__
-fed_results/
-fedsad_weights/
-scripts/
-models/
-results/
+fedsad_weights
+fedsad_results

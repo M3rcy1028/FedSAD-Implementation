@@ -4,13 +4,11 @@ import networkx as nx
 import numpy as np
 import pickle
 from itertools import combinations
-from sklearn.metrics import classification_report, confusion_matrix
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from tqdm import tqdm
-from arguments import get_args
-args = get_args()
-from utils import *
+from utils.arguments import get_gsad_args
+from utils.metrics import save_report, plt_confusion_matrix
 
 # ===============================
 #   GSAD-based Feature Extraction
@@ -175,6 +173,9 @@ def run_anomaly_detection(args, normal_file, anomaly_files, model_path):
 #   Main
 # ===============================
 if __name__ == "__main__":
+
+    args = get_gsad_args()
+
     os.makedirs(args.result_path,exist_ok=True)
     model_path=os.path.join(args.result_path, "normal_stats.pkl")
     report_path=os.path.join(args.result_path,"gsad_server.txt")

@@ -1,26 +1,18 @@
 import os
 import pickle
-import time
-from datetime import datetime
-from typing import List, Optional
 
 import numpy as np
 import networkx as nx
 import pandas as pd
 from tqdm import tqdm
 import tensorflow as tf
-
-from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.utils import shuffle
 
-# Custom module imports
-from tensorflow.keras.models import load_model
 from taae import TransformerAAE
 from gsad import create_gsad_from_window, extract_gsad_features
-from utils import fedsad_data_preprocessing, sanitize_numeric, plt_confusion_matrix, save_report
-from arguments import get_args, dataset_configs
-args = get_args()
+from utils.get_datasets import sanitize_numeric, fedsad_data_preprocessing
+from utils.arguments import get_fedsad_args
+from utils.metrics import save_report, plt_confusion_matrix, print_latency, timed_step, GLOBAL_TIMER
 
 # GPU Configuration
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2" 
@@ -204,84 +196,74 @@ def combine_dempster_shafer(m1, m2):
     }
 
 
-def evaluate(df_gsad, df_taae, label):
-    """실시간성 측정을 위해 파이프라인별 시간 측정 로직이 추가된 버전"""
+@timed_step("GSAD")
+def gsad_pipeline(df_window):
+    G = create_gsad_from_window(df_window)
+    feat = extract_gsad_features(G)
+    return gsad_model_predict(feat)
+
+
+@timed_step("TAAE")
+def taae_pipeline(df_window):
+    return taae_model_predict(df_window)
+
+
+@timed_step("Fusion")
+def fusion_pipeline(m_gsad, m_taae):
+    return combine_dempster_shafer(m_gsad, m_taae)
+
+
+def evaluate(df_gsad, df_taae, label,
+             gsad_pipeline,
+             taae_pipeline,
+             fusion_pipeline):
+
     gb_gsad = df_gsad.groupby(pd.Grouper(freq=TIME_WINDOW))
 
     taae_idx = 0
     total_taae_rows = len(df_taae)
-    results = []
+
     y_true, y_pred = [], []
+    results = []
 
-    # --- 시간 측정을 위한 리스트 ---
-    gsad_times = []
-    taae_times = []
-    fusion_times = []
-    total_pipeline_times = []
-
+    # tqdm 추가
     for window_time, df_gsad_window in tqdm(gb_gsad, desc=f"{label} Test"):
         if df_gsad_window.empty:
             continue
 
-        # 전체 파이프라인 시작 시간
-        start_total = time.perf_counter()
+        # GSAD
+        m_gsad = gsad_pipeline(df_gsad_window)
 
-        # 1. GSAD 파이프라인 (특징 추출 + 예측)
-        G = create_gsad_from_window(df_gsad_window)
-        feat = extract_gsad_features(G)
-        start_gsad = time.perf_counter()
-        m_gsad = gsad_model_predict(feat)
-        end_gsad = time.perf_counter()
-        
-        # 2. TAAE 파이프라인 (윈도우 샘플링 + 예측)
-        gsad_window_size = len(df_gsad_window)
-        if taae_idx + gsad_window_size <= total_taae_rows:
-            df_taae_window = df_taae.iloc[taae_idx:taae_idx + gsad_window_size].copy()
-            taae_idx += gsad_window_size
+        # TAAE window
+        size = len(df_gsad_window)
+        if taae_idx + size <= total_taae_rows:
+            df_taae_window = df_taae.iloc[taae_idx:taae_idx + size].copy()
+            taae_idx += size
         else:
-            remaining = (taae_idx + gsad_window_size) - total_taae_rows
-            df_taae_part1 = df_taae.iloc[taae_idx:].copy()
-            df_taae_part2 = df_taae.iloc[:remaining].copy()
-            df_taae_window = pd.concat([df_taae_part1, df_taae_part2], ignore_index=True)
-            taae_idx = remaining
-        start_taae = time.perf_counter()
-        m_taae = taae_model_predict(df_taae_window)
-        end_taae = time.perf_counter()
+            remain = (taae_idx + size) - total_taae_rows
+            df_taae_window = pd.concat([
+                df_taae.iloc[taae_idx:],
+                df_taae.iloc[:remain]
+            ], ignore_index=True)
+            taae_idx = remain
 
-        # 3. DS Fusion (결합 + 최종 결정)
-        start_fusion = time.perf_counter()
-        m_comb = combine_dempster_shafer(m_gsad, m_taae)
+        m_taae = taae_pipeline(df_taae_window)
+
+        # Fusion
+        m_comb = fusion_pipeline(m_gsad, m_taae)
         pred = 1 if m_comb["anomaly"] > m_comb["normal"] else 0
-        end_fusion = time.perf_counter()
-
-        end_total = time.perf_counter()
-
-        # 각 단계별 소요 시간 기록
-        gsad_times.append(end_gsad - start_gsad)
-        taae_times.append(end_taae - start_taae)
-        fusion_times.append(end_fusion - start_fusion)
-        total_pipeline_times.append(end_total - start_total)
 
         y_pred.append(pred)
         y_true.append(0 if label == "Normal" else 1)
+
         results.append({
             "window_time": window_time,
-            "m_gsad": m_gsad, "m_taae": m_taae, "m_comb": m_comb,
-            "pred": pred, "label": label
+            "m_gsad": m_gsad,
+            "m_taae": m_taae,
+            "m_comb": m_comb,
+            "pred": pred,
+            "label": label
         })
-
-    # --- 결과 출력 (Revision용 통계) ---
-    avg_total = np.mean(total_pipeline_times) * 1000
-    std_total = np.std(total_pipeline_times) * 1000 # 표준편차 계산 (ms 단위)
-    
-    print(f"\n⏱️  [{label}] Detailed Latency Analysis (per {TIME_WINDOW} window)")
-    print(f"  - GSAD Step:    {np.mean(gsad_times)*1000:.4f} ± {np.std(gsad_times)*1000:.4f} ms")
-    print(f"  - TAAE Step:    {np.mean(taae_times)*1000:.4f} ± {np.std(taae_times)*1000:.4f} ms")
-    print(f"  - DS Fusion:      {np.mean(fusion_times)*1000:.4f} ± {np.std(fusion_times)*1000:.4f} ms")
-    print("-" * 60)
-    # 전체 파이프라인 평균 ± 표준편차
-    print(f"  - Total Pipeline Time: {avg_total:.4f} ± {std_total:.4f} ms") 
-    print(f"  - Throughput:          {1/(avg_total/1000):.2f} windows/sec")
 
     return y_pred, y_true, results
 
@@ -317,7 +299,7 @@ def calculate_taae_threshold():
 
 if __name__ == "__main__":
 
-    # args = get_args()
+    args, dataset_configs = get_fedsad_args()
 
     config = dataset_configs.get(args.eval_dataset.lower())
     if not config:
@@ -360,15 +342,25 @@ if __name__ == "__main__":
     # Dynamically calculate threshold
     calculate_taae_threshold()
 
+    GLOBAL_TIMER.reset()
+
     # Evaluate normal data
-    normal_pred, normal_test, normal_results = evaluate(
-        gsad_normal_test, taae_normal_test, "Normal"
+    normal_pred, normal_test, normal_results =evaluate(
+        gsad_normal_test, taae_normal_test, "Normal",
+        gsad_pipeline,
+        taae_pipeline,
+        fusion_pipeline
     )
 
     # Evaluate anomaly data
-    anomaly_pred, anomaly_test, anomaly_results = evaluate(
-        gsad_anomaly_test, taae_anomaly_test, "Anomaly"
+    anomaly_pred, anomaly_test, anomaly_results =evaluate(
+        gsad_anomaly_test, taae_anomaly_test, "Anomaly",
+        gsad_pipeline,
+        taae_pipeline,
+        fusion_pipeline
     )
+
+    print_latency("Overall")
 
     y_pred = normal_pred + anomaly_pred
     y_true = normal_test + anomaly_test
