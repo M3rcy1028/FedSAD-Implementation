@@ -19,7 +19,7 @@ from tensorflow.keras.models import load_model
 from taae import TransformerAAE
 from gsad import create_gsad_from_window, extract_gsad_features
 from utils import fedsad_data_preprocessing, sanitize_numeric, plt_confusion_matrix, save_report
-from arguments import get_args, dataset_configs
+from arguments import get_args
 args = get_args()
 
 # GPU Configuration
@@ -317,7 +317,26 @@ def calculate_taae_threshold():
 
 if __name__ == "__main__":
 
-    # args = get_args()
+    dataset_configs = {
+        "cic": {
+            "taae_dir": f"{args.base_data_path}/cic_rnep",
+            "gsad_dir": f"{args.base_data_path}/cic_graph",
+            "taae_model": "fedsad_weights/fedsad_cic_weights.h5",
+            "gsad_model": "fedsad_weights/normal_stats.pkl",
+            "result_path": "fedsad_results/fedsad_cic",
+            "normal_file": "CIC_ae_normal.csv", # 정상 파일 이름
+            "anomaly_prefix": "CIC_anomaly_ae_" # 이상 파일 접두사
+        },
+        "unsw": {
+            "taae_dir": f"{args.base_data_path}/unsw_rnep",
+            "gsad_dir": f"{args.base_data_path}/unsw_graph",
+            "taae_model": "fedsad_weights/fedsad_unsw_weights.h5",
+            "gsad_model": "fedsad_weights/normal_stats.pkl",
+            "result_path": "fedsad_results/fedsad_unsw",
+            "normal_file": "UNSW_NB15_normal.csv", # 정상 파일 이름 (예시)
+            "anomaly_prefix": "UNSW_NB15_anomaly_"  # 이상 파일 접두사
+        }
+    }
 
     config = dataset_configs.get(args.eval_dataset.lower())
     if not config:
