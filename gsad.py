@@ -58,7 +58,9 @@ def compute_stats_from_df(df, time_window):
     if "Timestamp" not in df.columns:
         raise KeyError("❌ 'Timestamp' column is required.")
 
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], dayfirst=True, errors="coerce")
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"],
+               dayfirst = True,
+               errors="coerce")
     df.set_index("Timestamp", inplace=True)
     df.sort_index(inplace=True)
 
@@ -86,13 +88,25 @@ def compute_stats_from_df(df, time_window):
 # ===============================
 #   Training
 # ===============================
-def train_single_model(args, normal_file,savefile_path):
-    if not os.path.exists(normal_file):
-        raise FileNotFoundError(f"❌ {normal_file} not found")
+def train_single_model(args, normal_file, savefile_path):
 
-    df_normal = pd.read_csv(normal_file)
-    df_train = df_normal.sample(frac=0.8, random_state=123).copy()
+    df = pd.read_csv(normal_file)
+    df["Label"] = "Benign"
+    # 시간 정렬
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"],
+                dayfirst=True,
+               errors="coerce")
+    df = df.dropna(subset=["Timestamp"]).sort_values("Timestamp")
 
+    # 정상만
+
+    # 60% train (과거)
+    n = len(df)
+    train_end = int(n * 0.5)
+    df_train_full = df.iloc[:train_end]
+    df_future = df.iloc[train_end:]
+
+    df_train = df_train_full[df_train_full["Label"] == "Benign"]
     stats = compute_stats_from_df(df_train, args.time_window)
 
     mean = stats["mean"]
@@ -101,34 +115,72 @@ def train_single_model(args, normal_file,savefile_path):
     normal_stats = pd.DataFrame([mean, std], index=["mean", "std"])
     normal_stats = normal_stats[["num_nodes", "num_edges", "density", "avg_degree"]]
 
-
     with open(savefile_path, "wb") as f:
         pickle.dump(normal_stats, f)
 
-    print("\n=== Train ===")
-    print(f"Saved to: {savefile_path}")
-    print(normal_stats)
-
+    print("\n=== Train (Time-based 60%) ===")
     return normal_stats
-
 
 # ===============================
 #   Evaluation
 # ===============================
-def run_anomaly_detection(args, normal_file, anomaly_files, model_path):
+def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
 
     with open(model_path, "rb") as f:
         normal_stats = pickle.load(f)
 
     df_normal = pd.read_csv(normal_file)
-    df_test = df_normal.drop(df_normal.sample(frac=0.8, random_state=123).index).copy()
+    df_normal["Label"] = "Benign"   # 🔥 추가
 
-    df_test["Timestamp"] = pd.to_datetime(df_test["Timestamp"], dayfirst=True, errors="coerce")
-    df_test.set_index("Timestamp", inplace=True)
-    df_test.sort_index(inplace=True)
+    # anomaly
+    df_anomaly_list = []
 
-    y_true, y_pred = [], []
+    for f in anomaly_files:
+        df_tmp = pd.read_csv(f)
 
+        # 파일 이름에서 라벨 추출
+        label_name = os.path.basename(f).replace(".csv", "")
+
+        df_tmp["Label"] = label_name 
+        df_anomaly_list.append(df_tmp)
+
+    df_anomaly = pd.concat(df_anomaly_list, ignore_index=True)
+
+    df_all = pd.concat([df_normal, df_anomaly], ignore_index=True)
+
+    df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], dayfirst=True, errors="coerce")
+    df_all = df_all.dropna(subset=["Timestamp"]).sort_values("Timestamp").reset_index(drop=True)
+
+    n = len(df_all)
+    train_end = int(n * 0.5)
+
+    df_future = df_all.iloc[train_end:].copy()
+
+
+    # -------------------------------
+    # 3. sliding window split
+    # -------------------------------
+    df_future.set_index("Timestamp", inplace=True)
+
+    windows = [
+        w for _, w in df_future.groupby(pd.Grouper(freq=args.time_window))
+        if not w.empty
+    ]
+
+    valid_windows = []
+    test_windows = []
+
+    split = int(len(windows) * 0.5)
+
+    valid_windows = windows[:split]
+    test_windows  = windows[split:]
+
+    df_valid = pd.concat(valid_windows).sort_index()
+    df_test  = pd.concat(test_windows).sort_index()
+
+    # -------------------------------
+    # detection 함수
+    # -------------------------------
     def check(feat):
         for name, val in feat.items():
             if name not in normal_stats.columns:
@@ -137,37 +189,80 @@ def run_anomaly_detection(args, normal_file, anomaly_files, model_path):
             mean = float(normal_stats.loc["mean", name])
             std = float(normal_stats.loc["std", name])
 
-            lower = mean - args.threshold_std * std
-            upper = mean + args.threshold_std * std
-
-            if not (lower <= val <= upper):
+            if not (mean - args.threshold_std * std <= val <= mean + args.threshold_std * std):
                 return 1
         return 0
 
-    # normal
-    for _, df_window in tqdm(df_test.groupby(pd.Grouper(freq=args.time_window))):
+    # -------------------------------
+    # VALID
+    # -------------------------------
+    y_true_valid, y_pred_valid = [], []
+
+    for _, df_window in tqdm(df_valid.groupby(pd.Grouper(freq=args.time_window)), desc="VALID"):
         G = create_gsad_from_window(df_window)
         if not G:
             continue
-        y_pred.append(check(extract_gsad_features(G)))
-        y_true.append(0)
 
-    # anomaly
-    df_anomaly = pd.concat([pd.read_csv(f) for f in anomaly_files], ignore_index=True)
+        feat=extract_gsad_features(G)
+        pred = check(feat)
+        # ratio = (df_window["Label"] != "Benign").mean()
+        # label = 1 if ratio > 0.3 else 0
+        label = 1 if (df_window["Label"] != "Benign").any() else 0
 
-    df_anomaly["Timestamp"] = pd.to_datetime(df_anomaly["Timestamp"], dayfirst=True, errors="coerce")
-    df_anomaly.set_index("Timestamp", inplace=True)
-    df_anomaly.sort_index(inplace=True)
+        y_pred_valid.append(pred)
+        y_true_valid.append(label)
 
-    for _, df_window in tqdm(df_anomaly.groupby(pd.Grouper(freq=args.time_window))):
+        if pred == 0:
+            normal_stats = update_stats(normal_stats, [feat])
+
+    # -------------------------------
+    # TEST
+    # -------------------------------
+    y_true_test, y_pred_test = [], []
+
+    for _, df_window in tqdm(df_test.groupby(pd.Grouper(freq=args.time_window)), desc="TEST"):
         G = create_gsad_from_window(df_window)
         if not G:
             continue
-        y_pred.append(check(extract_gsad_features(G)))
-        y_true.append(1)
+        
+        feat = extract_gsad_features(G)
+        # ratio = (df_window["Label"] != "Benign").mean()
+        # label = 1 if ratio > 0.3 else 0
+        label = 1 if (df_window["Label"] != "Benign").any() else 0
 
-    return y_true, y_pred
+        pred = check(feat)
 
+        y_pred_test.append(pred)
+        y_true_test.append(label)
+
+
+    return y_true_valid, y_pred_valid, y_true_test, y_pred_test
+
+def update_stats(normal_stats, feat_list, alpha=0.2):
+
+    df_feat = pd.DataFrame(feat_list)
+
+    old_mean = normal_stats.loc["mean"]
+    old_std  = normal_stats.loc["std"]
+    old_var  = old_std ** 2
+
+    new_mean = df_feat.mean()
+    new_std  = df_feat.std(ddof=0)
+    new_var  = new_std ** 2
+
+    updated_mean = (1 - alpha) * old_mean + alpha * new_mean
+
+    updated_var = (
+        (1 - alpha) * (old_var + (old_mean - updated_mean) ** 2)
+        + alpha * (new_var + (new_mean - updated_mean) ** 2)
+    )
+
+    updated_std = np.sqrt(updated_var)
+
+    return pd.DataFrame(
+        [updated_mean, updated_std],
+        index=["mean", "std"]
+    )
 
 # ===============================
 #   Main
@@ -182,6 +277,7 @@ if __name__ == "__main__":
     matrix_path=os.path.join(args.result_path,"gsad_cm.png")
 
     normal_file = args.normal_file or os.path.join(args.ae_data_dir, "CIC_ae_normal.csv")
+    # normal_file = args.normal_file or os.path.join(args.ae_data_dir, "all_processed.csv")
 
     anomaly_files = [
         os.path.join(args.ae_data_dir, f)
@@ -189,9 +285,20 @@ if __name__ == "__main__":
         if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")
     ]
 
-    train_single_model(args, normal_file,model_path)
-    y_true,y_pred=run_anomaly_detection(args, normal_file, anomaly_files, model_path)
+    train_single_model(args, normal_file, model_path)
+
+    y_true_valid, y_pred_valid, y_true_test, y_pred_test = run_anomaly_detection(
+        args, normal_file, anomaly_files, model_path
+    )
+
+    # validation 결과
+    save_report(y_true_valid, y_pred_valid, report_path.replace(".txt", "_valid.txt"))
+
+    # test 결과
+    save_report(y_true_test, y_pred_test, report_path)
+    plt_confusion_matrix(y_true_test, y_pred_test, matrix_path)
+    # y_true,y_pred=run_anomaly_detection(args, normal_file, anomaly_files, model_path)
 
     
-    save_report(y_true,y_pred,report_path)
-    plt_confusion_matrix(y_true,y_pred,matrix_path)
+    # save_report(y_true,y_pred,report_path)
+    # plt_confusion_matrix(y_true,y_pred,matrix_path)

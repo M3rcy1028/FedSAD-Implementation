@@ -116,7 +116,7 @@ def get_gsad_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--time_window", type=str, default="1T")
-    parser.add_argument("--threshold_std", type=float, default=0.25)
+    parser.add_argument("--threshold_std", type=float, default=3)
 
     parser.add_argument("--ae_data_dir", type=str,
                         default="/data/SDP_Dataset/Unified_model/cic_graph")
