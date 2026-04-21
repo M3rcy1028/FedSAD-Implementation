@@ -91,20 +91,14 @@ def compute_stats_from_df(df, time_window):
 def train_single_model(args, normal_file, savefile_path):
 
     df = pd.read_csv(normal_file)
-    df["Label"] = "Benign"
     # 시간 정렬
     df["Timestamp"] = pd.to_datetime(df["Timestamp"],
-                dayfirst=True,
                errors="coerce")
     df = df.dropna(subset=["Timestamp"]).sort_values("Timestamp")
 
-    # 정상만
-
-    # 60% train (과거)
     n = len(df)
-    train_end = int(n * 0.5)
+    train_end = int(n * 0.6)
     df_train_full = df.iloc[:train_end]
-    df_future = df.iloc[train_end:]
 
     df_train = df_train_full[df_train_full["Label"] == "Benign"]
     stats = compute_stats_from_df(df_train, args.time_window)
@@ -124,35 +118,18 @@ def train_single_model(args, normal_file, savefile_path):
 # ===============================
 #   Evaluation
 # ===============================
-def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
+def run_anomaly_detection(args, data_file , model_path):
 
     with open(model_path, "rb") as f:
         normal_stats = pickle.load(f)
 
-    df_normal = pd.read_csv(normal_file)
-    df_normal["Label"] = "Benign"   # 🔥 추가
+    df_all = pd.read_csv(data_file)
 
-    # anomaly
-    df_anomaly_list = []
-
-    for f in anomaly_files:
-        df_tmp = pd.read_csv(f)
-
-        # 파일 이름에서 라벨 추출
-        label_name = os.path.basename(f).replace(".csv", "")
-
-        df_tmp["Label"] = label_name 
-        df_anomaly_list.append(df_tmp)
-
-    df_anomaly = pd.concat(df_anomaly_list, ignore_index=True)
-
-    df_all = pd.concat([df_normal, df_anomaly], ignore_index=True)
-
-    df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], dayfirst=True, errors="coerce")
+    df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors="coerce")
     df_all = df_all.dropna(subset=["Timestamp"]).sort_values("Timestamp").reset_index(drop=True)
 
     n = len(df_all)
-    train_end = int(n * 0.5)
+    train_end = int(n * 0.6)
 
     df_future = df_all.iloc[train_end:].copy()
 
@@ -205,9 +182,9 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
 
         feat=extract_gsad_features(G)
         pred = check(feat)
-        # ratio = (df_window["Label"] != "Benign").mean()
-        # label = 1 if ratio > 0.3 else 0
-        label = 1 if (df_window["Label"] != "Benign").any() else 0
+        ratio = (df_window["Label"] != "Benign").mean()
+        label = 1 if ratio > 0.3 else 0
+        # label = 1 if (df_window["Label"] != "Benign").any() else 0
 
         y_pred_valid.append(pred)
         y_true_valid.append(label)
@@ -226,9 +203,9 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
             continue
         
         feat = extract_gsad_features(G)
-        # ratio = (df_window["Label"] != "Benign").mean()
-        # label = 1 if ratio > 0.3 else 0
-        label = 1 if (df_window["Label"] != "Benign").any() else 0
+        ratio = (df_window["Label"] != "Benign").mean()
+        label = 1 if ratio > 0.3 else 0
+        # label = 1 if (df_window["Label"] != "Benign").any() else 0
 
         pred = check(feat)
 
@@ -276,19 +253,19 @@ if __name__ == "__main__":
     report_path=os.path.join(args.result_path,"gsad_server.txt")
     matrix_path=os.path.join(args.result_path,"gsad_cm.png")
 
-    normal_file = args.normal_file or os.path.join(args.ae_data_dir, "CIC_ae_normal.csv")
-    # normal_file = args.normal_file or os.path.join(args.ae_data_dir, "all_processed.csv")
+    # normal_file = args.normal_file or os.path.join(args.ae_data_dir, "CIC_ae_normal.csv")
+    normal_file = args.normal_file or os.path.join(args.ae_data_dir, "combined_dataset.csv")
 
-    anomaly_files = [
-        os.path.join(args.ae_data_dir, f)
-        for f in os.listdir(args.ae_data_dir)
-        if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")
-    ]
+    # anomaly_files = [
+    #     os.path.join(args.ae_data_dir, f)
+    #     for f in os.listdir(args.ae_data_dir)
+    #     if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")
+    # ]
 
     train_single_model(args, normal_file, model_path)
 
     y_true_valid, y_pred_valid, y_true_test, y_pred_test = run_anomaly_detection(
-        args, normal_file, anomaly_files, model_path
+        args, normal_file, model_path
     )
 
     # validation 결과
