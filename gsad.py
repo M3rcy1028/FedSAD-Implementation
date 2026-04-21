@@ -3,6 +3,7 @@ import os
 import networkx as nx
 import numpy as np
 import pickle
+from collections import Counter, defaultdict
 from itertools import combinations
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -17,32 +18,100 @@ def create_gsad_from_window(df_window):
     if df_window.empty:
         return None
 
-    nodes = df_window['Dst Port'].unique()
     G = nx.Graph()
-    G.add_nodes_from(nodes)
 
-    if len(nodes) > 1:
-        for node_pair in combinations(nodes, 2):
-            G.add_edge(*node_pair)
+    # port 등장 빈도
+    port_counts = Counter(df_window['Dst Port'])
+
+    ports = list(port_counts.keys())
+
+    for u, v in combinations(ports, 2):
+        weight = port_counts[u] + port_counts[v]   # weight 정의
+        G.add_edge(u, v, weight=weight)
 
     return G
 
 
+import numpy as np
+from scipy.stats import entropy
+
 def extract_gsad_features(G):
     if G is None or G.number_of_nodes() == 0:
-        return {'num_nodes': 0, 'num_edges': 0, 'density': 0, 'avg_degree': 0}
+        return {
+            'num_nodes': 0,
+            'num_edges': 0,
+            'total_weight': 0,
+            'avg_weight': 0,
+            'max_weight': 0,
+            'weight_std': 0,
+            'weight_entropy': 0,
+            'max_strength': 0,
+            'std_strength': 0,
+            'top1_ratio': 0
+        }
 
-    density = nx.density(G)
-    degrees = [val for (_, val) in G.degree()]
-    avg_degree = np.mean(degrees) if len(degrees) else 0
+    num_nodes = G.number_of_nodes()
+    num_edges = G.number_of_edges()
+
+    # -------------------------
+    # Edge weight 처리
+    # -------------------------
+    weights = []
+
+    for _, _, data in G.edges(data=True):
+        w = data.get("weight", 1.0)  # weight 없으면 1
+        weights.append(w)
+
+    weights = np.array(weights) if len(weights) > 0 else np.array([0.0])
+
+    total_weight = weights.sum()
+    avg_weight = weights.mean()
+    max_weight = weights.max()
+    weight_std = weights.std()
+
+    # -------------------------
+    # Entropy (중요)
+    # -------------------------
+    if total_weight > 0:
+        prob = weights / total_weight
+        weight_entropy = entropy(prob)
+    else:
+        weight_entropy = 0
+
+    # -------------------------
+    # Node strength (weighted degree)
+    # -------------------------
+    strengths = dict(G.degree(weight='weight'))
+
+    if strengths:
+        strength_values = np.array(list(strengths.values()))
+        max_strength = strength_values.max()
+        std_strength = strength_values.std()
+    else:
+        max_strength = 0
+        std_strength = 0
+
+    # -------------------------
+    # 집중도 (top-k)
+    # -------------------------
+    if total_weight > 0:
+        weights_sorted = np.sort(weights)[::-1]
+        top1_ratio = weights_sorted[0] / total_weight
+    else:
+        top1_ratio = 0
 
     return {
-        'num_nodes': G.number_of_nodes(),
-        'num_edges': G.number_of_edges(),
-        'density': density,
-        'avg_degree': avg_degree
+        'num_nodes': num_nodes,
+        'num_edges': num_edges,
+        'total_weight': total_weight,
+        'avg_weight': avg_weight,
+        'max_weight': max_weight,
+        'weight_std': weight_std,
+        'weight_entropy': weight_entropy,
+        'max_strength': max_strength,
+        'std_strength': std_strength,
+        'top1_ratio': top1_ratio
     }
-
 
 # ===============================
 #   Statistics Computation
@@ -104,16 +173,32 @@ def train_single_model(args, normal_file, savefile_path):
     n = len(df)
     train_end = int(n * 0.5)
     df_train_full = df.iloc[:train_end]
-    df_future = df.iloc[train_end:]
 
     df_train = df_train_full[df_train_full["Label"] == "Benign"]
     stats = compute_stats_from_df(df_train, args.time_window)
 
-    mean = stats["mean"]
-    std = np.sqrt(stats["var"].clip(lower=0))
+    stats = compute_stats_from_df(df_train, args.time_window)
 
-    normal_stats = pd.DataFrame([mean, std], index=["mean", "std"])
-    normal_stats = normal_stats[["num_nodes", "num_edges", "density", "avg_degree"]]
+    mean = stats["mean"]
+    var  = stats["var"].clip(lower=1e-6) 
+    std  = np.sqrt(var)
+
+    selected_features = [
+        "num_nodes",
+        "num_edges",
+        "total_weight",
+        "avg_weight",
+        "max_weight",
+        "weight_std",
+        "weight_entropy",
+        "max_strength",
+        "std_strength",
+        "top1_ratio"
+    ]
+    normal_stats = pd.DataFrame(
+        [mean[selected_features], std[selected_features]],
+        index=["mean", "std"]
+    )
 
     with open(savefile_path, "wb") as f:
         pickle.dump(normal_stats, f)
@@ -126,11 +211,13 @@ def train_single_model(args, normal_file, savefile_path):
 # ===============================
 def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
 
+    k_dict = parse_feature_thresholds(args.feature_thresholds)
+
     with open(model_path, "rb") as f:
         normal_stats = pickle.load(f)
 
     df_normal = pd.read_csv(normal_file)
-    df_normal["Label"] = "Benign"   # 🔥 추가
+    df_normal["Label"] = "Benign"  
 
     # anomaly
     df_anomaly_list = []
@@ -152,7 +239,7 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
     df_all = df_all.dropna(subset=["Timestamp"]).sort_values("Timestamp").reset_index(drop=True)
 
     n = len(df_all)
-    train_end = int(n * 0.5)
+    train_end = int(n * 0.6)
 
     df_future = df_all.iloc[train_end:].copy()
 
@@ -181,22 +268,46 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
     # -------------------------------
     # detection 함수
     # -------------------------------
+    # def check(feat):
+    #     for name, val in feat.items():
+    #         if name not in normal_stats.columns:
+    #             continue
+
+    #         mean = float(normal_stats.loc["mean", name])
+    #         std  = float(normal_stats.loc["std", name])
+
+
+    #         k = k_dict[name]
+
+    #         if not (mean - k * std <= val <= mean + k * std):
+    #             return 1
+
+    #     return 0
+
     def check(feat):
+        outlier_count = 0
+
         for name, val in feat.items():
             if name not in normal_stats.columns:
                 continue
 
             mean = float(normal_stats.loc["mean", name])
-            std = float(normal_stats.loc["std", name])
+            std  = float(normal_stats.loc["std", name])
 
-            if not (mean - args.threshold_std * std <= val <= mean + args.threshold_std * std):
-                return 1
-        return 0
+            k = k_dict[name]
+
+            if not (mean - k * std <= val <= mean + k * std):
+                outlier_count += 1
+
+        return 1 if outlier_count >= 1 else 0
+  
 
     # -------------------------------
     # VALID
     # -------------------------------
     y_true_valid, y_pred_valid = [], []
+
+    feature_margins = defaultdict(list)
 
     for _, df_window in tqdm(df_valid.groupby(pd.Grouper(freq=args.time_window)), desc="VALID"):
         G = create_gsad_from_window(df_window)
@@ -206,14 +317,42 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
         feat=extract_gsad_features(G)
         pred = check(feat)
         # ratio = (df_window["Label"] != "Benign").mean()
-        # label = 1 if ratio > 0.3 else 0
+        # label = 1 if ratio > 0.2 else 0
         label = 1 if (df_window["Label"] != "Benign").any() else 0
+
+        z_dict = compute_margin_per_feature(feat, normal_stats)
+
+        if pred == 1 and label == 0:
+            for f, z in z_dict.items():
+                feature_margins[f].append(z)
 
         y_pred_valid.append(pred)
         y_true_valid.append(label)
 
         if pred == 0:
             normal_stats = update_stats(normal_stats, [feat])
+
+    # print("\n=== Feature-wise Margin Statistics ===")
+
+    # for f, values in feature_margins.items():
+    #     arr = np.array(values)
+
+    #     if len(arr) == 0:
+    #         continue
+
+
+    #     k = k_dict[f]
+
+
+    #     print(f"\n[{f}]")
+    #     print(f"count: {len(arr)}")
+    #     print(f"mean : {arr.mean():.4f}")
+    #     print(f"std  : {arr.std():.4f}")
+    #     print(f"min  : {arr.min():.4f}")
+    #     print(f"max  : {arr.max():.4f}")
+    #     print(f"threshold k: {k}")
+    #     print(f"> k  : {(arr > k).mean():.2%}")
+
 
     # -------------------------------
     # TEST
@@ -227,7 +366,7 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
         
         feat = extract_gsad_features(G)
         # ratio = (df_window["Label"] != "Benign").mean()
-        # label = 1 if ratio > 0.3 else 0
+        # label = 1 if ratio > 0.2 else 0
         label = 1 if (df_window["Label"] != "Benign").any() else 0
 
         pred = check(feat)
@@ -263,6 +402,37 @@ def update_stats(normal_stats, feat_list, alpha=0.2):
         [updated_mean, updated_std],
         index=["mean", "std"]
     )
+
+def compute_margin_per_feature(feat, normal_stats):
+    z_dict = {}
+
+    for name, val in feat.items():
+        if name not in normal_stats.columns:
+            continue
+
+        mean = float(normal_stats.loc["mean", name])
+        std  = float(normal_stats.loc["std", name])
+
+        if std < 1e-3:
+            continue
+
+        z = abs(val - mean) / std
+        z_dict[name] = z
+
+    return z_dict
+
+def parse_feature_thresholds(threshold_str):
+    if threshold_str is None:
+        return None
+
+    result = {}
+    pairs = threshold_str.split(",")
+
+    for p in pairs:
+        key, val = p.split(":")
+        result[key.strip()] = float(val)
+
+    return result
 
 # ===============================
 #   Main
