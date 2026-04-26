@@ -332,26 +332,26 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
         if pred == 0:
             normal_stats = update_stats(normal_stats, [feat])
 
-    # print("\n=== Feature-wise Margin Statistics ===")
+    print("\n=== Feature-wise Margin Statistics ===")
 
-    # for f, values in feature_margins.items():
-    #     arr = np.array(values)
+    for f, values in feature_margins.items():
+        arr = np.array(values)
 
-    #     if len(arr) == 0:
-    #         continue
-
-
-    #     k = k_dict[f]
+        if len(arr) == 0:
+            continue
 
 
-    #     print(f"\n[{f}]")
-    #     print(f"count: {len(arr)}")
-    #     print(f"mean : {arr.mean():.4f}")
-    #     print(f"std  : {arr.std():.4f}")
-    #     print(f"min  : {arr.min():.4f}")
-    #     print(f"max  : {arr.max():.4f}")
-    #     print(f"threshold k: {k}")
-    #     print(f"> k  : {(arr > k).mean():.2%}")
+        k = k_dict[f]
+
+
+        print(f"\n[{f}]")
+        print(f"count: {len(arr)}")
+        print(f"mean : {arr.mean():.4f}")
+        print(f"std  : {arr.std():.4f}")
+        print(f"min  : {arr.min():.4f}")
+        print(f"max  : {arr.max():.4f}")
+        print(f"threshold k: {k}")
+        print(f"> k  : {(arr > k).mean():.2%}")
 
 
     # -------------------------------
