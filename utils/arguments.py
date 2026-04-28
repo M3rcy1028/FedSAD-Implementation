@@ -116,11 +116,11 @@ def get_gsad_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--time_window", type=str, default="1T")
-    # parser.add_argument("--threshold_std", type=float, default=5)
+
     parser.add_argument(
         "--feature_thresholds",
         type=str,
-        default="num_nodes:3,num_edges:3,total_weight:4,avg_weight:5,max_weight:3,weight_std:5,weight_entropy:6,max_strength:5,std_strength:5,top1_ratio:10",
+        default="num_nodes:0.15,num_edges:0.15,total_weight:0.058, avg_weight:0.8, max_weight:1 ,weight_std:5,weight_entropy:0.5,max_strength:3,std_strength:0.6,top1_ratio:0.1",
         help="feature별 threshold (예: num_nodes:6,num_edges:6,max_weight:4,top1_ratio:3)"
     )
     parser.add_argument("--ae_data_dir", type=str,

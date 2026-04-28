@@ -171,12 +171,10 @@ def train_single_model(args, normal_file, savefile_path):
 
     # 60% train (과거)
     n = len(df)
-    train_end = int(n * 0.5)
+    train_end = int(n * 0.6)
     df_train_full = df.iloc[:train_end]
 
     df_train = df_train_full[df_train_full["Label"] == "Benign"]
-    stats = compute_stats_from_df(df_train, args.time_window)
-
     stats = compute_stats_from_df(df_train, args.time_window)
 
     mean = stats["mean"]
@@ -209,7 +207,7 @@ def train_single_model(args, normal_file, savefile_path):
 # ===============================
 #   Evaluation
 # ===============================
-def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
+def run_anomaly_detection(args, normal_file, anomaly_files, model_path):
 
     k_dict = parse_feature_thresholds(args.feature_thresholds)
 
@@ -217,73 +215,43 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
         normal_stats = pickle.load(f)
 
     df_normal = pd.read_csv(normal_file)
-    df_normal["Label"] = "Benign"  
+    df_normal["Label"] = "Benign"
+
 
     # anomaly
     df_anomaly_list = []
-
     for f in anomaly_files:
         df_tmp = pd.read_csv(f)
-
-        # 파일 이름에서 라벨 추출
         label_name = os.path.basename(f).replace(".csv", "")
-
-        df_tmp["Label"] = label_name 
+        df_tmp["Label"] = label_name
         df_anomaly_list.append(df_tmp)
 
     df_anomaly = pd.concat(df_anomaly_list, ignore_index=True)
 
-    df_all = pd.concat([df_normal, df_anomaly], ignore_index=True)
+    df_normal["Timestamp"] = pd.to_datetime(df_normal["Timestamp"], dayfirst=True, errors="coerce")
+    df_normal = df_normal.dropna(subset=["Timestamp"]).sort_values("Timestamp").reset_index(drop=True)
 
-    df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], dayfirst=True, errors="coerce")
-    df_all = df_all.dropna(subset=["Timestamp"]).sort_values("Timestamp").reset_index(drop=True)
-
-    n = len(df_all)
-    train_end = int(n * 0.6)
-
-    df_future = df_all.iloc[train_end:].copy()
-
+    df_anomaly["Timestamp"] = pd.to_datetime(df_anomaly["Timestamp"], dayfirst=True, errors="coerce")
+    df_anomaly = df_anomaly.dropna(subset=["Timestamp"]).sort_values("Timestamp").reset_index(drop=True)
 
     # -------------------------------
-    # 3. sliding window split
+    # 2. normal 기준 split
     # -------------------------------
-    df_future.set_index("Timestamp", inplace=True)
+    n_normal = len(df_normal)
+    train_end = int(n_normal * 0.6)
 
-    windows = [
-        w for _, w in df_future.groupby(pd.Grouper(freq=args.time_window))
-        if not w.empty
-    ]
+    # train에서 사용된 normal 제외 → test용 normal
+    df_test_normal = df_normal.iloc[train_end:].copy()
 
-    valid_windows = []
-    test_windows = []
+    df_test = pd.concat([df_test_normal, df_anomaly], ignore_index=True)
 
-    split = int(len(windows) * 0.5)
+    df_test = df_test.sort_values("Timestamp").reset_index(drop=True)
 
-    valid_windows = windows[:split]
-    test_windows  = windows[split:]
-
-    df_valid = pd.concat(valid_windows).sort_index()
-    df_test  = pd.concat(test_windows).sort_index()
+    df_test.set_index("Timestamp", inplace=True)
 
     # -------------------------------
     # detection 함수
     # -------------------------------
-    # def check(feat):
-    #     for name, val in feat.items():
-    #         if name not in normal_stats.columns:
-    #             continue
-
-    #         mean = float(normal_stats.loc["mean", name])
-    #         std  = float(normal_stats.loc["std", name])
-
-
-    #         k = k_dict[name]
-
-    #         if not (mean - k * std <= val <= mean + k * std):
-    #             return 1
-
-    #     return 0
-
     def check(feat):
         outlier_count = 0
 
@@ -293,89 +261,93 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
 
             mean = float(normal_stats.loc["mean", name])
             std  = float(normal_stats.loc["std", name])
-
             k = k_dict[name]
 
-            if not (mean - k * std <= val <= mean + k * std):
+            # if not (mean - k * std <= val <= mean + k * std):
+            #     outlier_count += 1
+            if name=="top1_ratio" and not (mean - k * std <= val ):
+                outlier_count+=1
+            elif not (val <= mean + k * std):
                 outlier_count += 1
 
-        return 1 if outlier_count >= 1 else 0
-  
+        return 1 if outlier_count >= 2 else 0
 
     # -------------------------------
-    # VALID
+    # z-score 계산
     # -------------------------------
-    y_true_valid, y_pred_valid = [], []
+    def compute_z(feat):
+        z_dict = {}
+        for name, val in feat.items():
+            if name not in normal_stats.columns:
+                continue
 
-    feature_margins = defaultdict(list)
+            mean = float(normal_stats.loc["mean", name])
+            std  = float(normal_stats.loc["std", name])
 
-    for _, df_window in tqdm(df_valid.groupby(pd.Grouper(freq=args.time_window)), desc="VALID"):
-        G = create_gsad_from_window(df_window)
-        if not G:
-            continue
+            if std == 0:
+                continue
 
-        feat=extract_gsad_features(G)
-        pred = check(feat)
-        # ratio = (df_window["Label"] != "Benign").mean()
-        # label = 1 if ratio > 0.2 else 0
-        label = 1 if (df_window["Label"] != "Benign").any() else 0
+            z = abs((val - mean) / std)
+            z_dict[name] = z
 
-        z_dict = compute_margin_per_feature(feat, normal_stats)
-
-        if pred == 1 and label == 0:
-            for f, z in z_dict.items():
-                feature_margins[f].append(z)
-
-        y_pred_valid.append(pred)
-        y_true_valid.append(label)
-
-        if pred == 0:
-            normal_stats = update_stats(normal_stats, [feat])
-
-    print("\n=== Feature-wise Margin Statistics ===")
-
-    for f, values in feature_margins.items():
-        arr = np.array(values)
-
-        if len(arr) == 0:
-            continue
-
-
-        k = k_dict[f]
-
-
-        print(f"\n[{f}]")
-        print(f"count: {len(arr)}")
-        print(f"mean : {arr.mean():.4f}")
-        print(f"std  : {arr.std():.4f}")
-        print(f"min  : {arr.min():.4f}")
-        print(f"max  : {arr.max():.4f}")
-        print(f"threshold k: {k}")
-        print(f"> k  : {(arr > k).mean():.2%}")
-
+        return z_dict
 
     # -------------------------------
     # TEST
     # -------------------------------
     y_true_test, y_pred_test = [], []
 
+    normal_margins = defaultdict(list)
+    anomaly_margins = defaultdict(list)
+
     for _, df_window in tqdm(df_test.groupby(pd.Grouper(freq=args.time_window)), desc="TEST"):
         G = create_gsad_from_window(df_window)
         if not G:
             continue
-        
-        feat = extract_gsad_features(G)
-        # ratio = (df_window["Label"] != "Benign").mean()
-        # label = 1 if ratio > 0.2 else 0
-        label = 1 if (df_window["Label"] != "Benign").any() else 0
 
+        feat = extract_gsad_features(G)
+
+        label = 1 if (df_window["Label"] != "Benign").any() else 0
         pred = check(feat)
+
+        z_dict = compute_z(feat)
+
+        # 분포 저장
+        for f, z in z_dict.items():
+            if label == 0:
+                normal_margins[f].append(z)
+            else:
+                anomaly_margins[f].append(z)
 
         y_pred_test.append(pred)
         y_true_test.append(label)
 
+    # -------------------------------
+    # 결과 출력
+    # -------------------------------
+    print("\n=== Feature-wise Distribution ===")
 
-    return y_true_valid, y_pred_valid, y_true_test, y_pred_test
+    for f in k_dict.keys():
+        normal_arr = np.array(normal_margins[f])
+        anomaly_arr = np.array(anomaly_margins[f])
+
+        if len(normal_arr) == 0 or len(anomaly_arr) == 0:
+            continue
+
+        k = k_dict[f]
+
+        print(f"\n[{f}]")
+
+        print(f"[Normal]")
+        print(f" mean: {normal_arr.mean():.4f}, std: {normal_arr.std():.4f}")
+        print(f" >threshold : {(normal_arr > k).mean():.2%}")
+
+        print(f"[Anomaly]")
+        print(f" mean: {anomaly_arr.mean():.4f}, std: {anomaly_arr.std():.4f}")
+        print(f" <threshold : {(anomaly_arr < k).mean():.2%}")
+
+    return y_true_test, y_pred_test
+
 
 def update_stats(normal_stats, feat_list, alpha=0.2):
 
@@ -457,12 +429,16 @@ if __name__ == "__main__":
 
     train_single_model(args, normal_file, model_path)
 
-    y_true_valid, y_pred_valid, y_true_test, y_pred_test = run_anomaly_detection(
+    # y_true_valid, y_pred_valid, y_true_test, y_pred_test = run_anomaly_detection(
+    #     args, normal_file, anomaly_files, model_path
+    # )
+
+    y_true_test, y_pred_test = run_anomaly_detection(
         args, normal_file, anomaly_files, model_path
     )
 
     # validation 결과
-    save_report(y_true_valid, y_pred_valid, report_path.replace(".txt", "_valid.txt"))
+    # save_report(y_true_valid, y_pred_valid, report_path.replace(".txt", "_valid.txt"))
 
     # test 결과
     save_report(y_true_test, y_pred_test, report_path)
