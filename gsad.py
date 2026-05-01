@@ -25,9 +25,19 @@ def create_gsad_from_window(df_window):
 
     ports = list(port_counts.keys())
 
+
+    # pairwise edge 생성
     for u, v in combinations(ports, 2):
-        weight = port_counts[u] + port_counts[v]   # weight 정의
+        weight = port_counts[u] + port_counts[v]
         G.add_edge(u, v, weight=weight)
+
+    # -------------------------
+    # self-loop fallback (핵심 추가)
+    # -------------------------
+    if G.number_of_edges() == 0:
+        for port in ports:
+            G.add_node(port)
+            G.add_edge(port, port, weight=port_counts[port])
 
     return G
 
@@ -39,15 +49,15 @@ def extract_gsad_features(G):
     if G is None or G.number_of_nodes() == 0:
         return {
             'num_nodes': 0,
-            'num_edges': 0,
-            'total_weight': 0,
+            # 'num_edges': 0,
+            # 'total_weight': 0,
             'avg_weight': 0,
-            'max_weight': 0,
-            'weight_std': 0,
-            'weight_entropy': 0,
-            'max_strength': 0,
-            'std_strength': 0,
-            'top1_ratio': 0
+            # 'max_weight': 0,
+            # 'weight_std': 0,
+            'weight_entropy': 0
+            # 'max_strength': 0,
+            # 'std_strength': 0
+            # 'top1_ratio': 0
         }
 
     num_nodes = G.number_of_nodes()
@@ -81,7 +91,18 @@ def extract_gsad_features(G):
     # -------------------------
     # Node strength (weighted degree)
     # -------------------------
-    strengths = dict(G.degree(weight='weight'))
+    strengths = {}
+    for node in G.nodes():
+        total = 0
+        for neighbor, data in G[node].items():
+            w = data.get("weight", 1.0)
+
+            if neighbor == node:
+                total += w
+            else:
+                total += w
+
+        strengths[node] = total
 
     if strengths:
         strength_values = np.array(list(strengths.values()))
@@ -94,23 +115,23 @@ def extract_gsad_features(G):
     # -------------------------
     # 집중도 (top-k)
     # -------------------------
-    if total_weight > 0:
-        weights_sorted = np.sort(weights)[::-1]
-        top1_ratio = weights_sorted[0] / total_weight
-    else:
-        top1_ratio = 0
+    # if total_weight > 0:
+    #     weights_sorted = np.sort(weights)[::-1]
+    #     top1_ratio = weights_sorted[0] / total_weight
+    # else:
+    #     top1_ratio = 0
 
     return {
         'num_nodes': num_nodes,
-        'num_edges': num_edges,
-        'total_weight': total_weight,
+        # 'num_edges': num_edges,
+        # 'total_weight': total_weight,
         'avg_weight': avg_weight,
-        'max_weight': max_weight,
-        'weight_std': weight_std,
-        'weight_entropy': weight_entropy,
-        'max_strength': max_strength,
-        'std_strength': std_strength,
-        'top1_ratio': top1_ratio
+        # 'max_weight': max_weight,
+        # 'weight_std': weight_std,
+        'weight_entropy': weight_entropy
+        # 'max_strength': max_strength,
+        # 'std_strength': std_strength
+        # 'top1_ratio': top1_ratio
     }
 
 # ===============================
@@ -157,27 +178,48 @@ def compute_stats_from_df(df, time_window):
 # ===============================
 #   Training
 # ===============================
-def train_single_model(args, normal_file, savefile_path):
+def train_single_model(args, normal_file, anomaly_files, savefile_path):
 
-    df = pd.read_csv(normal_file)
-    df["Label"] = "Benign"
+    df_normal = pd.read_csv(normal_file)
+    df_normal["Label"] = "Benign"
     # 시간 정렬
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"],
+    df_normal["Timestamp"] = pd.to_datetime(df_normal["Timestamp"],
                 dayfirst=True,
                errors="coerce")
-    df = df.dropna(subset=["Timestamp"]).sort_values("Timestamp")
+    df_normal = df_normal.dropna(subset=["Timestamp"]).sort_values("Timestamp")
+    # anomaly
+    df_anomaly_list = []
 
-    # 정상만
+    for f in anomaly_files:
+        df_tmp = pd.read_csv(f)
 
-    # 60% train (과거)
-    n = len(df)
-    train_end = int(n * 0.6)
-    df_train_full = df.iloc[:train_end]
+        # 파일 이름에서 라벨 추출
+        label_name = os.path.basename(f).replace(".csv", "")
 
-    df_train = df_train_full[df_train_full["Label"] == "Benign"]
-    stats = compute_stats_from_df(df_train, args.time_window)
+        df_tmp["Label"] = label_name 
+        df_anomaly_list.append(df_tmp)
 
-    stats = compute_stats_from_df(df_train, args.time_window)
+    df_anomaly = pd.concat(df_anomaly_list, ignore_index=True)
+
+    # anomaly Timestamp 처리 먼저
+    df_anomaly["Timestamp"] = pd.to_datetime(
+        df_anomaly["Timestamp"],
+        dayfirst=True,
+        errors="coerce"
+    )
+    df_anomaly = df_anomaly.dropna(subset=["Timestamp"]).sort_values("Timestamp")
+
+    # anomaly의 가장 이른 시점
+    anomaly_start_time = df_anomaly["Timestamp"].min()
+
+    # normal에서도 같은 기준 적용
+    df_normal_filter = df_normal[df_normal["Timestamp"] < anomaly_start_time].copy()
+
+    # 다시 정렬 (안전)
+    df_normal_filter = df_normal_filter.sort_values("Timestamp").reset_index(drop=True)
+    print(f"df_normal_filter: {len(df_normal_filter)}")
+
+    stats = compute_stats_from_df(df_normal_filter, args.time_window)
 
     mean = stats["mean"]
     var  = stats["var"].clip(lower=1e-6) 
@@ -185,21 +227,23 @@ def train_single_model(args, normal_file, savefile_path):
 
     selected_features = [
         "num_nodes",
-        "num_edges",
-        "total_weight",
+        # "num_edges",
+        # "total_weight",
         "avg_weight",
-        "max_weight",
-        "weight_std",
-        "weight_entropy",
-        "max_strength",
-        "std_strength",
-        "top1_ratio"
+        # "max_weight",
+        # "weight_std",
+        "weight_entropy"
+        # "max_strength",
+        # "std_strength"
+        # "top1_ratio"
     ]
+
     normal_stats = pd.DataFrame(
         [mean[selected_features], std[selected_features]],
         index=["mean", "std"]
     )
 
+    normal_stats.to_csv("normal_stats.csv")
     with open(savefile_path, "wb") as f:
         pickle.dump(normal_stats, f)
 
@@ -240,28 +284,32 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
     df_anomaly["Timestamp"] = pd.to_datetime(df_anomaly["Timestamp"], dayfirst=True, errors="coerce")
     df_anomaly = df_anomaly.dropna(subset=["Timestamp"]).sort_values("Timestamp").reset_index(drop=True)
 
-    n_normal = len(df_normal)
-    train_end = int(n_normal * 0.6)
+    # -----------------------------
+    # 1. anomaly 시작 시점 기준
+    # -----------------------------
+    anomaly_start_time = df_anomaly["Timestamp"].min()
 
-    df_all_normal = df_normal.iloc[train_end:].copy()
-    df_all_normal.set_index("Timestamp", inplace=True)
+    # -----------------------------
+    # 2. anomaly 이전 normal 제거 (train에 이미 사용된 것으로 간주)
+    # -----------------------------
+    df_normal_after = df_normal[df_normal["Timestamp"] >= anomaly_start_time].copy()
+
+    # -----------------------------
+    # 3. random sampling (test normal)
+    # -----------------------------
+    sample_size = 200000
+
+    df_test_normal = df_normal_after.sample(
+        n=sample_size,
+        random_state=42
+    )
+
+    # index 설정 (기존 흐름 유지)
+    df_test_normal.set_index("Timestamp", inplace=True)
     df_anomaly.set_index("Timestamp", inplace=True)
-    # df_future = pd.concat([df_all_normal, df_anomaly], ignore_index=True)
-
-    # df_future = df_future.sort_values("Timestamp").reset_index(drop=True)
-
-    # -------------------------------
-    # 3. sliding window split
-    # -------------------------------
-    # df_future.set_index("Timestamp", inplace=True)
-
-    # windows = [
-    #     w for _, w in df_future.groupby(pd.Grouper(freq=args.time_window))
-    #     if not w.empty
-    # ]
 
     normal_windows = [
-        w for _, w in df_all_normal.groupby(pd.Grouper(freq=args.time_window))
+        w for _, w in df_test_normal.groupby(pd.Grouper(freq=args.time_window))
         if not w.empty
     ]
 
@@ -270,12 +318,9 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
         if not w.empty
     ]
 
-    def split_windows(windows):
-        split = int(len(windows) * 0.5)
-        return windows[:split], windows[split:]
 
-    normal_valid, normal_test = split_windows(normal_windows)
-    anomaly_valid, anomaly_test = split_windows(anomaly_windows)
+    normal_test = normal_windows
+    anomaly_test = anomaly_windows
 
     
 
@@ -293,68 +338,11 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
 
             if not (mean - k * std <= val <= mean + k * std):
                 outlier_count += 1
+            # if not (val <= mean + k * std):
+            #     outlier_count += 1
 
         return 1 if outlier_count >= 1 else 0
   
-
-    # -------------------------------
-    # VALID
-    # -------------------------------
-    y_true_valid, y_pred_valid = [], []
-    feature_margins = defaultdict(list)
-    # normal → label 0
-    for w in tqdm(normal_valid, desc="VALID-NORMAL"):
-        G = create_gsad_from_window(w)
-        if not G:
-            continue
-
-        feat = extract_gsad_features(G)
-        pred = check(feat)
-
-        z_dict = compute_margin_per_feature(feat, normal_stats)
-
-        if pred == 1:
-            for f, z in z_dict.items():
-                feature_margins[f].append(z)
-
-        y_true_valid.append(0)
-        y_pred_valid.append(pred)
-
-        # drift adaptation (normal만 업데이트)
-        if pred == 0:
-            normal_stats = update_stats(normal_stats, [feat])
-
-
-    # anomaly → label 1
-    for w in tqdm(anomaly_valid, desc="VALID-ANOMALY"):
-        G = create_gsad_from_window(w)
-        if not G:
-            continue
-
-        feat = extract_gsad_features(G)
-        pred = check(feat)
-
-        y_true_valid.append(1)
-        y_pred_valid.append(pred)
-
-
-    print("\n=== Feature-wise Margin Statistics ===")
-
-    for f, values in feature_margins.items():
-        arr = np.array(values)
-        if len(arr) == 0:
-            continue
-
-        k = k_dict[f]
-
-        print(f"\n[{f}]")
-        print(f"count: {len(arr)}")
-        print(f"mean : {arr.mean():.4f}")
-        print(f"std  : {arr.std():.4f}")
-        print(f"min  : {arr.min():.4f}")
-        print(f"max  : {arr.max():.4f}")
-        print(f"threshold k: {k}")
-        print(f"> k  : {(arr > k).mean():.2%}")
     # -------------------------------
     # TEST
     # -------------------------------
@@ -385,51 +373,7 @@ def run_anomaly_detection(args, normal_file, anomaly_files , model_path):
         y_pred_test.append(pred)
 
 
-    return y_true_valid, y_pred_valid, y_true_test, y_pred_test
-
-def update_stats(normal_stats, feat_list, alpha=0.2):
-
-    df_feat = pd.DataFrame(feat_list)
-
-    old_mean = normal_stats.loc["mean"]
-    old_std  = normal_stats.loc["std"]
-    old_var  = old_std ** 2
-
-    new_mean = df_feat.mean()
-    new_std  = df_feat.std(ddof=0)
-    new_var  = new_std ** 2
-
-    updated_mean = (1 - alpha) * old_mean + alpha * new_mean
-
-    updated_var = (
-        (1 - alpha) * (old_var + (old_mean - updated_mean) ** 2)
-        + alpha * (new_var + (new_mean - updated_mean) ** 2)
-    )
-
-    updated_std = np.sqrt(updated_var)
-
-    return pd.DataFrame(
-        [updated_mean, updated_std],
-        index=["mean", "std"]
-    )
-
-def compute_margin_per_feature(feat, normal_stats):
-    z_dict = {}
-
-    for name, val in feat.items():
-        if name not in normal_stats.columns:
-            continue
-
-        mean = float(normal_stats.loc["mean", name])
-        std  = float(normal_stats.loc["std", name])
-
-        if std < 1e-3:
-            continue
-
-        z = abs(val - mean) / std
-        z_dict[name] = z
-
-    return z_dict
+    return y_true_test, y_pred_test
 
 def parse_feature_thresholds(threshold_str):
     if threshold_str is None:
@@ -456,9 +400,10 @@ if __name__ == "__main__":
     report_path=os.path.join(args.result_path,"gsad_server.txt")
     matrix_path=os.path.join(args.result_path,"gsad_cm.png")
 
-    # normal_file = args.normal_file or os.path.join(args.ae_data_dir, "UNSW_NB15_normal.csv")
-    normal_file = args.normal_file or os.path.join(args.ae_data_dir, "CIC_ae_normal.csv")
-    # normal_file = args.normal_file or os.path.join(args.ae_data_dir, "all_processed.csv")
+    normal_file = args.normal_file or os.path.join(args.ae_data_dir, "UNSW_NB15_normal.csv")
+    # normal_file = args.normal_file or os.path.join(args.ae_data_dir, "CIC_ae_normal.csv")
+
+    
 
     # anomaly_files = [
     #     os.path.join(args.ae_data_dir, f)
@@ -468,17 +413,15 @@ if __name__ == "__main__":
     anomaly_files = [
         os.path.join(args.ae_data_dir, f)
         for f in os.listdir(args.ae_data_dir)
-        if f.startswith("CIC_anomaly") and f.endswith(".csv")
+        if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")
     ]
 
-    train_single_model(args, normal_file, model_path)
 
-    y_true_valid, y_pred_valid, y_true_test, y_pred_test = run_anomaly_detection(
+    train_single_model(args, normal_file, anomaly_files, model_path)
+
+    y_true_test, y_pred_test = run_anomaly_detection(
         args, normal_file, anomaly_files, model_path
     )
-
-    # validation 결과
-    save_report(y_true_valid, y_pred_valid, report_path.replace(".txt", "_valid.txt"))
 
     # test 결과
     save_report(y_true_test, y_pred_test, report_path)

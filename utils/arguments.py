@@ -120,11 +120,11 @@ def get_gsad_args():
     parser.add_argument(
         "--feature_thresholds",
         type=str,
-        default="num_nodes:0.15,num_edges:0.15,total_weight:0.058, avg_weight:0.8, max_weight:1 ,weight_std:5,weight_entropy:0.5,max_strength:3,std_strength:0.6,top1_ratio:0.1",
+        default="num_nodes: 1.698, num_edges: 1.2, total_weight: 1.2, avg_weight: 1.638, max_weight: 1.152, weight_std: 1.538, weight_entropy: 2.088, max_strength: 0.91, std_strength: 1.2",
         help="feature별 threshold (예: num_nodes:6,num_edges:6,max_weight:4,top1_ratio:3)"
     )
     parser.add_argument("--ae_data_dir", type=str,
-                        default="/data/SDP_Dataset/Unified_model/cic_graph")
+                        default="/data/SDP_Dataset/Unified_model/unsw_graph")
     parser.add_argument("--normal_file", type=str, default=None)
     parser.add_argument("--result_path", type=str, default="results/CSE-CIC-IDS2018/gsad")
     
