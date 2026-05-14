@@ -120,7 +120,7 @@ def get_gsad_args():
     parser.add_argument(
         "--feature_thresholds",
         type=str,
-        default="num_nodes: 1.698, num_edges: 1.2, total_weight: 1.2, avg_weight: 1.638, max_weight: 1.152, weight_std: 1.538, weight_entropy: 2.088, max_strength: 0.91, std_strength: 1.2",
+        default="num_nodes:1.698,num_edges:1.698,density:1.698,avg_degree:1.698",
         help="feature별 threshold (예: num_nodes:6,num_edges:6,max_weight:4,top1_ratio:3)"
     )
     parser.add_argument("--ae_data_dir", type=str,
