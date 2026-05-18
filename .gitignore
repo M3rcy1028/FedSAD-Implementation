@@ -23,7 +23,6 @@
 /test.py
 /utils.py*.h5
 KDD99/KDD99_encoded.csv
-*.csv
 KDD99/KDD99_encoded.csv
 FedSAD_env
 */*/__pycache__
