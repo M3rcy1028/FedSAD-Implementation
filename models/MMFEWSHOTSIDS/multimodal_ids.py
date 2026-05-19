@@ -1,8 +1,8 @@
 import torch.nn as nn
 
-from MMFEWSHOTSIDS.g_model import Traffic3DEncoder
-from MMFEWSHOTSIDS.s_model import SModel
-from MMFEWSHOTSIDS.fusion import build_fusion
+from models.MMFEWSHOTSIDS.g_model import Traffic3DEncoder
+from models.MMFEWSHOTSIDS.s_model import SModel
+from models.MMFEWSHOTSIDS.fusion import build_fusion
 
 
 class MultiModalIDS(nn.Module):

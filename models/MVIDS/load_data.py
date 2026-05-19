@@ -11,9 +11,9 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
 import torch
-from MVIDS.preprocess import MultiViewPreprocessor
-from MVIDS.multiview import MultiViewKnowledgeNet
-from MVIDS.preprocess import (
+from models.MVIDS.preprocess import MultiViewPreprocessor
+from models.MVIDS.multiview import MultiViewKnowledgeNet
+from models.MVIDS.preprocess import (
     CICIDS2018_VIEW_SCHEMA,
     MultiViewPreprocessor,
     UNSW_VIEW_SCHEMA,

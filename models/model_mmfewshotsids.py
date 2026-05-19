@@ -56,12 +56,19 @@ def main(args):
         output_path=args.tensor_path
     )
 
+    if args.dataset == "cicids2018":
+        label_col = "Label"
+        attack_col = "Attack"
+    else:
+        label_col = "label"
+        attack_col = "attack_cat"
+
     # Dataset
     target_dataset = MultimodalDataset(
         csv_path=args.data_path,
         tensor_data=tensor,
-        label_col="Label",
-        attack_col="Attack",
+        label_col=label_col,
+        attack_col=attack_col,
         dataset_type=args.dataset,
     )
 
