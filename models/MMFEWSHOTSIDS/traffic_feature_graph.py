@@ -20,7 +20,7 @@ def build_packet_sequence_tensor(
 
     for i, row in df.iterrows():
         # -----------------------------
-        # 1. packet 개수 추정
+        # estimate packet count
         # -----------------------------
         in_pkts = safe_get(row, "IN_PKTS")
         out_pkts = safe_get(row, "OUT_PKTS")
@@ -29,7 +29,7 @@ def build_packet_sequence_tensor(
         total_pkts = max(1, min(total_pkts, max_packets))
 
         # -----------------------------
-        # 2. packet size 분포 기반 생성
+        # generate based on packet size distribution
         # -----------------------------
         packet_sizes = []
 
@@ -48,13 +48,13 @@ def build_packet_sequence_tensor(
             avg_size = safe_get(row, "IN_BYTES") / (in_pkts + 1e-6)
             packet_sizes = [avg_size] * total_pkts
 
-        # 길이 맞추기
+        # adjust length
         packet_sizes = packet_sizes[:max_packets]
         if len(packet_sizes) < max_packets:
             packet_sizes += [packet_sizes[-1]] * (max_packets - len(packet_sizes))
 
         # -----------------------------
-        # 3. IAT 생성 (temporal 정보)
+        # generate IAT (temporal info)
         # -----------------------------
         iat_mean = safe_get(row, "SRC_TO_DST_IAT_AVG", 1.0)
         iat_std = safe_get(row, "SRC_TO_DST_IAT_STDDEV", 0.1)
@@ -63,14 +63,14 @@ def build_packet_sequence_tensor(
         iats = np.clip(iats, 0, None)
 
         # -----------------------------
-        # 4. direction (in/out)
+        # direction (in/out)
         # -----------------------------
         directions = np.zeros(max_packets)
         split = int(max_packets * (in_pkts / (in_pkts + out_pkts + 1e-6)))
         directions[:split] = 1  # inbound = 1, outbound = 0
 
         # -----------------------------
-        # 5. packet feature 구성
+        # build packet features
         # -----------------------------
         packets = []
 
@@ -91,21 +91,21 @@ def build_packet_sequence_tensor(
                 safe_get(row, "SHORTEST_FLOW_PKT"),
                 safe_get(row, "MIN_IP_PKT_LEN"),
                 safe_get(row, "MAX_IP_PKT_LEN"),
-                j / max_packets,  # position encoding 느낌
+                j / max_packets,  # position encoding
             ]
             packets.append(pkt)
 
         packets = np.array(packets, dtype=np.float32)  # (16,16)
 
         # -----------------------------
-        # 6. normalization (per sample)
+        # normalization (per sample)
         # -----------------------------
         mean = packets.mean(axis=0, keepdims=True)
         std = packets.std(axis=0, keepdims=True) + 1e-6
         packets = (packets - mean) / std
 
         # -----------------------------
-        # 7. 2D → 3D tensor 변환
+        # 2D -> 3D tensor conversion
         # -----------------------------
         grid = packets.reshape(16, 16)
 

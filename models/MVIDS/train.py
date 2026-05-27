@@ -39,7 +39,7 @@ def train_loop(model: nn.Module, dl_tr, dl_va, args, kg_vec_fn=None, save_path: 
             losses.append(loss.item())
             train_bar.set_postfix(loss=np.mean(losses[-10:]) if losses else 0.0)
         
-        # validation이 있을 때만 실행
+        # run only when validation is available
         if dl_va is not None:
             model.eval()
             all_prob, all_true = [], []
@@ -65,15 +65,15 @@ def train_loop(model: nn.Module, dl_tr, dl_va, args, kg_vec_fn=None, save_path: 
                 best_f1 = m['f1']
                 best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
         else:
-            # validation 없이 train loss만 출력
+            # print only train loss without validation
             print(f"Epoch {epoch:03d}/{args.epochs} | TrainLoss={np.mean(losses):.4f}")
-            # validation 없이는 마지막 epoch의 state를 저장
+            # save last epoch's state when there is no validation
             if epoch == args.epochs:
                 best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
 
     if best_state is not None:
         model.load_state_dict(best_state)
-        # 모델 저장
+        # save model
         if save_path is not None:
             torch.save(best_state, save_path)
             print(f"Best model saved to {save_path}")

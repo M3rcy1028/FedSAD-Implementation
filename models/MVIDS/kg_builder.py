@@ -60,19 +60,19 @@ def build_kg_features(
     G = nx.Graph()
 
     # =========================
-    # [CHANGE 1] multi-view → single view로 통합
+    # [CHANGE 1] merge multi-view -> single view
     # =========================
     X = np.concatenate(view_arrays, axis=1)
     all_features = sum(feature_names.values(), [])
 
     # =========================
-    # [CHANGE 2] Mutual Information 기반 top-k feature 선택
+    # [CHANGE 2] top-k feature selection based on Mutual Information
     # =========================
 
     y = args.y_train
     scores, _ = f_classif(X, y)
 
-    # NaN 방지 (중요 ⚠️)
+    # prevent NaN (important)
     scores = np.nan_to_num(scores, nan=0.0)
 
     topk = min(args.kg_topk, X.shape[1])
@@ -81,24 +81,24 @@ def build_kg_features(
     X_selected = X[:, topk_idx]
     selected_features = [all_features[i] for i in topk_idx]
     # =========================
-    # 기존 binarization 유지
+    # keep existing binarization
     # =========================
     bin_X = _binarise(X_selected, args.kg_thresh)
 
     # =========================
-    # 기존 co-occurrence 유지
+    # keep existing co-occurrence
     # =========================
     co_occ = _co_occurrence_matrix(bin_X)
     np.fill_diagonal(co_occ, 0.0)
 
     # =========================
-    # [CHANGE 3] node 단순화
+    # [CHANGE 3] simplify nodes
     # =========================
     for i, feat in enumerate(selected_features):
         G.add_node(feat, index=i)
 
     # =========================
-    # [CHANGE 4] intra-view only (inter-view 제거)
+    # [CHANGE 4] intra-view only (remove inter-view)
     # =========================
     for i in range(len(selected_features)):
         for j in range(i + 1, len(selected_features)):
@@ -110,7 +110,7 @@ def build_kg_features(
         return G, []
 
     # =========================
-    # centrality 유지 (논문)
+    # keep centrality (paper)
     # =========================
     try:
         centrality = nx.eigenvector_centrality_numpy(G, weight="weight")

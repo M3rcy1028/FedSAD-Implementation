@@ -16,27 +16,27 @@ PERCENTILE = 65
 class SaveEvaluationFedAvg(fl.server.strategy.FedAvg):
     def __init__(self, eval_server_args=None, **kwargs):
         super().__init__(**kwargs)
-        self.eval_server_args = eval_server_args  # 반드시 {"model": model, ...} 포함
+        self.eval_server_args = eval_server_args  # must include {"model": model, ...}
         self.final_parameters = None
 
-    # 🔒 라운드 0 시작 전에 서버가 “빌드된” 글로벌 파라미터를 브로드캐스트
+    # broadcast the server's “built” global parameters before round 0 starts
     def initialize_parameters(self, client_manager):
         # ...
         mdl = self.eval_server_args["model"]
 
         # ...
         if not mdl.weights:
-            print("🧱 [Strategy] Building model for initial parameters...")
-            # ⬇️⬇️⬇️ [FIX] 'mdl' 변수를 사용합니다. ⬇️⬇️⬇️
+            print("[Strategy] Building model for initial parameters...")
+            # [FIX] use the 'mdl' variable
             try:
-                # Keras 모델의 input shape에서 timesteps, features를 동적으로 가져오기
+                # dynamically retrieve timesteps, features from Keras model's input shape
                 input_shape = mdl.encoder.input_shape 
                 timesteps, features = input_shape[1], input_shape[2]
                 _ = mdl(tf.zeros((1, timesteps, features)))
-                print(f"✅ Model built with shape (1, {timesteps}, {features})")
+                print(f"Model built with shape (1, {timesteps}, {features})")
             except Exception as e:
-                print(f"🚨 Model build failed in strategy: {e}")
-                # fallback (하드코딩)
+                print(f"Model build failed in strategy: {e}")
+                # fallback (hardcoded)
                 _ = mdl(tf.zeros((1, 10, 4))) 
 
 
@@ -49,25 +49,25 @@ class SaveEvaluationFedAvg(fl.server.strategy.FedAvg):
         if aggregated_parameters is not None:
             self.final_parameters = aggregated_parameters
         else:
-            # ⛑️ fallback: 
-            print(f"⚠️ [Round {rnd}] Aggregation failed, using fallback weights.")
+            # fallback:
+            print(f"[Round {rnd}] Aggregation failed, using fallback weights.")
             mdl = self.eval_server_args["model"]
             current_weights_nd = mdl.get_weights()
             aggregated_parameters = fl.common.ndarrays_to_parameters(current_weights_nd)
             
-            # ⬇️⬇️⬇️ [FIX] fallback 시에도 final_parameters를 업데이트합니다. ⬇️⬇️⬇️
+            # [FIX] update final_parameters even on fallback
             self.final_parameters = aggregated_parameters
             
         return aggregated_parameters, metrics
 
     def evaluate(self, server_round: int, parameters: fl.common.Parameters):
-        """서버 검증: 파라미터가 None/빈 리스트면 현재 모델 가중치로 대체"""
+        """Server validation: replace with current model weights if parameters is None or an empty list."""
         if self.eval_server_args is None:
             return None
 
         mdl = self.eval_server_args["model"]
 
-        # 🛡️ 빈 파라미터 가드
+        # guard against empty parameters
         nd = []
         if parameters is not None:
             try:
@@ -75,14 +75,14 @@ class SaveEvaluationFedAvg(fl.server.strategy.FedAvg):
             except Exception:
                 nd = []
         if (parameters is None) or (not nd):
-            # initialize_parameters에서 보장되지만, 혹시 모를 방어
+            # guaranteed by initialize_parameters, but as an extra precaution
             nd = mdl.get_weights()
         mdl.set_weights(nd)
 
         X_test = self.eval_server_args["X_test_scaled"]
         y_test = self.eval_server_args["y_test"]
 
-        # multi-output 대응
+        # handle multi-output
         preds = mdl.predict(X_test, verbose=0)
         if isinstance(preds, dict):
             recon = preds["decoded"]
@@ -99,7 +99,7 @@ class SaveEvaluationFedAvg(fl.server.strategy.FedAvg):
             f.write(classification_report(y_test, y_pred,
                                           target_names=["Normal", "Anomaly"],
                                           zero_division=0))
-        # Flower는 (loss, metrics) 반환
+        # Flower returns (loss, metrics)
         return float(1 - acc), {"acc": acc}
 
 # ---------------------- AE-LSTM (Unsupervised) ----------------------
@@ -159,7 +159,7 @@ class FLClient(fl.client.NumPyClient):
         self.epochs = epochs
         self.batch_size = batch_size
 
-        # 🧩 모델 빌드 (중요!)
+        # build model (important!)
         _ = self.model(tf.zeros((1, X_train.shape[1], X_train.shape[2])))
 
     def fit(self, parameters, config):
@@ -201,9 +201,9 @@ class FLClient(fl.client.NumPyClient):
         cm_recon = confusion_matrix(self.y_test, y_pred_recon)
         cm_cls = confusion_matrix(self.y_test, y_pred_cls)
 
-        print("\n📊 [Reconstruction-based Confusion Matrix]")
+        print("\n[Reconstruction-based Confusion Matrix]")
         print(cm_recon)
-        print("\n📊 [Classifier-based Confusion Matrix]")
+        print("\n[Classifier-based Confusion Matrix]")
         print(cm_cls)
 
         # ---------- Reports ----------
@@ -219,9 +219,9 @@ class FLClient(fl.client.NumPyClient):
             zero_division=0
         )
 
-        print("\n📊 [Reconstruction-based Report]")
+        print("\n[Reconstruction-based Report]")
         print(report_recon)
-        print("📊 [Classifier-based Report]")
+        print("[Classifier-based Report]")
         print(report_cls)
 
         return float(1 - acc_recon), len(self.X_test), {"acc_cls": float(acc_cls)}

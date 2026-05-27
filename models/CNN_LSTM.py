@@ -1,9 +1,9 @@
 from arguments import get_args
 from utils import *
-from model_cnnlstm import SaveEvaluationFedAvg, CNN_LSTM, FLClient  # 커스텀 FedAvg, CNN-LSTM, Client
+from model_cnnlstm import SaveEvaluationFedAvg, CNN_LSTM, FLClient  # custom FedAvg, CNN-LSTM, Client
 
 # ----------------------------
-# 경로 설정
+# path configuration
 # ----------------------------
 os.makedirs("./cnn_lstm", exist_ok=True)
 WEIGHT_PATH = "./cnn_lstm/cnn_lstm_weights.h5"
@@ -15,7 +15,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 
 # ----------------------------
-# CNN 입력용 reshape 함수
+# reshape function for CNN input
 # ----------------------------
 def reshape_for_sequence_nsl(X, timesteps=10, features=12):
     n_samples, n_feats = X.shape
@@ -26,7 +26,7 @@ def reshape_for_sequence_nsl(X, timesteps=10, features=12):
     return X.reshape(-1, timesteps, features)
 
 # ----------------------------
-# NSL-KDD 지도학습 데이터셋 로더
+# NSL-KDD supervised dataset loader
 # ----------------------------
 def get_datasets_nsl_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12):
     np.random.seed(random_seed)
@@ -75,7 +75,7 @@ def get_datasets_nsl_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=10,
 
     return X_train_seq, y_train_supervised, X_test_seq, y_test_supervised
 
-# CIC 2018 데이터셋 전처리
+# CIC 2018 dataset preprocessing
 def get_datasets_cic_multi_supervised(
     normal_csv="./CIC2018/ae_datas_sampled/CIC_ae_normal.csv",
     anomaly_pattern="./CIC2018/v/CIC_anomaly_ae_{}.csv",
@@ -86,45 +86,45 @@ def get_datasets_cic_multi_supervised(
     features=8
 ):
     """
-    CIC-IDS2018 AE 버전 (다중 anomaly 파일)을 지도학습용으로 불러옴.
-    - 정상 1개 파일, anomaly 여러 개 자동 로드 및 병합
-    - 정상 데이터 절반 train/test split
-    - anomaly 일부만 학습 포함 (비율 anomaly_ratio)
-    - 학습에 사용된 anomaly는 테스트셋에서 제거
-    - CNN-LSTM 입력을 위해 reshape (예: 10×2)
+    Load CIC-IDS2018 AE version (multiple anomaly files) for supervised learning.
+    - One normal file, multiple anomaly files auto-loaded and merged
+    - Normal data split into half train/test
+    - Only a portion of anomalies included in training (ratio: anomaly_ratio)
+    - Anomalies used in training are excluded from test set
+    - Reshaped for CNN-LSTM input (e.g., 10x2)
     """
 
     np.random.seed(random_seed)
     random.seed(random_seed)
     # ----------------------------
-    # 1. 정상 CSV 불러오기
+    # load normal CSV
     # ----------------------------
     df_normal = pd.read_csv(normal_csv)
 
     # ----------------------------
-    # 2. 여러 anomaly CSV 자동 병합
+    # merge multiple anomaly CSV files automatically
     # ----------------------------
     anomlay_path = "./CIC2018/ae_datas_sampled/CIC_ae_anomaly.csv"
     df_anomaly = pd.read_csv(anomlay_path, low_memory=False)
 
     # ----------------------------
-    # 3. NaN / inf 처리
+    # handle NaN / inf
     # ----------------------------
     for df in [df_normal, df_anomaly]:
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
         df.fillna(0, inplace=True)
 
     # ----------------------------
-    # 4. 정상 데이터 split
+    # split normal data
     # ----------------------------
-    # 5) 정상 80% split
+    # 80% normal split
     df_normal = shuffle(df_normal, random_state=random_seed)
     split_point = int(len(df_normal) * 0.8)
     df_normal_train = df_normal.iloc[:split_point]
     df_normal_test = df_normal.iloc[split_point:]
 
     # ----------------------------
-    # 5. 스케일링
+    # scaling
     # ----------------------------
     scaler = MinMaxScaler()
     X_normal_train = scaler.fit_transform(df_normal_train)
@@ -132,14 +132,14 @@ def get_datasets_cic_multi_supervised(
     X_anomaly_all = scaler.transform(df_anomaly)
 
     # ----------------------------
-    # 6. anomaly 일부만 학습 포함
+    # include a portion of anomalies in training
     # ----------------------------
     num_anomaly_to_add = int(len(X_anomaly_all) * anomaly_ratio)
     X_anomaly_train = X_anomaly_all[:num_anomaly_to_add]
     X_anomaly_test = X_anomaly_all[num_anomaly_to_add:]
 
     # ----------------------------
-    # 7. train / test 구성
+    # build train / test sets
     # ----------------------------
     X_train = np.concatenate([X_normal_train, X_anomaly_train], axis=0)
     y_train = np.concatenate([
@@ -151,23 +151,23 @@ def get_datasets_cic_multi_supervised(
     ])
 
     # ----------------------------
-    # 8. 셔플
+    # shuffle
     # ----------------------------
     X_train, y_train = shuffle(X_train, y_train, random_state=random_seed)
     X_test, y_test = shuffle(X_test, y_test, random_state=random_seed)
 
     # ----------------------------
-    # 9. CNN-LSTM 입력 reshape (예: 20 → 10×2)
+    # CNN-LSTM input reshape (e.g., 20 -> 10x2)
     # ----------------------------
     X_train_seq = reshape_for_sequence_nsl(X_train, timesteps=timesteps, features=features)
     X_test_seq = reshape_for_sequence_nsl(X_test, timesteps=timesteps, features=features)
 
-    print(f"✅ Loaded CIC dataset: Normal {len(df_normal)}, Anomaly {len(df_anomaly)}")
+    print(f"Loaded CIC dataset: Normal {len(df_normal)}, Anomaly {len(df_anomaly)}")
     print(f"Train: {X_train_seq.shape}, Test: {X_test_seq.shape}")
 
     return X_train_seq, y_train, X_test_seq, y_test
 
-# KDD99 데이터셋 전처리
+# KDD99 dataset preprocessing
 def get_datasets_kdd99_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12):
     np.random.seed(random_seed)
     random.seed(random_seed)
@@ -185,7 +185,7 @@ def get_datasets_kdd99_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=1
     X_normal_test = scaler.transform(df_normal_test)
     X_anomaly_all = scaler.transform(df_anomaly)
 
-    # ✨ 일부 anomaly를 학습에 포함
+    # include a portion of anomalies in training
     num_anomaly_train = int(len(X_anomaly_all) * anomaly_ratio)
     X_anomaly_train = X_anomaly_all[:num_anomaly_train]
     X_anomaly_test = X_anomaly_all[num_anomaly_train:]
@@ -207,10 +207,10 @@ def get_datasets_kdd99_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=1
     X_train_seq = reshape_for_sequence_nsl(X_train, timesteps=timesteps, features=features)
     X_test_seq = reshape_for_sequence_nsl(X_test, timesteps=timesteps, features=features)
 
-    print(f"✅ Loaded KDD99 (train {len(X_train_seq)}, test {len(X_test_seq)}) with {anomaly_ratio*100:.1f}% anomaly in training")
+    print(f"Loaded KDD99 (train {len(X_train_seq)}, test {len(X_test_seq)}) with {anomaly_ratio*100:.1f}% anomaly in training")
     return X_train_seq, y_train, X_test_seq, y_test
 
-# InSDN 데이터셋 전처리
+# InSDN dataset preprocessing
 def get_datasets_insdn_supervised(
     normal_csv="./InSDN/ae_datas/InSDN_normal.csv",
     anomaly_csv="./InSDN/ae_datas/InSDN_anomaly.csv",
@@ -220,11 +220,11 @@ def get_datasets_insdn_supervised(
     features=7
 ):
     """
-    InSDN 48-feature 지도학습 세트 (CNN-LSTM 입력용)
-    - 정상의 절반은 train, 나머지 절반 + 전체 이상치로 test 구성
-    - train에는 anomaly_ratio 비율의 이상치 일부만 포함
-    - CNN-LSTM 입력을 위해 (timesteps, features) = (8, 6)으로 reshape
-    반환: X_train_seq, y_train, X_test_seq, y_test
+    InSDN 48-feature supervised dataset (for CNN-LSTM input).
+    - Half of normal data for train, remaining half + all anomalies for test
+    - Only a portion of anomalies (anomaly_ratio) included in train
+    - Reshaped to (timesteps, features) = (8, 6) for CNN-LSTM input
+    Returns: X_train_seq, y_train, X_test_seq, y_test
     """
     np.random.seed(random_seed)
     random.seed(random_seed)
@@ -247,8 +247,8 @@ def get_datasets_insdn_supervised(
     # ---------------------------
     df_normal = shuffle(df_normal, random_state=random_seed)
     split_point = int(len(df_normal) * 0.8)
-    df_normal_train = df_normal.iloc[:split_point] # 스케일러 훈련용
-    df_normal_test = df_normal.iloc[split_point:] # 실제 테스트용
+    df_normal_train = df_normal.iloc[:split_point] # for scaler training
+    df_normal_test = df_normal.iloc[split_point:] # for actual testing
 
     # ---------------------------
     # (3) Scaling
@@ -335,8 +335,8 @@ def get_datasets_unsw_supervised(
     df_normal = shuffle(df_normal, random_state=random_seed)
     
     split_point = int(len(df_normal) * 0.8)
-    df_normal_train = df_normal.iloc[:split_point] # 스케일러 훈련용
-    df_normal_test = df_normal.iloc[split_point:] # 실제 테스트용
+    df_normal_train = df_normal.iloc[:split_point] # for scaler training
+    df_normal_test = df_normal.iloc[split_point:] # for actual testing
 
     # ---------------------------
     # (3) Scaling
@@ -394,7 +394,7 @@ def get_datasets_unsw_supervised(
     return X_train_seq, y_train, X_test_seq, y_test
 
 # ----------------------------
-# 메인 실행 함수
+# main function
 # ----------------------------
 def main():
     args = get_args()
@@ -424,7 +424,7 @@ def main():
     print("Test :", X_test.shape, y_test.shape)
 
     # ----------------------------
-    # Global (Server) 모델 초기화
+    # Global (Server) model initialization
     # ----------------------------
     # model = CNN_LSTM(timesteps=10, features=12)
     # _ = model(tf.zeros((1, 10, 12))) # NSL
@@ -440,13 +440,13 @@ def main():
     model.summary()
 
     # ----------------------------
-    # 데이터 분할: 클라이언트별
+    # data split: per client
     # ----------------------------
     client_data = np.array_split(X_train, args.client_nums)
     label_data = np.array_split(y_train, args.client_nums)
 
     # ----------------------------
-    # 서버 평가 콜백
+    # server evaluation callback
     # ----------------------------
     def server_evaluate(server_round: int, parameters, config):
         weights = parameters_to_ndarrays(parameters)
@@ -479,7 +479,7 @@ def main():
         return float(loss), {"acc": float(acc), "auc": float(auc)}
 
     # ----------------------------
-    # 커스텀 FedAvg 전략
+    # custom FedAvg strategy
     # ----------------------------
     strategy = SaveEvaluationFedAvg(
         eval_server_args=None,
@@ -492,7 +492,7 @@ def main():
     )
 
     # ----------------------------
-    # 클라이언트 함수 정의
+    # client function definition
     # ----------------------------
     def client_fn(cid: str):
         cid_int = int(cid)
@@ -523,13 +523,13 @@ def main():
         )
 
     # ----------------------------
-    # 결과 파일 초기화
+    # initialize results file
     # ----------------------------
     with open(RESULT_PATH, "w") as f:
         f.write("[Server Evaluation Report]\n")
 
     # ----------------------------
-    # 연합 학습 시작
+    # start federated learning
     # ----------------------------
     history = fl.simulation.start_simulation(
         client_fn=client_fn,
@@ -541,14 +541,14 @@ def main():
     )
 
     # ----------------------------
-    # 최종 글로벌 모델 weight 저장
+    # save final global model weights
     # ----------------------------
     if hasattr(strategy, "final_parameters") and strategy.final_parameters is not None:
         final_weights = parameters_to_ndarrays(strategy.final_parameters)
         model.set_weights(final_weights)
 
     # # ----------------------------
-    # # 학습 결과 저장 및 시각화
+    # # save and visualize training results
     # # ----------------------------
     # save_and_plot_history(
     #     history,
@@ -557,13 +557,13 @@ def main():
     # )
 
     # # ----------------------------
-    # # 최종 평가
+    # # final evaluation
     # # ----------------------------
     # loss, acc = model.evaluate(X_test, y_test, verbose=0)
     # print(f"\n[Final] Loss: {loss:.4f}  Acc: {acc:.4f}")
 
     model.save_weights(WEIGHT_PATH)
-    print(f"\n✅ Model weights saved to {WEIGHT_PATH}")
+    print(f"\nModel weights saved to {WEIGHT_PATH}")
 
  
 if __name__ == "__main__":

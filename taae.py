@@ -3,7 +3,7 @@
 '''
 from utils import *
 import argparse
-#TODO arguments 수정 필요
+#TODO arguments need to be modified
 # from arguments import get_args
 # args = get_args()
 
@@ -18,10 +18,10 @@ BATCH_SIZE = args.batch_size
 DROPOUT = args.dropout_rate
 PERCENTILE = args.percentile
 
-# 클라이언트 엔트로피 계산
+# Compute client entropy
 def compute_client_entropy(X_local: np.ndarray, n_bins: int = 16, eps: float = 1e-12) -> float:
     """
-    각 feature의 히스토그램 분포로 샤논 엔트로피를 계산하고 평균을 취함.
+    Computes Shannon entropy from the histogram distribution of each feature and averages across features.
     """
     if X_local is None or X_local.shape[0] == 0:
         return 0.0
@@ -45,8 +45,8 @@ def mix_weights_by_entropy(
     ent2: float,
 ) -> List[np.ndarray]:
     """
-    RNEP 혼합: α = ent1/(ent1+ent2), (1-α) = ent2/(ent1+ent2).
-    엔트로피가 높을수록 가중치를 더 많이 반영.
+    RNEP mixing: α = ent1/(ent1+ent2), (1-α) = ent2/(ent1+ent2).
+    Higher entropy results in a larger contribution to the mixed weights.
     """
     s = ent1 + ent2
     if s <= 0:
@@ -55,13 +55,13 @@ def mix_weights_by_entropy(
         a1, a2 = ent1 / s, ent2 / s
     return [a1 * w1 + a2 * w2 for w1, w2 in zip(weights1, weights2)]
 
-# === 기존: SaveEvaluationFedAvg 를 RNEP 버전으로 변경 ===
+# === Original: SaveEvaluationFedAvg replaced with RNEP version ===
 class SaveEvaluationRNEP(fl.server.strategy.FedAvg):
     """
-    FedAvg를 오버라이드하여 RNEP 방식(엔트로피 기반 페어 혼합)으로 집계.
-    - 클라이언트 fit() metrics 에 "entropy" 가 반드시 포함되어야 함.
-    - 결과 리스트를 무작위 페어링하여 각 페어의 가중치 혼합을 수행.
-    - 모든 페어 혼합 결과를 단순 평균하여 최종 글로벌 파라미터로 설정.
+    Overrides FedAvg to aggregate using the RNEP method (entropy-based pair mixing).
+    - Client fit() metrics must include "entropy".
+    - Results list is randomly paired and each pair's weights are mixed.
+    - All pair-mixed results are simply averaged to produce the final global parameters.
     """
     def __init__(self, eval_server_args: Optional[Dict] = None, **kwargs):
         super().__init__(**kwargs)
@@ -90,7 +90,7 @@ class SaveEvaluationRNEP(fl.server.strategy.FedAvg):
         idxs = list(range(len(entries)))
         random.shuffle(idxs)
 
-        mixed_param_lists = []  # 각 페어 혼합 결과 (ndarrays)
+        mixed_param_lists = []  # mixed result per pair (ndarrays)
         i = 0
         while i < len(idxs):
             i1 = idxs[i]
@@ -102,7 +102,7 @@ class SaveEvaluationRNEP(fl.server.strategy.FedAvg):
                 mixed_param_lists.append(mixed)
                 i += 2
             else:
-                # 짝이 없으면 그대로 통과 (odd client)
+                # pass through as-is if unpaired (odd client)
                 w1, _, _ = entries[i1]
                 mixed_param_lists.append([w.copy() for w in w1])
                 i += 1
@@ -118,7 +118,7 @@ class SaveEvaluationRNEP(fl.server.strategy.FedAvg):
         aggregated_parameters = fl.common.ndarrays_to_parameters(agg)
         self.final_parameters = aggregated_parameters
 
-        # 서버 메트릭(선택)
+        # server metrics (optional)
         metrics = {"rnp_pairs": len(mixed_param_lists)}
 
         return aggregated_parameters, metrics
@@ -128,7 +128,7 @@ class SaveEvaluationRNEP(fl.server.strategy.FedAvg):
         server_round: int,
         parameters: fl.common.Parameters,
     ) -> Optional[Tuple[float, Dict[str, fl.common.Scalar]]]:
-        """서버 측 공통 검증셋 평가 (기존 SaveEvaluationFedAvg와 동일 로직)."""
+        """Server-side common validation set evaluation (same logic as the original SaveEvaluationFedAvg)."""
         if self.eval_server_args is None:
             return None
 
@@ -139,7 +139,7 @@ class SaveEvaluationRNEP(fl.server.strategy.FedAvg):
         X_test_scaled = self.eval_server_args['X_test_scaled']
         y_test = self.eval_server_args['y_test']
         result_path = self.eval_server_args['result_path']
-        matrix_path = self.eval_server_args['matrix_path']  # 사용하지 않더라도 인자 유지
+        matrix_path = self.eval_server_args['matrix_path']  # keep the argument even if unused
 
         # 1) train 기반 threshold 산출
         pred_train = model.predict(X_train_scaled, verbose=2)
@@ -191,7 +191,7 @@ class GradientReversal(layers.Layer):
 class TransformerAAE(tf.keras.Model):
     def __init__(self, input_dim, latent_dim=64, embed_dim=128, num_heads=4, ff_dim=128,
                  num_encoder_layers=3, num_decoder_layers=3,
-                 dropout_rate=DROPOUT, beta=0.3, grl_lambda=1.0): # CIC는 0.3으로 조정함
+                 dropout_rate=DROPOUT, beta=0.3, grl_lambda=1.0): # adjusted to 0.3 for CIC
         super().__init__()
         self.latent_dim = latent_dim
         self.beta = beta
@@ -249,7 +249,7 @@ class TransformerAAE(tf.keras.Model):
             layers.Dense(1, activation="sigmoid")
         ])
 
-        # Loss 함수
+        # Loss functions
         self.mse = tf.keras.losses.MeanSquaredError()
         self.bce = tf.keras.losses.BinaryCrossentropy()
 
@@ -286,7 +286,7 @@ class TransformerAAE(tf.keras.Model):
         # -------------------
         recon_loss = self.mse(inputs, output)
 
-        if prior_labels is not None:  # prior 분포와 맞추기 (예: 정규분포 샘플 vs 인코딩 z)
+        if prior_labels is not None:  # align with prior distribution (e.g., normal samples vs. encoded z)
             z_grl = self.grl(z)
             d_pred = self.discriminator(z_grl, training=training)
             adv_loss = self.bce(prior_labels, d_pred)
@@ -305,35 +305,35 @@ class FLClient(fl.client.NumPyClient):
         self.X_test = X_test
         self.y_test = y_test
         self.epochs = epochs
-        self.model(tf.zeros((1, X_train.shape[1])))   # 초기 weight로 초기화
+        self.model(tf.zeros((1, X_train.shape[1])))   # initialize with initial weights
 
     def get_parameters(self, config):
         return self.model.get_weights()
 
     def fit(self, parameters, config):
-        self.model.set_weights(parameters) # 서버의 최신 가중치를 가져와 학습함
+        self.model.set_weights(parameters) # load the latest server weights for training
         self.model.compile(optimizer=Adam(0.00001))
         self.model.fit(self.X_train, self.X_train,
                        epochs=self.epochs,
                        batch_size=BATCH_SIZE,
                        verbose=2,
                        validation_split=0.2)
-        ent = compute_client_entropy(self.X_train)   # ★ 엔트로피 계산
+        ent = compute_client_entropy(self.X_train)   # ★ compute entropy
         return self.model.get_weights(), len(self.X_train), {"entropy": float(ent)}
 
     def evaluate(self, parameters, config):
-        # 로컬 결과 얻기
+        # get local results
         self.model.set_weights(parameters)
         local_pred = self.model.predict(self.X_train, verbose=0)
         local_recon_errors = np.mean(np.square(self.X_train - local_pred), axis=1)
         threshold = np.percentile(local_recon_errors, PERCENTILE)
         
-        # test 데이터셋으로 성능 평가하기
+        # evaluate performance on test dataset
         pred_test = self.model.predict(self.X_test, verbose=0)
         recon_errors_test = np.mean(np.square(self.X_test - pred_test), axis=1)
         y_pred = (recon_errors_test > threshold).astype(int)
 
-        # 평가 매트릭 생성
+        # generate evaluation metrics
         acc = np.mean(y_pred == self.y_test)
         report = classification_report(
             self.y_test, y_pred,
@@ -341,12 +341,12 @@ class FLClient(fl.client.NumPyClient):
             zero_division=0
         )
 
-        # ✅ 콘솔 출력
+        # ✅ console output
         print(f"\n--- Client {self.cid} Evaluation ---")
         print(f"Accuracy: {acc:.4f}")
         print(report)
 
-        # ✅ 파일 저장
+        # ✅ save to file
         with open("./FedSAD_Results/client.txt", "a") as f:
             f.write(f"\n--- Client {self.cid} Evaluation ---\n")
             f.write(f"Accuracy: {acc:.4f}\n")

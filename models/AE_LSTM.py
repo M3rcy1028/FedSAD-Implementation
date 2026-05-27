@@ -1,9 +1,9 @@
 from arguments import get_args
 from utils import *
-from model_aelstm import SaveEvaluationFedAvg, AE_LSTM, FLClient  # 비지도 AE-LSTM
+from model_aelstm import SaveEvaluationFedAvg, AE_LSTM, FLClient  # unsupervised AE-LSTM
 
 # ----------------------------
-# 경로 설정
+# path configuration
 # ----------------------------
 os.makedirs("./ae_lstm", exist_ok=True)
 WEIGHT_PATH = "./ae_lstm/ae_lstm_weights.h5"
@@ -13,7 +13,7 @@ ROC_PATH = "./ae_lstm/ae_lstm_roc.png"
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 # ----------------------------
-# 결과 파일 초기화
+# initialize results file
 # ----------------------------
 with open(RESULT_PATH, "w") as f:
     f.write("[Server Evaluation Report]\n")
@@ -80,9 +80,9 @@ def get_datasets_nsl_semi(
     """
     Semi-supervised NSL-KDD dataset for AE-LSTM
     ---------------------------------------------------------
-    - 정상(normal): 절반 train / 절반 test
-    - 이상(anomaly): 일부(anomaly_ratio)만 train에 포함
-    - AE-LSTM 입력용 (reshape_for_sequence_nsl 적용)
+    - normal: half train / half test
+    - anomaly: only a portion (anomaly_ratio) included in train
+    - for AE-LSTM input (reshape_for_sequence_nsl applied)
     ---------------------------------------------------------
     Return:
         X_train_seq, y_train_cls, X_test_seq, y_test
@@ -90,7 +90,7 @@ def get_datasets_nsl_semi(
     np.random.seed(random_seed)
     random.seed(random_seed)
 
-    # 1️⃣ Load data
+    # load data
     df_normal = pd.read_csv(normal_csv)
     df_anomaly = pd.read_csv(anomaly_csv)
     df_normal = shuffle(df_normal, random_state=random_seed)
@@ -99,23 +99,23 @@ def get_datasets_nsl_semi(
     df_normal = df_normal.sample(n=min(len(df_normal), n_samples * 2), random_state=random_seed)
     df_anomaly = df_anomaly.sample(n=min(len(df_anomaly), n_samples), random_state=random_seed)
 
-    # 2️⃣ Split normal
+    # split normal
     split_point = int(len(df_normal) * 0.8)
-    df_normal_train = df_normal.iloc[:split_point] # 스케일러 훈련용
-    df_normal_test = df_normal.iloc[split_point:] # 실제 테스트용
+    df_normal_train = df_normal.iloc[:split_point] # for scaler training
+    df_normal_test = df_normal.iloc[split_point:] # for actual testing
 
-    # 3️⃣ Scale
+    # scale
     scaler = MinMaxScaler()
     X_normal_train = scaler.fit_transform(df_normal_train)
     X_normal_test  = scaler.transform(df_normal_test)
     X_anomaly_all  = scaler.transform(df_anomaly)
 
-    # 4️⃣ Split anomaly
+    # split anomaly
     num_anomaly_to_add = int(len(X_anomaly_all) * anomaly_ratio)
     X_anomaly_train = X_anomaly_all[:num_anomaly_to_add]
     X_anomaly_test  = X_anomaly_all[num_anomaly_to_add:]
 
-    # 5️⃣ Compose datasets
+    # compose datasets
     X_train = np.concatenate([X_normal_train, X_anomaly_train], axis=0)
     y_train_cls = np.concatenate([
         np.zeros(len(X_normal_train)), np.ones(len(X_anomaly_train))
@@ -128,7 +128,7 @@ def get_datasets_nsl_semi(
     X_train, y_train_cls = shuffle(X_train, y_train_cls, random_state=random_seed)
     X_test,  y_test      = shuffle(X_test,  y_test,      random_state=random_seed)
 
-    # 6️⃣ Reshape for AE-LSTM (3D input)
+    # reshape for AE-LSTM (3D input)
     X_train_seq = reshape_for_sequence_nsl(X_train, timesteps=timesteps, features=features)
     X_test_seq  = reshape_for_sequence_nsl(X_test, timesteps=timesteps, features=features)
 
@@ -148,10 +148,10 @@ def reshape_for_sequence(X, timesteps=10, features=2):
     """
     X: (n_samples, n_features_flat)
     -> (n_samples, timesteps, features)
-    부족하면 0으로 패딩, 초과면 앞에서 절단
+    pad with 0 if short, truncate from front if too long
     """
     if X.ndim == 3:
-        # 이미 LSTM 입력 형태
+        # already in LSTM input format
         return X
         
     n = timesteps * features
@@ -173,50 +173,50 @@ def get_datasets_cic_multi_semi(
     features=8,  
 ):
     """
-    Semi-supervised CIC-IDS2018 dataset for AE-LSTM (수정된 버전)
-    - CNN-LSTM 버전처럼 피처 선택 로직을 제거하여 안정화
-    - (가정) CSV 파일들은 이미 동일한 컬럼을 가지고 있음
+    Semi-supervised CIC-IDS2018 dataset for AE-LSTM (revised version)
+    - Feature selection logic removed for stability, as in CNN-LSTM version
+    - (Assumption) CSV files already share the same columns
     """
     np.random.seed(random_seed)
     random.seed(random_seed)
-    # 2) 정상 로드
+    # load normal data
     try:
         df_normal = pd.read_csv(normal_csv, low_memory=False)
     except FileNotFoundError:
-        print(f"❌ Error: Normal file not found at {normal_csv}")
+        print(f"Error: Normal file not found at {normal_csv}")
         return
 
-    # 3) 이상 여러 파일 병합
+    # merge multiple anomaly files
     anomlay_path = "./CIC2018/ae_datas_sampled/CIC_ae_anomaly.csv"
     df_anomaly = pd.read_csv(anomlay_path, low_memory=False)
 
-    # (참고) pd.concat은 공통 컬럼만 합치므로, 만약 파일 간 컬럼이 다르면
-    # 이 시점에서 이미 일부 컬럼이 NaN이 되거나 유실될 수 있습니다.
-    # -> 모든 CSV의 컬럼이 동일하다고 가정합니다.
+    # (Note) pd.concat only merges common columns — if files have different columns,
+    # some columns may already become NaN or be lost at this point.
+    # -> Assumes all CSVs share the same columns.
 
-    # 4) NaN/inf 처리
+    # handle NaN/inf
     for df in (df_normal, df_anomaly):
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
         df.fillna(0, inplace=True)
 
-    # 5) 정상 80% split
+    # 80% normal split
     df_normal = shuffle(df_normal, random_state=random_seed)
     split_point = int(len(df_normal) * 0.8)
     df_normal_train = df_normal.iloc[:split_point]
     df_normal_test = df_normal.iloc[split_point:]
 
-    # 6) 스케일링 (정상-train에만 fit)
+    # scaling (fit on normal-train only)
     scaler = MinMaxScaler()
     X_normal_train = scaler.fit_transform(df_normal_train.values)
     X_normal_test  = scaler.transform(df_normal_test.values)
     X_anomaly_all  = scaler.transform(df_anomaly.values)
 
-    # 7) anomaly 일부만 학습 포함
+    # include a portion of anomalies in training
     n_anom_train = int(len(X_anomaly_all) * anomaly_ratio)
     X_anomaly_train = X_anomaly_all[:n_anom_train]
     X_anomaly_test  = X_anomaly_all[n_anom_train:]
 
-    # 8) 합치기 + 라벨
+    # combine + label
     X_train = np.concatenate([X_normal_train, X_anomaly_train], axis=0)
     y_train_cls = np.concatenate([
         np.zeros(len(X_normal_train), dtype=int),
@@ -228,17 +228,17 @@ def get_datasets_cic_multi_semi(
         np.ones(len(X_anomaly_test), dtype=int),
     ])
 
-    # 9) 셔플
+    # shuffle
     X_train, y_train_cls = shuffle(X_train, y_train_cls, random_state=random_seed)
     X_test,  y_test       = shuffle(X_test,  y_test,      random_state=random_seed)
 
-    # 10) AE-LSTM 입력 리셰이프 (기존 함수 사용)
+    # AE-LSTM input reshape (using existing function)
     X_train_seq = reshape_for_sequence(X_train, timesteps=timesteps, features=features)
     X_test_seq  = reshape_for_sequence(X_test,  timesteps=timesteps, features=features)
 
-    # 11) 로그
+    # log
     original_features = X_train.shape[1]
-    print(f"✅ [CIC-IDS2018 Semi] Normal={len(df_normal):,}, Anomaly={len(df_anomaly):,}")
+    print(f"[CIC-IDS2018 Semi] Normal={len(df_normal):,}, Anomaly={len(df_anomaly):,}")
     print(f"Train: {X_train_seq.shape}, Test: {X_test_seq.shape} "
           f"(flatten={original_features} -> {timesteps}x{features})")
     print(f"Anomaly ratio (train): {anomaly_ratio}")
@@ -254,9 +254,9 @@ def get_datasets_insdn_semi(
     """
     Semi-supervised InSDN dataset for AE-LSTM
     ---------------------------------------------------------
-    - 정상(normal) 데이터: 50% train, 50% test
-    - 이상(anomaly) 데이터: 일부(anomaly_ratio)만 train에 혼합
-    - AE-LSTM 입력용으로 정규화된 48 feature 벡터 반환
+    - normal data: 50% train, 50% test
+    - anomaly data: only a portion (anomaly_ratio) mixed into train
+    - returns normalized 48-feature vector for AE-LSTM input
     ---------------------------------------------------------
     Return:
         X_train (normal + small anomaly)
@@ -343,11 +343,11 @@ def get_datasets_unsw_semi(
     anomaly_ratio=0.05,
 ):
     """
-    Semi-supervised InSDN dataset for AE-LSTM
+    Semi-supervised UNSW_NB15 dataset for AE-LSTM
     ---------------------------------------------------------
-    - 정상(normal) 데이터: 50% train, 50% test
-    - 이상(anomaly) 데이터: 일부(anomaly_ratio)만 train에 혼합
-    - AE-LSTM 입력용으로 정규화된 48 feature 벡터 반환
+    - normal data: 50% train, 50% test
+    - anomaly data: only a portion (anomaly_ratio) mixed into train
+    - returns normalized 48-feature vector for AE-LSTM input
     ---------------------------------------------------------
     Return:
         X_train (normal + small anomaly)
@@ -382,8 +382,8 @@ def get_datasets_unsw_semi(
     # ---------------------------
     df_normal = shuffle(df_normal, random_state=random_seed)
     split_point = int(len(df_normal) * 0.8)
-    df_normal_train = df_normal.iloc[:split_point] # 스케일러 훈련용
-    df_normal_test = df_normal.iloc[split_point:] # 실제 테스트용
+    df_normal_train = df_normal.iloc[:split_point] # for scaler training
+    df_normal_test = df_normal.iloc[split_point:] # for actual testing
 
     # ---------------------------
     # (4) Scaling
@@ -428,12 +428,12 @@ def get_datasets_unsw_semi(
     return X_train, y_train_cls, X_test, y_test
 
 # ----------------------------
-# 메인 함수
+# main function
 # ----------------------------
 def main():
     args = get_args()
 
-    # 데이터 불러오기
+    # load data
     # X_train, y_train_cls, X_test, y_test = get_datasets_kdd99_semi()
     # X_train = reshape_for_sequence(X_train, timesteps=10, features=13) # KDD
     # X_test = reshape_for_sequence(X_test, timesteps=10, features=13)
@@ -461,12 +461,12 @@ def main():
     # X_train = reshape_for_sequence(X_train, timesteps=6, features=7)
     # X_test = reshape_for_sequence(X_test, timesteps=6, features=7)
     
-    # 클라이언트 분할 시 classifier 라벨도 같이 나눔
+    # also split classifier labels when dividing client data
     client_data = np.array_split(X_train, args.client_nums)
     label_data = np.array_split(y_train_cls, args.client_nums)
 
     # ----------------------------
-    # 서버 모델 정의 (비지도 AE-LSTM)
+    # server model definition (unsupervised AE-LSTM)
     # ----------------------------
     # model = AE_LSTM(timesteps=10, features=12) # NSL
     # _ = model(tf.zeros((1, 10, 12)))
@@ -490,12 +490,12 @@ def main():
     model.summary()
 
     # ----------------------------
-    # 클라이언트 데이터 분할 (정상만)
+    # client data split (normal only)
     # ----------------------------
     client_data = np.array_split(X_train, args.client_nums)
 
     # ----------------------------
-    # 서버 평가 콜백
+    # server evaluation callback
     # ----------------------------
     def server_evaluate(server_round: int, parameters, config):
         weights = parameters_to_ndarrays(parameters)
@@ -505,12 +505,12 @@ def main():
         recon = preds["decoded"]
         cls_prob = preds["pred"].flatten()
 
-        # ---------- Reconstruction 기반 ----------
+        # ---------- Reconstruction-based ----------
         mse = np.mean(np.square(X_test - recon), axis=(1, 2))
         threshold = np.percentile(mse, 80)
         y_pred_recon = (mse > threshold).astype(int)
 
-        # ---------- Classifier 기반 ----------
+        # ---------- Classifier-based ----------
         y_pred_cls = (cls_prob > 0.5).astype(int)
 
         # ---------- Accuracy ----------
@@ -523,9 +523,9 @@ def main():
         cm_recon = confusion_matrix(y_test, y_pred_recon)
         cm_cls = confusion_matrix(y_test, y_pred_cls)
 
-        print("\n📊 [f-based Confusion Matrix]")
+        print("\n[f-based Confusion Matrix]")
         print(cm_recon)
-        print("\n📊 [Classifier-based Confusion Matrix]")
+        print("\n[Classifier-based Confusion Matrix]")
         print(cm_cls)
 
         # ---------- Reports ----------
@@ -541,12 +541,12 @@ def main():
             zero_division=0
         )
 
-        print("\n📊 [Reconstruction-based Report]")
+        print("\n[Reconstruction-based Report]")
         print(report_recon)
-        print("📊 [Classifier-based Report]")
+        print("[Classifier-based Report]")
         print(report_cls)
 
-        # ---------- 로그 파일 저장 ----------
+        # ---------- save log file ----------
         with open(RESULT_PATH, "a") as f:
             f.write(f"\n[Round {server_round}] Server Evaluation\n")
             f.write(f"Threshold={threshold:.6f}, Recon-Acc={acc_recon:.4f}, Cls-Acc={acc_cls:.4f}\n")
@@ -564,7 +564,7 @@ def main():
 
 
     # ----------------------------
-    # 커스텀 FedAvg 전략
+    # custom FedAvg strategy
     # ----------------------------
     strategy = SaveEvaluationFedAvg(
         eval_server_args={
@@ -583,7 +583,7 @@ def main():
 
 
     # ----------------------------
-    # 클라이언트 함수
+    # client function
     # ----------------------------
     def client_fn(cid: str):
         cid_int = int(cid)
@@ -607,7 +607,7 @@ def main():
 
 
     # ----------------------------
-    # 연합 학습 시작
+    # start federated learning
     # ----------------------------
     history = fl.simulation.start_simulation(
         client_fn=client_fn,
@@ -619,7 +619,7 @@ def main():
     )
 
     # ----------------------------
-    # 최종 평가
+    # final evaluation
     # ----------------------------
     preds = model.predict(X_test, verbose=0)
     recon = preds["decoded"] 
@@ -631,7 +631,7 @@ def main():
     acc = np.mean(y_pred == y_test)
 
     # ----------------------------
-    # 최종 모델 저장
+    # save final model
     # ----------------------------
     if hasattr(strategy, "final_parameters") and strategy.final_parameters is not None:
         final_weights = parameters_to_ndarrays(strategy.final_parameters)
@@ -639,7 +639,7 @@ def main():
         
     print(f"\n[Final] Accuracy={acc:.4f}, Threshold={threshold:.6f}")
     model.save_weights(WEIGHT_PATH)
-    print(f"✅ Model weights saved to {WEIGHT_PATH}")
+    print(f"Model weights saved to {WEIGHT_PATH}")
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ from tqdm import tqdm
 import numpy as np
 from typing import Sequence, Union, Optional, Dict, Iterable, Tuple
 
-# G-브랜치용 후보 (CICIDS2018)
+# G-branch candidates (CICIDS2018)
 G_COL_CANDIDATES_CICIDS = [
     "IN_BYTES", "OUT_BYTES", "IN_PKTS", "OUT_PKTS",
     "FLOW_DURATION_MILLISECONDS", "DURATION_IN", "DURATION_OUT",
@@ -24,7 +24,7 @@ G_COL_CANDIDATES_CICIDS = [
     "TCP_WIN_MAX_IN", "TCP_WIN_MAX_OUT",
 ]
 
-# S-브랜치 이산형 후보 (CICIDS2018)
+# S-branch discrete candidates (CICIDS2018)
 S_DISC_CANDIDATES_CICIDS = [
     "L4_SRC_PORT", "L4_DST_PORT", "PROTOCOL", "L7_PROTO",
     "TCP_FLAGS", "CLIENT_TCP_FLAGS", "SERVER_TCP_FLAGS",
@@ -54,7 +54,7 @@ S_CONT_CANDIDATES_CICIDS = [
 ]
 
 
-# G-브랜치용 후보 (UNSW-NB15)
+# G-branch candidates (UNSW-NB15)
 G_COL_CANDIDATES_UNSW = [
     "dur", "sbytes", "dbytes", "spkts", "dpkts", "sload", "dload",
     "sttl", "dttl", "sloss", "dloss", "swin", "dwin", "stcpb", "dtcpb",
@@ -64,7 +64,7 @@ G_COL_CANDIDATES_UNSW = [
     "ct_src_dport_ltm", "ct_dst_sport_ltm", "ct_dst_src_ltm",
 ]
 
-# S-브랜치 이산형 후보 (UNSW-NB15)
+# S-branch discrete candidates (UNSW-NB15)
 S_DISC_CANDIDATES_UNSW = [
     "sport", "dsport", "proto", "state", "service",
     "is_sm_ips_ports", "ct_state_ttl", "ct_ftp_cmd",
@@ -137,7 +137,7 @@ class MultimodalDataset(Dataset):
         df = pd.read_csv(csv_path, encoding=encoding)
 
         # -----------------------------
-        # 컬럼 체크
+        # column check
         # -----------------------------
         missing_cont = [c for c in self.cont_cols if c not in df.columns]
         missing_disc = [c for c in self.disc_cols if c not in df.columns]
@@ -153,7 +153,7 @@ class MultimodalDataset(Dataset):
             raise ValueError(f"Missing label column: {label_col}")
 
         # -----------------------------
-        # dataframe 처리
+        # dataframe processing
         # -----------------------------
         df = df.reset_index(drop=True)
         df["y"] = df[label_col].astype(int)
@@ -165,7 +165,7 @@ class MultimodalDataset(Dataset):
             self.attack_col = None
 
         # -----------------------------
-        # 🔥 tensor 처리 (핵심 변경)
+        # tensor processing (core change)
         # -----------------------------
         self.graphs = None
 
@@ -179,7 +179,7 @@ class MultimodalDataset(Dataset):
                 )
 
         # -----------------------------
-        # 내부 변수
+        # internal variables
         # -----------------------------
         self._cont_stats: Dict[str, Tuple[float, float]] = {}
         self._disc_mappings: Dict[str, Dict[str, int]] = {}
@@ -207,7 +207,7 @@ class MultimodalDataset(Dataset):
         raise ValueError("Invalid tensor shape")
 
     # -----------------------------
-    # 기본 함수
+    # basic functions
     # -----------------------------
     def __len__(self):
         return len(self.df)
@@ -257,7 +257,7 @@ class MultimodalDataset(Dataset):
         self._fitted = True
 
     # -----------------------------
-    # 데이터 반환
+    # data retrieval
     # -----------------------------
     def __getitem__(self, idx: int):
         if not self._fitted:
@@ -265,11 +265,11 @@ class MultimodalDataset(Dataset):
 
         row = self.df.iloc[idx]
 
-        # 🔥 graph 부분
+        # graph part
         if self.graphs is not None:
             g_tensor = torch.tensor(self.graphs[idx], dtype=torch.float32)
         else:
-            # fallback (기존 유지)
+            # fallback (keep existing)
             g_tensor = torch.tensor(
                 row[self.g_cols].values.astype("float32"),
                 dtype=torch.float32
@@ -291,8 +291,8 @@ class MultimodalDataset(Dataset):
     
 def build_graph_A(df, g_cols, topk=None, thresh=0.0):
     """
-    df[g_cols]로 피어슨 상관행렬 |corr| 계산 → 행 정규화 row-stochastic A
-    topk가 주어지면 각 행에서 topk만 남김. thresh>0이면 그 미만은 0.
+    Compute Pearson correlation matrix |corr| from df[g_cols] -> row-normalize to row-stochastic A.
+    If topk is given, keep only topk per row. If thresh>0, values below are set to 0.
     """
     if not g_cols:
         return torch.zeros((256,256), dtype=torch.float32)  # dummy
@@ -311,11 +311,11 @@ def build_graph_A(df, g_cols, topk=None, thresh=0.0):
         mask[rows, idx] = True
         A[~mask] = 0.0
 
-    # 행 정규화
+    # row normalization
     row_sum = A.sum(axis=1, keepdims=True) + 1e-8
     A = A / row_sum
 
-    # 256×256로 pad/trunc (GGraphCNN의 16×16 reshape 용)
+    # pad/trunc to 256x256 (for GGraphCNN 16x16 reshape)
     if M > 256:
         A = A[:256, :256]
     elif M < 256:

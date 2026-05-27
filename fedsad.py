@@ -16,16 +16,7 @@ import argparse
 from tqdm import tqdm
 from utils import *
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2" 
-
-# RESULT_DIR = "results/FedSAD"
-
-# os.makedirs(RESULT_DIR,exist_ok=True)
 TF_DEVICE='/CPU:0'
-
-# RESULT_FILE_PATH=os.path.join(RESULT_DIR,"fedsad.pkl")
-# MATRIX_PATH=os.path.join(RESULT_DIR,"fedsad_cm.png")
-# REPORT_PATH=os.path.join(RESULT_DIR,"fedsad_server.txt")
 
 TIME_WINDOW = '1T'
 RANDOM_STATE = 123

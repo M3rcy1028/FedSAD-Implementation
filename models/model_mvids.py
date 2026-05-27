@@ -17,14 +17,14 @@ def run(args):
     supported_datasets = {"unsw", "cic"}
     if dataset_key not in supported_datasets:
         raise NotImplementedError(
-            f"지원하지 않는 데이터셋입니다: '{args.dataset}'. "
-            f"현재는 {sorted(supported_datasets)} 만 사용할 수 있습니다."
+            f"Unsupported dataset: '{args.dataset}'. "
+            f"Currently only {sorted(supported_datasets)} are supported."
         )
 
     features, labels, preprocessor_template = load_dataset(args.dataset, args.data_path)
 
     # ---------------------------
-    # 공격 유형 로드
+    # load attack types
     # ---------------------------
     attack_types = None
     original_df = pd.read_csv(args.data_path)
@@ -60,12 +60,12 @@ def run(args):
             attack_types=attack_types
         )
 
-        # KG 생성 (model6 기준 항상 사용)
+        # create KG (always used based on model6)
         args.y_train = y_train
         _, kg_metadata = make_kg_provider(train_views, feature_names, args)
 
     # ---------------------------
-    # 모델 생성
+    # build model
     # ---------------------------
     model = build_model(view_lengths)
 
@@ -73,12 +73,12 @@ def run(args):
 
     save_path=os.path.join(args.result_path,"mvids_weights.pt")
     # ---------------------------
-    # 학습
+    # train
     # ---------------------------
     model = train_loop(model, dl_train, None, args, save_path=save_path)
 
     # ---------------------------
-    # 저장
+    # save
     # ---------------------------
     save_dict = {
         'model_state_dict': model.state_dict(),
@@ -92,7 +92,7 @@ def run(args):
     torch.save(save_dict, save_path)
 
     # ---------------------------
-    # 평가
+    # evaluate
     # ---------------------------
     metrics = test_loop(model, dl_test, args)
     f1_scores.append(metrics["f1"])

@@ -108,7 +108,7 @@ def make_loaders(
     """Split data into train/val/test, fit preprocessing on train only, and create DataLoaders."""
     idx = np.arange(len(labels))
     
-    # 공격 유형별 stratify (가능한 경우), 없으면 이진 라벨로 stratify
+    # stratify by attack type (if available), otherwise by binary label
     if attack_types is not None:
         stratify = attack_types
         print(f"Stratifying by attack types: {len(np.unique(attack_types))} types")
@@ -138,7 +138,7 @@ def make_loaders(
 
     view_lengths = [v.shape[1] for v in train_views]
     feature_names = preprocessor.get_feature_names()
-    # validation 없이 반환
+    # return without validation
     return dl_train, None, dl_test, view_lengths, train_views, feature_names, y_train
 
 
@@ -155,7 +155,7 @@ def build_model(view_lengths: Sequence[int], kg_provider=None):
     )
     return model
 
-#TODO 코드 구조 수정
+#TODO refactor code structure
 def load_unsw() -> Tuple[pd.DataFrame, np.ndarray, MultiViewPreprocessor]:
     """Backward-compatible helper for code paths expecting the UNSW loader."""
     return load_dataset("unsw")

@@ -17,7 +17,7 @@ def main():
     X_train_scaled, X_test_scaled, y_test = get_datasets_cic_sam()
     client_data = np.array_split(X_train_scaled, args.client_nums)
     
-    # 서버 평가를 위한 모델/데이터 준비
+    # Prepare model/data for server evaluation
     input_dim = X_train_scaled.shape[1]
     print(input_dim)
     central_model = TransformerAAE(input_dim)
@@ -69,12 +69,12 @@ def main():
         strategy=strategy,
         config=fl.server.ServerConfig(num_rounds=args.server_rounds),
         client_resources={"num_cpus": 1},
-        # num_parallel_clients=args.num_parallel_clients,   # 권장 1~2
+        # num_parallel_clients=args.num_parallel_clients,   # recommended 1~2
         ray_init_args={"include_dashboard": False, "ignore_reinit_error": True},   
         # client_fn_eval=client_fn 
         )
 
-    # 최종 학습된 weight를 central_model에 적용
+    # Apply the final trained weights to central_model
     if strategy.final_parameters is not None:
         from flwr.common import parameters_to_ndarrays
         final_weights = parameters_to_ndarrays(strategy.final_parameters)
@@ -96,7 +96,7 @@ def main():
         roc_path=ROC_PATH
     )
     
-    # 5. Save the trained model weights
+    # Save the trained model weights
     central_model.save_weights(WEIGHT_PATH)
     print(f"\nModel weights saved to {WEIGHT_PATH}")
 

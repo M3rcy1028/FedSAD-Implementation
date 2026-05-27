@@ -21,13 +21,13 @@ def main():
     global_model.compile(optimizer=Adam(0.0001), loss="mse")
     # try:
     #     global_model.load_weights("./initial_weight.h5")
-    #     print(f"✅ Loaded weights.")
+    #     print(f"Loaded weights.")
     # except Exception as e:
-    #     print(f"❌ Failed to load weights: {e}")
+    #     print(f"Failed to load weights: {e}")
     #     global_model.save_weights("./initial_weight_3.h5")
     #     print("\nInitial Model saved.\n")
 
-    # eval_server에 필요한 인자들을 묶어서 strategy에 전달
+    # bundle arguments required for eval_server and pass to strategy
     eval_server_args = {
         'model': global_model,
         'X_train_scaled': X_train_scaled,
@@ -73,11 +73,11 @@ def main():
         strategy=strategy,
         config=fl.server.ServerConfig(num_rounds=args.server_rounds),
         client_resources={"num_cpus": 1},
-        # num_parallel_clients=args.num_parallel_clients,   # 권장 1~2
+        # num_parallel_clients=args.num_parallel_clients,   # recommended 1~2
         ray_init_args={"include_dashboard": False, "ignore_reinit_error": True},
     )
 
-    # 최종 학습된 weight를 global_model에 적용
+    # apply the final trained weights to global_model
     if strategy.final_parameters is not None:
         from flwr.common import parameters_to_ndarrays
         final_weights = parameters_to_ndarrays(strategy.final_parameters)
@@ -99,7 +99,7 @@ def main():
         roc_path=ROC_PATH
     )
     
-    # 5. Save the trained model weights
+    # save the trained model weights
     global_model.save_weights(WEIGHT_PATH)
     print(f"\nModel weights saved to {WEIGHT_PATH}")
 

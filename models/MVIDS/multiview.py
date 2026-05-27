@@ -61,8 +61,8 @@ class MultiViewKnowledgeNet(nn.Module):
 
 
         self.lstm = nn.LSTM(
-            input_size = lstm_input_dim,   # 입력 feature 크기
-            hidden_size=cnn_channels,  # 출력 feature 크기
+            input_size = lstm_input_dim,   # input feature size
+            hidden_size=cnn_channels,  # output feature size
             batch_first=True
         )
 
@@ -114,18 +114,18 @@ class MultiViewKnowledgeNet(nn.Module):
 
             kg_embed = self.kg_fc(kg_vec)  # [B, C]
 
-            # 🔥 KG를 sequence에 맞게 확장
+            # expand KG to match sequence
             kg_expand = kg_embed.unsqueeze(1).expand(-1, stacked_feats.size(1), -1)  # [B, V, C]
 
-            # 🔥 논문 Eq.(4): concat
+            # paper Eq.(4): concat
             fused_input = torch.cat([stacked_feats, kg_expand], dim=-1)  # [B, V, 2C]
         else:
             fused_input = stacked_feats
 
-        # 🔥 LSTM (fusion 이후)
+        # LSTM (after fusion)
         lstm_out, _ = self.lstm(fused_input)  # [B, V, H]
 
-        # 🔥 Attention
+        # Attention
         attn_scores = self.temporal_attn(lstm_out)  # [B, V, 1]
         attn_weights = torch.softmax(attn_scores, dim=1)
         fused = (attn_weights * lstm_out).sum(dim=1)  # [B, H]
