@@ -6,10 +6,10 @@ import numpy as np
 import torch
 import os
 import argparse
-from MVIDS.kg_builder import make_kg_provider
-from MVIDS.load_data import load_dataset
-from MVIDS.train import test_loop, train_loop
-from MVIDS.load_data import build_model, make_loaders
+from models.MVIDS.kg_builder import make_kg_provider
+from models.MVIDS.load_data import load_dataset
+from models.MVIDS.train import test_loop, train_loop
+from models.MVIDS.load_data import build_model, make_loaders
 import pandas as pd
 
 def run(args):
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--data_path', type=str, default="/data/SDP_Dataset/UNSW_NB15/UNSW_NB15_preprocessed.csv")
     parser.add_argument('--device', type=str, default="cuda:0")
-    parser.add_argument('--result_path',type=str, default="results/UNSW-NB15/mvids")
+    parser.add_argument('--result_path',type=str, default="results/UNSW_NB15/mvids")
     args = parser.parse_args()
 
     run(args)

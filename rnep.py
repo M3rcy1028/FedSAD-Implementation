@@ -1,5 +1,12 @@
-from arguments import get_args
-from utils import *
+import os
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
+import flwr as fl
+from flwr.common import parameters_to_ndarrays
+from utils.get_datasets import get_datasets_cic_sam
+from utils.metrics import save_and_plot_history, eval_server
+from utils.arguments import get_args
 from taae import SaveEvaluationRNEP, TransformerAAE, FLClient  # FLClient class can be used if imported
 
 os.makedirs("./FedSAD_Results", exist_ok=True)
@@ -76,7 +83,6 @@ def main():
 
     # Apply the final trained weights to central_model
     if strategy.final_parameters is not None:
-        from flwr.common import parameters_to_ndarrays
         final_weights = parameters_to_ndarrays(strategy.final_parameters)
         central_model.set_weights(final_weights)
     

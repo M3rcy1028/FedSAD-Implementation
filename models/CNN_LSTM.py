@@ -1,6 +1,17 @@
-from arguments import get_args
-from utils import *
-from model_cnnlstm import SaveEvaluationFedAvg, CNN_LSTM, FLClient  # custom FedAvg, CNN-LSTM, Client
+import os
+import numpy as np
+import pandas as pd
+import random
+from sklearn.utils import shuffle
+from sklearn.preprocessing import MinMaxScaler 
+import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
+from sklearn.metrics import classification_report, confusion_matrix, mean_squared_error, roc_curve, roc_auc_score
+import matplotlib.pyplot as plt
+from flwr.common import Scalar, parameters_to_ndarrays, ndarrays_to_parameters
+import flwr as fl
+from utils.arguments import get_args
+from model_cnnlstm import SaveEvaluationFedAvg, CNN_LSTM, FLClient  # 커스텀 FedAvg, CNN-LSTM, Client
 
 # ----------------------------
 # path configuration
@@ -470,7 +481,7 @@ def main():
 
         try:
             plt.figure()
-            RocCurveDisplay.from_predictions(y_test, y_prob)
+            RocCurveDisplay.from_predictions(y_test, y_prob) # TODO RocCurveDisplay 정의
             plt.savefig(ROC_PATH, bbox_inches="tight")
             plt.close()
         except Exception:

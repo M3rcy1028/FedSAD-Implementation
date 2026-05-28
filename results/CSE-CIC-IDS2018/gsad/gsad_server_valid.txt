@@ -1,0 +1,33 @@
+
+📊 [Classification Report]
+              precision    recall  f1-score   support
+
+      Normal     0.8071    0.5355    0.6439      1055
+     Anomaly     0.3166    0.6271    0.4208       362
+
+    accuracy                         0.5589      1417
+   macro avg     0.5619    0.5813    0.5323      1417
+weighted avg     0.6818    0.5589    0.5869      1417
+
+
+📊 [Classification Report]
+              precision    recall  f1-score   support
+
+      Normal     0.8071    0.5355    0.6439      1055
+     Anomaly     0.3166    0.6271    0.4208       362
+
+    accuracy                         0.5589      1417
+   macro avg     0.5619    0.5813    0.5323      1417
+weighted avg     0.6818    0.5589    0.5869      1417
+
+
+📊 [Classification Report]
+              precision    recall  f1-score   support
+
+      Normal     0.9653    0.5342    0.6878      1404
+     Anomaly     0.0000    0.0000    0.0000        27
+
+    accuracy                         0.5241      1431
+   macro avg     0.4826    0.2671    0.3439      1431
+weighted avg     0.9470    0.5241    0.6748      1431
+

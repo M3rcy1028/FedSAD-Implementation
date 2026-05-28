@@ -110,9 +110,8 @@ def test_loop(model: nn.Module, dl_te, args, kg_vec_fn=None):
     fig, ax = plt.subplots(figsize=(6, 6))
     disp.plot(ax=ax, cmap="Blues", colorbar=False)
     ax.set_title("Confusion Matrix")
-    img_dir = Path("img")
-    img_dir.mkdir(parents=True, exist_ok=True)
-    fig.savefig(img_dir / "confusion_matrix.png", bbox_inches="tight")
+    fig.savefig(Path(args.result_path) / "confusion_matrix.png",
+            bbox_inches="tight")
     plt.close(fig)
 
     return m

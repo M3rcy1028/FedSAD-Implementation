@@ -1,0 +1,66 @@
+
+📊 [Classification Report]
+              precision    recall  f1-score   support
+
+      Normal     0.0000    0.0000    0.0000         0
+     Anomaly     1.0000    0.3696    0.5397       276
+
+    accuracy                         0.3696       276
+   macro avg     0.5000    0.1848    0.2698       276
+weighted avg     1.0000    0.3696    0.5397       276
+
+
+📊 [Classification Report]
+              precision    recall  f1-score   support
+
+      Normal     0.0000    0.0000    0.0000         0
+     Anomaly     1.0000    0.9649    0.9821       712
+
+    accuracy                         0.9649       712
+   macro avg     0.5000    0.4824    0.4911       712
+weighted avg     1.0000    0.9649    0.9821       712
+
+
+📊 [Classification Report]
+              precision    recall  f1-score   support
+
+      Normal     0.0000    0.0000    0.0000         0
+     Anomaly     1.0000    0.7221    0.8386       403
+
+    accuracy                         0.7221       403
+   macro avg     0.5000    0.3610    0.4193       403
+weighted avg     1.0000    0.7221    0.8386       403
+
+
+📊 [Classification Report]
+              precision    recall  f1-score   support
+
+      Normal     1.0000    0.2669    0.4213       281
+     Anomaly     0.6617    1.0000    0.7964       403
+
+    accuracy                         0.6988       684
+   macro avg     0.8309    0.6335    0.6089       684
+weighted avg     0.8007    0.6988    0.6423       684
+
+
+📊 [Classification Report]
+              precision    recall  f1-score   support
+
+      Normal     1.0000    0.2669    0.4213       281
+     Anomaly     0.6617    1.0000    0.7964       403
+
+    accuracy                         0.6988       684
+   macro avg     0.8309    0.6335    0.6089       684
+weighted avg     0.8007    0.6988    0.6423       684
+
+
+📊 [Classification Report]
+              precision    recall  f1-score   support
+
+      Normal     1.0000    0.2918    0.4518       281
+     Anomaly     0.6694    1.0000    0.8020       403
+
+    accuracy                         0.7091       684
+   macro avg     0.8347    0.6459    0.6269       684
+weighted avg     0.8052    0.7091    0.6581       684
+

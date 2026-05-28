@@ -1,39 +1,37 @@
 import os
 import pickle
-from datetime import datetime
+
 import numpy as np
 import networkx as nx
 import pandas as pd
-from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.preprocessing import MinMaxScaler
-from typing import List, Optional
+from tqdm import tqdm
 import tensorflow as tf
-from tensorflow.keras.models import load_model
-from sklearn.utils import shuffle
+from sklearn.preprocessing import MinMaxScaler
+
 from taae import TransformerAAE
 from gsad import create_gsad_from_window, extract_gsad_features
-import argparse
-from tqdm import tqdm
-from utils import *
+from utils.get_datasets import sanitize_numeric, fedsad_data_preprocessing
+from utils.arguments import get_fedsad_args
+from utils.metrics import save_report, plt_confusion_matrix, print_latency, timed_step, GLOBAL_TIMER
 
+# GPU Configuration
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2" 
 TF_DEVICE='/CPU:0'
 
+# Global constants for evaluation
 TIME_WINDOW = '1T'
 RANDOM_STATE = 123
+THRESHOLD_PERCENTILE = 82  
 
-
-
+# Global model and scaler instances
 SCALER = MinMaxScaler()
 TAAE_FEATURE_COLUMNS = []
 TRAIN_NORMAL_SCALED = None
-
 GSAD_MODEL=None
 TAAE_MODEL = None 
-
 TAAE_THRESHOLD = None  
-THRESHOLD_PERCENTILE = 82  
 
-def build_and_load_taae(n_features: int,taae_model_path):
+def build_and_load_taae(n_features: int,taae_model_path: str):
     """Load simplified TAAE model"""
     global TAAE_MODEL
 
@@ -198,49 +196,61 @@ def combine_dempster_shafer(m1, m2):
     }
 
 
-def evaluate(df_gsad, df_taae, label):
-    """Process TAAE data aligned with GSAD time windows"""
+@timed_step("GSAD")
+def gsad_pipeline(df_window):
+    G = create_gsad_from_window(df_window)
+    feat = extract_gsad_features(G)
+    return gsad_model_predict(feat)
+
+
+@timed_step("TAAE")
+def taae_pipeline(df_window):
+    return taae_model_predict(df_window)
+
+
+@timed_step("Fusion")
+def fusion_pipeline(m_gsad, m_taae):
+    return combine_dempster_shafer(m_gsad, m_taae)
+
+
+def evaluate(df_gsad, df_taae, label,
+             gsad_pipeline,
+             taae_pipeline,
+             fusion_pipeline):
 
     gb_gsad = df_gsad.groupby(pd.Grouper(freq=TIME_WINDOW))
 
     taae_idx = 0
     total_taae_rows = len(df_taae)
 
-    results = []
     y_true, y_pred = [], []
+    results = []
 
+    # tqdm 추가
     for window_time, df_gsad_window in tqdm(gb_gsad, desc=f"{label} Test"):
-
-        # Skip empty windows
         if df_gsad_window.empty:
             continue
 
-        gsad_window_size = len(df_gsad_window)
+        # GSAD
+        m_gsad = gsad_pipeline(df_gsad_window)
 
-        # Sample TAAE data to match GSAD window size
-        if taae_idx + gsad_window_size <= total_taae_rows:
-            df_taae_window = df_taae.iloc[taae_idx:taae_idx + gsad_window_size].copy()
-            taae_idx += gsad_window_size
+        # TAAE window
+        size = len(df_gsad_window)
+        if taae_idx + size <= total_taae_rows:
+            df_taae_window = df_taae.iloc[taae_idx:taae_idx + size].copy()
+            taae_idx += size
         else:
-            remaining = (taae_idx + gsad_window_size) - total_taae_rows
-            df_taae_part1 = df_taae.iloc[taae_idx:].copy()
-            df_taae_part2 = df_taae.iloc[:remaining].copy()
-            df_taae_window = pd.concat([df_taae_part1, df_taae_part2], ignore_index=True)
-            taae_idx = remaining
+            remain = (taae_idx + size) - total_taae_rows
+            df_taae_window = pd.concat([
+                df_taae.iloc[taae_idx:],
+                df_taae.iloc[:remain]
+            ], ignore_index=True)
+            taae_idx = remain
 
-        if df_taae_window.empty:
-            continue
+        m_taae = taae_pipeline(df_taae_window)
 
-        # Extract GSAD features
-        G = create_gsad_from_window(df_gsad_window)
-        feat = extract_gsad_features(G)
-
-        m_gsad = gsad_model_predict(feat)
-        m_taae = taae_model_predict(df_taae_window)
-
-        # Combine both models using DS theory
-        m_comb = combine_dempster_shafer(m_gsad, m_taae)
-
+        # Fusion
+        m_comb = fusion_pipeline(m_gsad, m_taae)
         pred = 1 if m_comb["anomaly"] > m_comb["normal"] else 0
 
         y_pred.append(pred)
@@ -248,8 +258,6 @@ def evaluate(df_gsad, df_taae, label):
 
         results.append({
             "window_time": window_time,
-            "gsad_window_size": len(df_gsad_window),
-            "taae_window_size": len(df_taae_window),
             "m_gsad": m_gsad,
             "m_taae": m_taae,
             "m_comb": m_comb,
@@ -289,39 +297,36 @@ def calculate_taae_threshold():
         TAAE_THRESHOLD = 0.00008
         print(f"[INFO] Using default RNEP threshold: {TAAE_THRESHOLD}")
 
-
 if __name__ == "__main__":
-    global gsad_model
-    parser = argparse.ArgumentParser()
 
-    parser.add_argument("--taae_data_dir", type=str,
-                        default="/data/SDP_Dataset/Unified_model/cic_rnep")
-    parser.add_argument("--gsad_data_dir", type=str,
-                        default="/data/SDP_Dataset/Unified_model/cic_graph")
-    parser.add_argument("--taae_model_path", type=str,
-                        default="results/CSE-CIC-IDS2018/taae/taae_cic_weights.h5")
-    parser.add_argument("--gsad_model_path", type=str,
-                        default="results/CSE-CIC-IDS2018/gsad/normal_stats.pkl")
-    parser.add_argument("--threshold_std", type=float, default=0.25)
-    parser.add_argument("--result_path",type=str,
-                        default="results/CSE-CIC-IDS2018/fedsad")
-    args = parser.parse_args()
+    args, dataset_configs = get_fedsad_args()
 
-    os.makedirs(args.result_path, exist_ok=True)
-    model_path=os.path.join(args.result_path,"fedsad.pkl")
-    matrix_path=os.path.join(args.result_path,"fedsad_cm.png")
-    report_path=os.path.join(args.result_path,"fedsad_server.txt")
+    config = dataset_configs.get(args.eval_dataset.lower())
+    if not config:
+        print(f"[ERROR] Dataset '{args.eval_dataset}' is not supported.")
+        exit(1)
+
+    os.makedirs(config["result_path"], exist_ok=True)
+    model_path = os.path.join(config["result_path"], "fedsad.pkl")
+    matrix_path = os.path.join(config["result_path"], "fedsad_cm.png")
+    report_path = os.path.join(config["result_path"], "fedsad_server.txt")
 
     # TAAE data path
-    taae_normal_file = f"{args.taae_data_dir}/CIC_ae_normal.csv"
-    taae_anomaly_files = [f"{args.taae_data_dir}/" + f for f in os.listdir(args.taae_data_dir) if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")]
+    taae_normal_file = os.path.join(config["taae_dir"], config["normal_file"])
+    taae_anomaly_files = [
+        os.path.join(config["taae_dir"], f) for f in os.listdir(config["taae_dir"]) 
+        if f.startswith(config["anomaly_prefix"]) and f.endswith(".csv")
+    ]
 
     # GSAD data path
-    gsad_normal_file = f"{args.gsad_data_dir}/CIC_ae_normal.csv"
-    gsad_anomaly_files = [f"{args.gsad_data_dir}/" + f for f in os.listdir(args.gsad_data_dir) if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")]
+    gsad_normal_file = os.path.join(config["gsad_dir"], config["normal_file"])
+    gsad_anomaly_files = [
+        os.path.join(config["gsad_dir"], f) for f in os.listdir(config["gsad_dir"]) 
+        if f.startswith(config["anomaly_prefix"]) and f.endswith(".csv")
+    ]
 
     # Load models
-    with open(args.gsad_model_path, "rb") as f:
+    with open(config["gsad_model"], "rb") as f:
         GSAD_MODEL = pickle.load(f)
 
     gsad_normal_test, gsad_anomaly_test, taae_normal_test, taae_anomaly_test, TRAIN_NORMAL_SCALED= fedsad_data_preprocessing( taae_normal_file,
@@ -332,20 +337,30 @@ if __name__ == "__main__":
     TAAE_FEATURE_COLUMNS=taae_normal_test.columns.tolist()
 
     # Load TAAE model
-    build_and_load_taae(len(TAAE_FEATURE_COLUMNS), args.taae_model_path)
+    build_and_load_taae(len(TAAE_FEATURE_COLUMNS), config["taae_model"])
 
     # Dynamically calculate threshold
     calculate_taae_threshold()
 
+    GLOBAL_TIMER.reset()
+
     # Evaluate normal data
-    normal_pred, normal_test, normal_results = evaluate(
-        gsad_normal_test, taae_normal_test, "Normal"
+    normal_pred, normal_test, normal_results =evaluate(
+        gsad_normal_test, taae_normal_test, "Normal",
+        gsad_pipeline,
+        taae_pipeline,
+        fusion_pipeline
     )
 
     # Evaluate anomaly data
-    anomaly_pred, anomaly_test, anomaly_results = evaluate(
-        gsad_anomaly_test, taae_anomaly_test, "Anomaly"
+    anomaly_pred, anomaly_test, anomaly_results =evaluate(
+        gsad_anomaly_test, taae_anomaly_test, "Anomaly",
+        gsad_pipeline,
+        taae_pipeline,
+        fusion_pipeline
     )
+
+    print_latency("Overall")
 
     y_pred = normal_pred + anomaly_pred
     y_true = normal_test + anomaly_test

@@ -1,6 +1,12 @@
-from utils import *
-from arguments import get_args
-from model_aae import TransformerAAE, FLClient
+import os
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping
+import tensorflow as tf
+from utils. get_datasets import get_datasets_nsl, eval_server
+from utils.arguments import get_args
+from taae import TransformerAAE, FLClient
+
+args=get_args()
 
 WEIGHT_PATH = "./cml/cml_vae_transformer_weights1.h5"
 MATRIX_PATH = "./cml/cml_cm1.png"
