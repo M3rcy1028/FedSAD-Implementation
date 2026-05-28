@@ -26,7 +26,10 @@ KDD99/KDD99_encoded.csv
 *.csv
 KDD99/KDD99_encoded.csv
 FedSAD_env
-results
 fedsad_weights
 fedsad_results
 test.*
+results/*/mmfewshotsids/*
+results/*/mvids/*
+!results/*/mmfewshotsids/*.png
+!results/*/mvids/*.png
