@@ -181,12 +181,28 @@ if __name__ == "__main__":
     report_path=os.path.join(args.result_path,"gsad_server.txt")
     matrix_path=os.path.join(args.result_path,"gsad_cm.png")
 
-    normal_file = args.normal_file or os.path.join(args.ae_data_dir, "CIC_ae_normal.csv")
+    dataset_file_configs = {
+    "cic": {
+        "normal_file": "CIC_ae_normal.csv",
+        "anomaly_prefix": "CIC_anomaly_ae_"
+    },
+        "unsw": {
+            "normal_file": "UNSW_NB15_normal.csv",
+            "anomaly_prefix": "UNSW_NB15_anomaly_"
+        }
+    }
+
+    file_config = dataset_file_configs.get(args.eval_dataset.lower())
+    if not file_config:
+        print(f"[ERROR] Dataset '{args.eval_dataset}' is not supported.")
+        exit(1)
+
+    normal_file = args.normal_file or os.path.join(args.ae_data_dir, file_config["normal_file"])
 
     anomaly_files = [
         os.path.join(args.ae_data_dir, f)
         for f in os.listdir(args.ae_data_dir)
-        if f.startswith("CIC_anomaly_ae_") and f.endswith(".csv")
+        if f.startswith(file_config["anomaly_prefix"]) and f.endswith(".csv")
     ]
 
     train_single_model(args, normal_file,model_path)

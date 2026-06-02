@@ -93,18 +93,18 @@ def get_fedsad_args():
         "cic": {
             "taae_dir": f"{args.base_data_path}/cic_rnep",
             "gsad_dir": f"{args.base_data_path}/cic_graph",
-            "taae_model": "fedsad_weights/fedsad_cic_weights.h5",
-            "gsad_model": "fedsad_weights/normal_stats.pkl",
-            "result_path": "fedsad_results/fedsad_cic",
-            "normal_file": "CIC_ae_normal.csv", # 정상 파일 이름
-            "anomaly_prefix": "CIC_anomaly_ae_" # 이상 파일 접두사
+            "taae_model": "results/CSE-CIC-IDS2018/taae/taae_cic_weights.h5",
+            "gsad_model": "results/CSE-CIC-IDS2018/gsad/normal_stats.pkl",
+            "result_path": "results/CSE-CIC-IDS2018/fedsad",
+            "normal_file": "CIC_ae_normal.csv", 
+            "anomaly_prefix": "CIC_anomaly_ae_" 
         },
         "unsw": {
             "taae_dir": f"{args.base_data_path}/unsw_rnep",
             "gsad_dir": f"{args.base_data_path}/unsw_graph",
-            "taae_model": "fedsad_weights/fedsad_unsw_weights.h5",
-            "gsad_model": "fedsad_weights/normal_stats.pkl",
-            "result_path": "fedsad_results/fedsad_unsw",
+            "taae_model": "results/UNSW_NB15/taae/taae_unsw_weights.h5",
+            "gsad_model": "results/UNSW_NB15/gsad/normal_stats.pkl",
+            "result_path": "results/UNSW_NB15/fedsad",
             "normal_file": "UNSW_NB15_normal.csv", 
             "anomaly_prefix": "UNSW_NB15_anomaly_"
         }
@@ -116,13 +116,14 @@ def get_gsad_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--time_window", type=str, default="1T")
-    parser.add_argument("--threshold_std", type=float, default=0.25)
+    parser.add_argument("--threshold_std", type=float, default=0.25) #unsw 5
 
     parser.add_argument("--ae_data_dir", type=str,
                         default="/data/SDP_Dataset/Unified_model/cic_graph")
     parser.add_argument("--normal_file", type=str, default=None)
     parser.add_argument("--result_path", type=str, default="results/CSE-CIC-IDS2018/gsad")
-    
+    parser.add_argument("--eval_dataset", type=str, default="cic", 
+                        choices=["cic", "unsw"], help="Select dataset: cic or unsw")
     args = parser.parse_args()
     
     return args

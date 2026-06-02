@@ -7,11 +7,29 @@ import pandas as pd
 from tqdm import tqdm
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
+import sys
+
+import argparse as _ap
+_pre = _ap.ArgumentParser(add_help=False)
+_pre.add_argument("--eval_dataset", type=str, default="cic")
+_pre.add_argument("--base_data_path", type=str, default="/data/SDP_Dataset/Unified_model")
+_pre.add_argument("--n_samples", type=int, default=150_000)
+_pre.add_argument("--batch_size", type=int, default=16)
+_pre.add_argument("--dropout_rate", type=float, default=0.1)
+_pre.add_argument("--percentile", type=int, default=82)
+_pre.add_argument("--random_seed", type=int, default=123)
+_pre.add_argument("--client_nums", type=int, default=15)
+_pre.add_argument("--client_epochs", type=int, default=30)
+_pre.add_argument("--set_verbose", type=int, default=2)
+_pre.add_argument("--server_rounds", type=int, default=10)
+_pre.add_argument("--threshold_std", type=float, default=0.25) # unsw 5
+_known, _ = _pre.parse_known_args()
+sys.argv = [sys.argv[0]]
 
 from taae import TransformerAAE
 from gsad import create_gsad_from_window, extract_gsad_features
 from utils.get_datasets import sanitize_numeric, fedsad_data_preprocessing
-from utils.arguments import get_fedsad_args
+import argparse
 from utils.metrics import save_report, plt_confusion_matrix, print_latency, timed_step, GLOBAL_TIMER
 
 # GPU Configuration
@@ -298,8 +316,28 @@ def calculate_taae_threshold():
         print(f"[INFO] Using default RNEP threshold: {TAAE_THRESHOLD}")
 
 if __name__ == "__main__":
+    args = _known
 
-    args, dataset_configs = get_fedsad_args()
+    dataset_configs = {
+        "cic": {
+            "taae_dir": f"{args.base_data_path}/cic_rnep",
+            "gsad_dir": f"{args.base_data_path}/cic_graph",
+            "taae_model": "results/CSE-CIC-IDS2018/taae/taae_cic_weights.h5",
+            "gsad_model": "results/CSE-CIC-IDS2018/gsad/normal_stats.pkl",
+            "result_path": "results/CSE-CIC-IDS2018/fedsad",
+            "normal_file": "CIC_ae_normal.csv", 
+            "anomaly_prefix": "CIC_anomaly_ae_"
+        },
+        "unsw": {
+            "taae_dir": f"{args.base_data_path}/unsw_rnep",
+            "gsad_dir": f"{args.base_data_path}/unsw_graph",
+            "taae_model": "results/UNSW_NB15/taae/taae_unsw_weights.h5",
+            "gsad_model": "results/UNSW_NB15/gsad/normal_stats.pkl",
+            "result_path": "results/UNSW_NB15/fedsad",
+            "normal_file": "UNSW_NB15_normal.csv", 
+            "anomaly_prefix": "UNSW_NB15_anomaly_"
+        }
+    }
 
     config = dataset_configs.get(args.eval_dataset.lower())
     if not config:

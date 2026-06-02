@@ -13,8 +13,9 @@ This repository provides the core logic for the FedSAD model, including comparis
 ├── models/             # Baseline and comparison model definitions
 ├── scripts/            # Evaluation and result-saving scripts
 ├── results/            # Experimental results and performance metrics
-├── FedSAD.py           # Main implementation of the FedSAD framework
-├── model_taae_rnep.py  # Specific model architecture (TAAE-RNEP)
+├── fedsad.py           # Main implementation of the FedSAD framework
+├── gsad.py             # Graph-based Statistical Anomaly Detection module
+├── rnep.py             # Specific model architecture (TAAE-RNEP)
 ├── utils.py            # Utility functions for data processing and logging
 └── FedSAD_ModelSummary.txt # Detailed model architecture summary
 ```
