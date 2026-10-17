@@ -116,6 +116,22 @@ DATASET_CONFIG = {
             4: "Probe", 5: "U2R", 6: "Web-Attack"
         }
     },
+    "CICIoT2023": {
+        "base_dir": "./CICIoT2023/ciciot_rnep",
+        "normal_file": "CICIoT_ae_normal.csv", # 78 features (same as CSE-CIC-IDS2018)
+        "anomaly_prefix": "CICIoT_anomaly_ae_",
+        "merged_anomaly_file": "CICIoT_ae_anomaly.csv",
+        "attack_map": {
+            1: "DDoS-UDP_Flood", 2: "DDoS-TCP_Flood", 3: "DDoS-PSHACK_Flood", 4: "DDoS-SYN_Flood",
+            5: "DDoS-RSTFINFlood", 6: "DDoS-SynonymousIP_Flood", 7: "DoS-UDP_Flood",
+            8: "DoS-TCP_Flood", 9: "DoS-SYN_Flood", 10: "Mirai-udpplain", 11: "VulnerabilityScan",
+            12: "DDoS-UDP_Fragmentation", 13: "DDoS-ACK_Fragmentation", 14: "DNS_Spoofing",
+            15: "Recon-HostDiscovery", 16: "Recon-OSScan", 17: "Recon-PortScan", 18: "DoS-HTTP_Flood",
+            19: "DDoS-HTTP_Flood", 20: "DDoS-SlowLoris", 21: "DictionaryBruteForce",
+            22: "BrowserHijacking", 23: "CommandInjection", 24: "SqlInjection", 25: "XSS",
+            26: "Backdoor_Malware", 27: "Uploading_Attack"
+        }
+    },
     "UNSW_NB15": {
         "base_dir": "./UNSW_NB15/ae_datas",
         "normal_file": "UNSW_NB15_normal.csv", # 42 features
@@ -458,6 +474,11 @@ MODEL_EVAL_CONFIG = {
     "InSDN": {
          "model_params": {"timesteps": 12, "features": 7},
          "weights": "Results/InSDN/aelstm/ae_lstm_weights.h5" # (modify if path differs)
+    },
+    "CICIoT2023": {
+        # 78 features, same reshape as CIC2018 (10, 8) -> 80 (padding)
+        "model_params": {"timesteps": 10, "features": 8},
+        "weights": "Results/CICIoT2023/aelstm/ae_lstm_weights.h5"
     },
     "UNSW_NB15": { # 85
         "model_params": {"timesteps": 6, "features": 7},

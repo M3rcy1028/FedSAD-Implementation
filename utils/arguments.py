@@ -29,7 +29,7 @@ def get_args():
 
     # --- Evaluation Data ---
     parser.add_argument("--eval_dataset", type=str, default="cic", 
-                        choices=["cic", "unsw"], help="Select dataset: cic or unsw")
+                        choices=["cic", "unsw", "ciciot"], help="Select dataset: cic, unsw or ciciot")
     parser.add_argument("--base_data_path", type=str, default="/data/SDP_Dataset/Unified_model")
     parser.add_argument("--n_samples", type=int, default=150_000)
     
@@ -64,7 +64,7 @@ def get_fedsad_args():
 
     # --- Evaluation Data ---
     parser.add_argument("--eval_dataset", type=str, default="cic", 
-                        choices=["cic", "unsw"], help="Select dataset: cic or unsw")
+                        choices=["cic", "unsw", "ciciot"], help="Select dataset: cic, unsw or ciciot")
     parser.add_argument("--base_data_path", type=str, default="/data/SDP_Dataset/Unified_model")
     parser.add_argument("--n_samples", type=int, default=150_000)
     
@@ -99,6 +99,15 @@ def get_fedsad_args():
             "normal_file": "CIC_ae_normal.csv", 
             "anomaly_prefix": "CIC_anomaly_ae_" 
         },
+        "ciciot": {
+            "taae_dir": f"{args.base_data_path}/ciciot_rnep",
+            "gsad_dir": f"{args.base_data_path}/ciciot_graph",
+            "taae_model": "results/CICIoT2023/taae/taae_ciciot_weights.h5",
+            "gsad_model": "results/CICIoT2023/gsad/normal_stats.pkl",
+            "result_path": "results/CICIoT2023/fedsad",
+            "normal_file": "CICIoT_ae_normal.csv",
+            "anomaly_prefix": "CICIoT_anomaly_ae_"
+        },
         "unsw": {
             "taae_dir": f"{args.base_data_path}/unsw_rnep",
             "gsad_dir": f"{args.base_data_path}/unsw_graph",
@@ -123,7 +132,7 @@ def get_gsad_args():
     parser.add_argument("--normal_file", type=str, default=None)
     parser.add_argument("--result_path", type=str, default="results/CSE-CIC-IDS2018/gsad")
     parser.add_argument("--eval_dataset", type=str, default="cic", 
-                        choices=["cic", "unsw"], help="Select dataset: cic or unsw")
+                        choices=["cic", "unsw", "ciciot"], help="Select dataset: cic, unsw or ciciot")
     args = parser.parse_args()
     
     return args

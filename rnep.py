@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
 import flwr as fl
 from flwr.common import parameters_to_ndarrays
-from utils.get_datasets import get_datasets_cic_sam
+from utils.get_datasets import get_datasets_cic_sam, get_datasets_ciciot
 from utils.metrics import save_and_plot_history, eval_server
 from utils.arguments import get_args
 from taae import SaveEvaluationRNEP, TransformerAAE, FLClient  # FLClient class can be used if imported
@@ -21,7 +21,10 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
 
 def main():
     args = get_args()
-    X_train_scaled, X_test_scaled, y_test = get_datasets_cic_sam()
+    if args.eval_dataset == "ciciot":
+        X_train_scaled, X_test_scaled, y_test = get_datasets_ciciot(f"{args.base_data_path}/ciciot_rnep")
+    else:
+        X_train_scaled, X_test_scaled, y_test = get_datasets_cic_sam()
     client_data = np.array_split(X_train_scaled, args.client_nums)
     
     # Prepare model/data for server evaluation

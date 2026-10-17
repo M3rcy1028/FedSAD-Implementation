@@ -33,3 +33,4 @@ results/*/mmfewshotsids/*
 results/*/mvids/*
 !results/*/mmfewshotsids/*.png
 !results/*/mvids/*.png
+/CICIoT

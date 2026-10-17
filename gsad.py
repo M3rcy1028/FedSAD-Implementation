@@ -189,6 +189,10 @@ if __name__ == "__main__":
         "unsw": {
             "normal_file": "UNSW_NB15_normal.csv",
             "anomaly_prefix": "UNSW_NB15_anomaly_"
+        },
+        "ciciot": {
+            "normal_file": "CICIoT_ae_normal.csv",
+            "anomaly_prefix": "CICIoT_anomaly_ae_"
         }
     }
 
