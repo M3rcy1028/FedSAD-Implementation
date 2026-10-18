@@ -50,14 +50,52 @@ CICIoT/processed/
 ```text
 CICIoT/processed/ciciot_rnep   → /data/SDP_Dataset/Unified_model/ciciot_rnep
 CICIoT/processed/ciciot_graph  → /data/SDP_Dataset/Unified_model/ciciot_graph
-CICIoT/processed/ciciot_rnep   → ./CICIoT2023/ciciot_rnep   (for scripts/test_taae.py, test_aelstm.py, test_cnnlstm.py)
 ```
 
-## 5. Run
+## 5. Run on the server
+
+All commands run from the repository root (`ciciot2023` branch).
 
 ```bash
-python rnep.py --eval_dataset ciciot          # writes ./FedSAD_Results/fedsad_weights.h5
-                                              # → copy to results/CICIoT2023/taae/taae_ciciot_weights.h5
-python gsad.py --eval_dataset ciciot --ae_data_dir /data/SDP_Dataset/Unified_model/ciciot_graph --result_path results/CICIoT2023/gsad
-python fedsad.py --eval_dataset ciciot
+# baselines and scripts/test_*.py read ./CICIoT2023/ciciot_rnep
+ln -s /data/SDP_Dataset/Unified_model ./CICIoT2023
 ```
+
+**(1) TAAE federated training (RNEP)** — writes to `./FedSAD_Results/`, then copy the weights to where `fedsad.py` looks
+
+```bash
+python rnep.py --eval_dataset ciciot
+mkdir -p results/CICIoT2023/taae && cp FedSAD_Results/fedsad_weights.h5 results/CICIoT2023/taae/taae_ciciot_weights.h5
+```
+
+**(2) GSAD** — `--threshold_std` needs tuning for CICIoT2023 (CIC 0.25, UNSW 5)
+
+```bash
+python gsad.py --eval_dataset ciciot --ae_data_dir /data/SDP_Dataset/Unified_model/ciciot_graph --result_path results/CICIoT2023/gsad --threshold_std 0.25
+```
+
+**(3) FedSAD (TAAE + GSAD fusion)** — needs the outputs of (1) and (2)
+
+```bash
+python fedsad.py --eval_dataset ciciot --threshold_std 0.25
+```
+
+**(4) TAAE per-attack evaluation** — set `DATASET_TO_RUN = "CICIoT2023"` in `scripts/test_taae.py`
+
+```bash
+PYTHONPATH=. python scripts/test_taae.py
+```
+
+**(5) Baselines** — in `main()` comment out the current loader and uncomment the `# CICIoT2023` block
+(`models/AE_LSTM.py`, `models/CNN_LSTM.py`). Results go to `./ae_lstm/`, `./cnn_lstm/`.
+
+```bash
+PYTHONPATH=.:models python models/AE_LSTM.py
+PYTHONPATH=.:models python models/CNN_LSTM.py
+```
+
+Per-attack evaluation: set `DATASET_TO_RUN = "CICIoT2023"` in `scripts/test_aelstm.py` / `scripts/test_cnnlstm.py`.
+Run them with `PYTHONPATH=.:models python scripts/test_aelstm.py` (they import `model_aelstm` / `model_cnnlstm`).
+Note that both scripts currently call `exit()` right after `model.summary()`, so remove that line to run the evaluation.
+
+Not wired for CICIoT2023 yet: MM-FewShot-IDS, MV-IDS (need NetFlow features), `models/FedAVG.py`, `models/CML.py`.

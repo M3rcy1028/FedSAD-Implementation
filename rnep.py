@@ -4,8 +4,8 @@ import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
 import flwr as fl
 from flwr.common import parameters_to_ndarrays
-from utils.get_datasets import get_datasets_cic_sam, get_datasets_ciciot
-from utils.metrics import save_and_plot_history, eval_server
+from utils.get_datasets import get_datasets_cic_sam, get_datasets_ciciot, eval_server
+from utils.metrics import save_and_plot_history
 from utils.arguments import get_args
 from taae import SaveEvaluationRNEP, TransformerAAE, FLClient  # FLClient class can be used if imported
 

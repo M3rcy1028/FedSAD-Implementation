@@ -144,6 +144,7 @@ def get_taae_args():
     parser.add_argument('--dropout_rate', type=float, default=0.1)
     parser.add_argument('--percentile', type=int, default=82)
 
-    args = parser.parse_args()
+    # taae.py is imported by rnep.py/fedsad.py, so ignore their flags (e.g. --eval_dataset)
+    args, _ = parser.parse_known_args()
     
     return args

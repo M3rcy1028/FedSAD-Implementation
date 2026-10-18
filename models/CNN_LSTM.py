@@ -91,6 +91,7 @@ def get_datasets_cic_multi_supervised(
     normal_csv="./CIC2018/ae_datas_sampled/CIC_ae_normal.csv",
     anomaly_pattern="./CIC2018/v/CIC_anomaly_ae_{}.csv",
     num_anomaly_files=14,
+    anomaly_csv="./CIC2018/ae_datas_sampled/CIC_ae_anomaly.csv",
     random_seed=123,
     anomaly_ratio=0.2,
     timesteps=10,
@@ -115,7 +116,7 @@ def get_datasets_cic_multi_supervised(
     # ----------------------------
     # merge multiple anomaly CSV files automatically
     # ----------------------------
-    anomlay_path = "./CIC2018/ae_datas_sampled/CIC_ae_anomaly.csv"
+    anomlay_path = anomaly_csv
     df_anomaly = pd.read_csv(anomlay_path, low_memory=False)
 
     # ----------------------------
@@ -427,6 +428,15 @@ def main():
     # )
 
     X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=12, features=7)
+
+    # CICIoT2023 (same 78 features as CIC2018)
+    # X_train, y_train, X_test, y_test = get_datasets_cic_multi_supervised(
+    #     normal_csv="./CICIoT2023/ciciot_rnep/CICIoT_ae_normal.csv",
+    #     anomaly_csv="./CICIoT2023/ciciot_rnep/CICIoT_ae_anomaly.csv",
+    #     anomaly_ratio=0.5,
+    #     timesteps=10,
+    #     features=8
+    # )
 
     # UNSW_NB15
     # X_train, y_train, X_test, y_test = get_datasets_unsw_supervised(timesteps=6, features=7)

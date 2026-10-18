@@ -137,13 +137,8 @@ def get_datasets_nsl_semi(
     X_train, y_train_cls = shuffle(X_train, y_train_cls, random_state=random_seed)
     X_test,  y_test      = shuffle(X_test,  y_test,      random_state=random_seed)
 
-<<<<<<< HEAD
     # reshape for AE-LSTM (3D input)
     X_train_seq = reshape_for_sequence_nsl(X_train, timesteps=timesteps, features=features)
-=======
-    # 6️⃣ Reshape for AE-LSTM (3D input)
-    X_train_seq = reshape_for_sequence_nsl(X_train, timesteps=timesteps, features=features) #TODO reshape_for_sequence_nsl 정의 필요
->>>>>>> fedsad_eval
     X_test_seq  = reshape_for_sequence_nsl(X_test, timesteps=timesteps, features=features)
 
     print(f"[NSL-KDD Semi] Train: {X_train_seq.shape}, Test: {X_test_seq.shape}")
@@ -174,6 +169,7 @@ def get_datasets_cic_multi_semi(
     normal_csv="./CIC2018/ae_datas_sampled/CIC_ae_normal.csv",
     anomaly_pattern="./CIC2018/ae_datas_sampled/CIC_anomaly_ae_{}.csv",
     num_anomaly_files=14,
+    anomaly_csv="./CIC2018/ae_datas_sampled/CIC_ae_anomaly.csv",
     random_seed=123,
     anomaly_ratio=0.2,
     timesteps=10,
@@ -194,7 +190,7 @@ def get_datasets_cic_multi_semi(
         return
 
     # merge multiple anomaly files
-    anomlay_path = "./CIC2018/ae_datas_sampled/CIC_ae_anomaly.csv"
+    anomlay_path = anomaly_csv
     df_anomaly = pd.read_csv(anomlay_path, low_memory=False)
 
     # (Note) pd.concat only merges common columns — if files have different columns,
@@ -463,6 +459,15 @@ def main():
     )
     # X_train = reshape_for_sequence(X_train, timesteps=10, features=8) # CIC2018
     # X_test = reshape_for_sequence(X_test, timesteps=10, features=8)
+
+    # CICIoT2023 (same 78 features as CIC2018)
+    # X_train, y_train_cls, X_test, y_test = get_datasets_cic_multi_semi(
+    #     normal_csv="./CICIoT2023/ciciot_rnep/CICIoT_ae_normal.csv",
+    #     anomaly_csv="./CICIoT2023/ciciot_rnep/CICIoT_ae_anomaly.csv",
+    #     anomaly_ratio=0.2,
+    #     timesteps=10,
+    #     features=8
+    # )
     
     # X_train, y_train_cls, X_test, y_test = get_datasets_unsw_semi() # UNSW
     # X_train = reshape_for_sequence(X_train, timesteps=6, features=7)
