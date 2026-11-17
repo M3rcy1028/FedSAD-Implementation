@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import random
@@ -9,6 +10,20 @@ from sklearn.utils import shuffle
 from utils.metrics import plot_roc_curve, plt_confusion_matrix
 
 RANDOM_SEED = 123
+
+
+def rnep_normal_split(n_rows: int, train_ratio: float = 0.8, seed: int = RANDOM_SEED):
+    """Positional train/test row indices exactly as the RNEP loaders split normal data
+    (sklearn shuffle with RANDOM_SEED, first int(n * train_ratio) rows = train).
+    Apply it to the CSV in file order, before any sorting, so GSAD/FedSAD use the same rows as RNEP."""
+    perm = shuffle(np.arange(n_rows), random_state=seed)
+    split_point = int(n_rows * train_ratio)
+    return np.sort(perm[:split_point]), np.sort(perm[split_point:])
+
+
+def normal_split_indices(df: pd.DataFrame):
+    """Normal train/test positional indices (RNEP random split, see rnep_normal_split)."""
+    return rnep_normal_split(len(df))
 
 # For datasets
 def get_datasets_nsl():
@@ -393,64 +408,79 @@ def sanitize_numeric(df: pd.DataFrame, exclude: Optional[List[str]] = None) -> p
         clean[target_cols] = numeric
     return clean
 
+def _pair_files(taae_files, gsad_files):
+    """Pair RNEP/GSAD anomaly CSVs by file name (os.listdir order differs between dirs)."""
+    taae_by_name = {os.path.basename(f): f for f in taae_files}
+    gsad_by_name = {os.path.basename(f): f for f in gsad_files}
+    if set(taae_by_name) != set(gsad_by_name):
+        raise ValueError(f"RNEP/GSAD anomaly files differ: "
+                         f"{sorted(set(taae_by_name) ^ set(gsad_by_name))}")
+    return [(taae_by_name[n], gsad_by_name[n]) for n in sorted(taae_by_name)]
+
+
+def _gsad_by_time(df_gsad):
+    """Parse Timestamp, drop unparsable rows, index by time (row_id kept as a column)."""
+    df = df_gsad.copy()
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], dayfirst=True, errors="coerce")
+    df = df[df["Timestamp"].notna()]
+    df = sanitize_numeric(df, exclude=["Timestamp", "row_id"])
+    df.set_index("Timestamp", inplace=True)
+    df.sort_index(inplace=True, kind="stable")
+    return df
+
+
 def fedsad_data_preprocessing(taae_normal_file, taae_anomaly_file,
-                              gsad_normal_file,gsad_anomaly_file, SCALER ):
-     # TAAE 데이터 로드 (학습용) - timestamp 없이 처리
+                              gsad_normal_file, gsad_anomaly_file, SCALER):
+    """RNEP and GSAD CSVs are row-aligned (same flow on the same line). Every row gets a
+    `row_id`; the normal split is taken in file order exactly like the RNEP loaders
+    (rnep_normal_split), and GSAD windows later fetch their RNEP rows by row_id.
+
+    Returns:
+        df_gsad_normal_test / df_gsad_anomaly_test: Timestamp index, columns incl. `row_id`
+        df_taae_normal_test / df_taae_anomaly_test: indexed by `row_id`, feature columns only
+        train_normal_scaled: scaled RNEP train rows (for the RNEP threshold)
+    """
+    # ---- Normal ----
     df_taae_normal_raw = pd.read_csv(taae_normal_file)
-    print(f"[INFO] TAAE normal data loaded: {len(df_taae_normal_raw)} rows")
-
-    # TAAE 학습/테스트 분할 
-    df_taae_normal_train_raw = df_taae_normal_raw.sample(frac=0.8, random_state=123).copy()
-    df_taae_normal_test = df_taae_normal_raw.drop(df_taae_normal_raw.sample(frac=0.8, random_state=123).index).copy()
-
-    # GSAD 데이터도 로드 (테스트용)
     df_gsad_normal_raw = pd.read_csv(gsad_normal_file)
-    df_gsad_normal_raw["Timestamp"] = pd.to_datetime(df_gsad_normal_raw["Timestamp"], dayfirst=True, errors="coerce")
-    df_gsad_normal_raw = df_gsad_normal_raw[df_gsad_normal_raw["Timestamp"].notna()].copy()
-    df_gsad_normal_raw.sort_values("Timestamp", inplace=True)
+    if len(df_taae_normal_raw) != len(df_gsad_normal_raw):
+        raise ValueError(f"RNEP/GSAD normal CSVs are not row-aligned: "
+                         f"{len(df_taae_normal_raw)} vs {len(df_gsad_normal_raw)} rows")
+    print(f"[INFO] Normal data loaded: {len(df_taae_normal_raw)} rows (RNEP/GSAD row-aligned)")
 
-    print(f"[INFO] GSAD normal data loaded: {len(df_gsad_normal_raw)} rows")
+    df_taae_normal_raw.index.name = "row_id"
+    df_gsad_normal_raw["row_id"] = np.arange(len(df_gsad_normal_raw))
 
-    # GSAD 테스트 데이터 준비 
-    df_gsad_normal_test = df_gsad_normal_raw.drop(df_gsad_normal_raw.sample(frac=0.8, random_state=123).index).copy()
+    train_idx, test_idx = normal_split_indices(df_gsad_normal_raw)
 
-    df_gsad_normal_test = sanitize_numeric(df_gsad_normal_test, exclude=["Timestamp"])
-    df_gsad_normal_test.set_index("Timestamp", inplace=True)
-    df_gsad_normal_test.sort_index(inplace=True)
+    df_taae_normal_train_raw = df_taae_normal_raw.iloc[train_idx]
+    df_taae_normal_test = df_taae_normal_raw.iloc[test_idx].copy()
+    df_gsad_normal_test = _gsad_by_time(df_gsad_normal_raw.iloc[test_idx])
 
-    # TAAE 테스트 데이터 준비 (timestamp 없이)
-    df_taae_normal_test = df_taae_normal_test.copy()
-    df_taae_normal_test.reset_index(drop=True, inplace=True)
-
-    # TAAE scaler/feature 준비 (이미 전처리된 데이터 사용)
+    # RNEP scaler (fit on RNEP train rows only)
     taae_train_features = sanitize_numeric(df_taae_normal_train_raw)
-    if not taae_train_features.empty:
-        # TAAE_FEATURE_COLUMNS = list(taae_train_features.columns)
-        SCALER.fit(taae_train_features.values)
-        train_normal_scaled = SCALER.transform(taae_train_features.values)
-        print(f"[INFO] TAAE scaler fitted on {train_normal_scaled.shape[1]} features")
+    SCALER.fit(taae_train_features.values)
+    train_normal_scaled = SCALER.transform(taae_train_features.values)
+    print(f"[INFO] TAAE scaler fitted on {train_normal_scaled.shape[1]} features "
+          f"({len(train_idx)} train / {len(test_idx)} test normal rows)")
 
-    # TAAE Anomaly 데이터 로드 (timestamp 없이)
-    df_taae_anomaly_list = []
-    for fpath in taae_anomaly_file:
-        df_tmp = pd.read_csv(fpath)
-        df_taae_anomaly_list.append(df_tmp)
+    # ---- Anomaly (all used for test) ----
+    taae_list, gsad_list, offset = [], [], 0
+    for taae_path, gsad_path in _pair_files(taae_anomaly_file, gsad_anomaly_file):
+        df_t = pd.read_csv(taae_path)
+        df_g = pd.read_csv(gsad_path)
+        if len(df_t) != len(df_g):
+            raise ValueError(f"{os.path.basename(taae_path)}: RNEP/GSAD not row-aligned "
+                             f"({len(df_t)} vs {len(df_g)} rows)")
+        ids = np.arange(offset, offset + len(df_t))
+        df_t.index = pd.Index(ids, name="row_id")
+        df_g["row_id"] = ids
+        offset += len(df_t)
+        taae_list.append(df_t)
+        gsad_list.append(df_g)
 
-    df_taae_anomaly_test = pd.concat(df_taae_anomaly_list, ignore_index=True)
-    df_taae_anomaly_test.reset_index(drop=True, inplace=True)
-
-    # GSAD Anomaly 데이터 로드
-    df_gsad_anomaly_list = []
-    for fpath in gsad_anomaly_file:
-        df_tmp = pd.read_csv(fpath)
-        df_tmp["Timestamp"] = pd.to_datetime(df_tmp["Timestamp"], dayfirst=True, errors="coerce")
-        df_tmp = df_tmp[df_tmp["Timestamp"].notna()].copy()
-        df_gsad_anomaly_list.append(df_tmp)
-
-    df_gsad_anomaly_test = pd.concat(df_gsad_anomaly_list, ignore_index=True)
-    df_gsad_anomaly_test = sanitize_numeric(df_gsad_anomaly_test, exclude=["Timestamp"])
-    df_gsad_anomaly_test.set_index("Timestamp", inplace=True)
-    df_gsad_anomaly_test.sort_index(inplace=True)
+    df_taae_anomaly_test = pd.concat(taae_list)
+    df_gsad_anomaly_test = _gsad_by_time(pd.concat(gsad_list, ignore_index=True))
 
     print(f"[INFO] GSAD Normal test rows: {len(df_gsad_normal_test)} | GSAD Anomaly test rows: {len(df_gsad_anomaly_test)}")
     print(f"[INFO] TAAE Normal test rows: {len(df_taae_normal_test)} | TAAE Anomaly test rows: {len(df_taae_anomaly_test)}")

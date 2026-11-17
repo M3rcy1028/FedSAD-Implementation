@@ -9,6 +9,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 from tqdm import tqdm
 from utils.arguments import get_gsad_args
 from utils.metrics import save_report, plt_confusion_matrix
+from utils.get_datasets import normal_split_indices
 
 # ===============================
 #   GSAD-based Feature Extraction
@@ -91,7 +92,8 @@ def train_single_model(args, normal_file,savefile_path):
         raise FileNotFoundError(f"❌ {normal_file} not found")
 
     df_normal = pd.read_csv(normal_file)
-    df_train = df_normal.sample(frac=0.8, random_state=123).copy()
+    train_idx, _ = normal_split_indices(df_normal)
+    df_train = df_normal.iloc[train_idx].copy()
 
     stats = compute_stats_from_df(df_train, args.time_window)
 
@@ -121,7 +123,8 @@ def run_anomaly_detection(args, normal_file, anomaly_files, model_path):
         normal_stats = pickle.load(f)
 
     df_normal = pd.read_csv(normal_file)
-    df_test = df_normal.drop(df_normal.sample(frac=0.8, random_state=123).index).copy()
+    _, test_idx = normal_split_indices(df_normal)
+    df_test = df_normal.iloc[test_idx].copy()
 
     df_test["Timestamp"] = pd.to_datetime(df_test["Timestamp"], dayfirst=True, errors="coerce")
     df_test.set_index("Timestamp", inplace=True)
