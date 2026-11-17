@@ -275,7 +275,7 @@ The [ROC summary CSV](results/combined_roc_curves_6datasets.csv) links each curv
 
 ### Effect of client count on GeNIS
 
-Measured configuration: **70 local epochs per client per round**, 10 server rounds, previous TAAE with RNEP aggregation, latent dimension 64, batch size 16, learning rate `3e-5`, dropout 0.1 and seed 123. The current CLI default for new runs is 30 epochs; the configuration here identifies the saved measurements.
+Measured configuration: **30 local epochs per client per round**, 10 server rounds, previous TAAE with RNEP aggregation, latent dimension 64, batch size 16, learning rate `3e-5`, dropout 0.1 and seed 123. The current CLI default for new runs is 30 epochs; the configuration here identifies the saved measurements.
 
 The same ordered pool of **31,123 normal training rows** was partitioned using `numpy.array_split`; increasing the client count changes the partition sizes, not the total training pool. All runs share the same **7,630 validation rows** (3,815 normal and 3,815 attack) and **8,746 test rows** (4,373 normal and 4,373 attack), with the same preprocessing and frozen implementation source. The recorded source/data hashes, partition sizes and full settings are in [experiment_config.json](results/clients/experiment_config.json) and [partition_summary.csv](results/clients/partition_summary.csv).
 
