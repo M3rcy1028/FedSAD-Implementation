@@ -36,7 +36,7 @@ _pre.add_argument("--episode_gap", type=str, default="5min",
 _known, _ = _pre.parse_known_args()
 sys.argv = [sys.argv[0]]
 
-from taae import TransformerAAE
+from taae_previous import TransformerAAE  # archived FedSAD weights use the previous TAAE (latent_dim=64)
 from gsad import create_gsad_from_window, extract_gsad_features
 from utils.get_datasets import sanitize_numeric, fedsad_data_preprocessing
 import argparse
