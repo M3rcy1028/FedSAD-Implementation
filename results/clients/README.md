@@ -1,12 +1,9 @@
 # GeNIS client 수 비교
 
-문서의 실행 설정은 **로컬 30 epochs·서버 10 rounds**로 맞춘다.
-아래에 연결된 기존 성능 표와 그림은 **70 epochs로 측정한 아카이브**이며, 30-epoch 결과로 변경한 것이 아니다.
-이번 수정에서는 문서만 변경했고, 학습·평가를 다시 실행하지 않았다.
-
 **5·10·15·20·25·30 clients의 학습과 평가가 모두 완료됐다.**
-기존 성능 표와 결과 해석은 [측정 결과 아카이브](reference_measurements.md)에 정리했다.
-30-epoch 재실험 후 사용할 문장 초안은 [프로젝트 README](../../README.md#effect-of-client-count-on-genis)에 있다.
+성능 표·비교 그림·결과 해석은 [프로젝트 README 본문](../../README.md#effect-of-client-count-on-genis)에 함께 정리했다.
+기존 측정 설정은 로컬 70 epochs·서버 10 rounds이며, 새 실행의 기본값은 로컬 30 epochs다.
+
 전체 수치는 [client_comparison.csv](client_comparison.csv), 요약 표는 [final_comparison_table.md](final_comparison_table.md)에서 확인할 수 있다.
 
 비교 대상은 5, 10, 15, 20, 25, 30 clients다. 원래 실행 순서는 5 → 15 → 20 → 25 → 30이며,
@@ -60,12 +57,12 @@ cat results/clients/status.json
 cat results/clients/final_comparison_table.md
 ```
 
-백그라운드 실행을 관리하는 코드는 `experiment/_legacy/scripts/run_genis_client_sweep.py`다.
+백그라운드 실행을 관리하는 코드는 `experiment/core/scripts/run_genis_client_sweep.py`다.
 실험이 실행 중일 때 중복으로 시작하면 파일 잠금으로 거부한다.
 추가 실험용 `genis_clients_10` 세션은 `--wait-lock`으로 기존 작업이 끝나기를 기다린 뒤 10 clients를 실행했다.
 완료된 기존 client 수는 다시 학습하지 않았으며, 10-client 결과도 같은 비교 CSV와 PNG에 합쳤다.
 실행이 종료된 뒤 기존 결과 표·그림만 다시 수집하려면 다음 명령을 사용한다.
 
 ```bash
-python experiment/_legacy/scripts/run_genis_client_sweep.py --collect-only
+python experiment/core/scripts/run_genis_client_sweep.py --collect-only
 ```
