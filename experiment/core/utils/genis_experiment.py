@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 from utils.genis import file_sha256, prepare_genis
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 SOURCE_FILES = [
     "train_taae.py", "models/__init__.py", "models/taae_current.py", "models/taae_previous.py", "utils/__init__.py", "utils/arguments.py", "utils/metrics.py",
     "utils/genis.py", "utils/genis_experiment.py", "utils/genis_outputs.py", "utils/taae_checkpoint.py",
@@ -343,7 +344,7 @@ def run_single(args):
         "prepared_data_unchanged": True, "source_files_unchanged": unchanged,
         "primary_percentile_selected_on_validation": True})
     from utils.genis_outputs import publish_rnep_outputs
-    published = args.result_path or PROJECT_ROOT / "results" / dataset_name / (
+    published = args.result_path or REPO_ROOT / "results" / dataset_name / (
         "taae" if args.taae_version == "previous" and dataset_name == "GeNIS" else "taae_current")
     publish_rnep_outputs(output, published)
     print(f"Published {dataset_name} outputs: {published}", flush=True)
@@ -359,7 +360,7 @@ def run_genis(args):
     versions = ["previous", "current"] if args.taae_version == "both" else [args.taae_version]
     stamp = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d_%H%M%S_%f")
     model_dir = "taae" if args.taae_version == "previous" else "taae_current"
-    published = (args.result_path or PROJECT_ROOT / "results" / "GeNIS" / model_dir).resolve()
+    published = (args.result_path or REPO_ROOT / "results" / "GeNIS" / model_dir).resolve()
     run_name = "comparison" if len(versions) == 2 else "training"
     output = args.output_dir or published / "runs" / f"{run_name}_{stamp}"
     output = output.resolve()

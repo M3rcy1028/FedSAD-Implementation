@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[3]  # results/ and relative data paths
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -384,7 +385,7 @@ def main():
     dataset = {"genis": "GeNIS"}.get(args.eval_dataset, args.eval_dataset)
     config = MODEL_EVAL_CONFIG[dataset]
     weights_path = (Path(args.weights).expanduser().resolve() if args.weights
-                    else PROJECT_ROOT / config["weights"])
+                    else REPO_ROOT / config["weights"])
     if not weights_path.is_file():
         parser.error(f"Weight file not found: {weights_path}")
     if dataset == "GeNIS":

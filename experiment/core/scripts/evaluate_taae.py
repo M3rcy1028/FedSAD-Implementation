@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[3]  # results/ and relative data paths
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -235,7 +236,7 @@ def evaluate_dataset(model, dataset_name, percentile, train_split_ratio=0.8,
 
     base_dir = Path(base_dir or config["base_dir"])
     if not base_dir.is_absolute():
-        base_dir = PROJECT_ROOT / base_dir
+        base_dir = REPO_ROOT / base_dir
     output_dir = Path(result_path) if result_path is not None else Path.cwd()
     output_dir.mkdir(parents=True, exist_ok=True)
     normal_path = os.path.join(base_dir, config["normal_file"])
@@ -462,10 +463,10 @@ def main():
         parser.error("train_ratio must be in (0, 1) and percentile must be in [0, 100]")
     weights_path = args.weights or Path(MODEL_CONFIG[dataset]["weights"])
     if not weights_path.is_absolute():
-        weights_path = PROJECT_ROOT / weights_path
+        weights_path = REPO_ROOT / weights_path
     base_dir = args.base_dir or Path(DATASET_CONFIG[dataset]["base_dir"])
     if not base_dir.is_absolute():
-        base_dir = PROJECT_ROOT / base_dir
+        base_dir = REPO_ROOT / base_dir
     normal_path = base_dir / DATASET_CONFIG[dataset]["normal_file"]
     if not weights_path.is_file():
         raise FileNotFoundError(f"Weight file not found: {weights_path}; specify --weights")

@@ -8,7 +8,7 @@ import sys
 from zoneinfo import ZoneInfo
 
 from utils.genis import file_sha256
-from utils.genis_experiment import PROJECT_ROOT, dump, frozen_sources, run_single, runtime_environment
+from utils.genis_experiment import PROJECT_ROOT, REPO_ROOT, dump, frozen_sources, run_single, runtime_environment
 from utils.gotham import prepare_gotham
 
 
@@ -20,7 +20,7 @@ def run_gotham(args):
         args.genis_prepared = args.gotham_prepared
         return run_single(args)
     stamp = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d_%H%M%S_%f")
-    published = (args.result_path or PROJECT_ROOT / "results" / "Gotham" / "taae").resolve()
+    published = (args.result_path or REPO_ROOT / "results" / "Gotham" / "taae").resolve()
     output = (args.output_dir or published / "runs" / f"training_{stamp}").resolve()
     output.mkdir(parents=True, exist_ok=False)
     snapshot = output / "sources"

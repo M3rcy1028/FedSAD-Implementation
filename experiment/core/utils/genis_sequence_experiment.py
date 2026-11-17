@@ -13,6 +13,7 @@ from utils.genis import file_sha256
 from utils.genis_sequences import DEFAULT_PREPARED
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 SOURCES = ["utils/__init__.py", "utils/arguments.py", "utils/genis.py", "utils/genis_sequences.py",
            "utils/genis_outputs.py", "utils/genis_sequence_experiment.py", "utils/metrics.py",
            "train_aelstm.py", "train_cnnlstm.py", "models/aelstm.py", "models/cnnlstm.py"]
@@ -237,7 +238,7 @@ def run_genis_sequence(args, kind, loader):
     if args.prepare_only:
         print(f"Prepared GeNIS inputs: {shared}", flush=True)
         return
-    published = (args.result_path or PROJECT_ROOT / "results" / "GeNIS" / kind).resolve()
+    published = (args.result_path or REPO_ROOT / "results" / "GeNIS" / kind).resolve()
     stamp = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d_%H%M%S_%f")
     output = (args.output_dir or published / "runs" / f"training_{stamp}").resolve()
     output.mkdir(parents=True, exist_ok=False)

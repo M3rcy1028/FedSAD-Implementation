@@ -18,6 +18,7 @@ EPOCHS = 300
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
 
 def main():
+    os.makedirs(os.path.dirname(WEIGHT_PATH), exist_ok=True)
     # 1. Get dataset
     X_train_scaled, X_test_scaled, y_test = get_datasets_nsl()
 

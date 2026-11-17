@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 from utils.arguments import get_args
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 WEIGHT_PATH = "./FedSAD_Results/fedsad_weights.h5"
 MATRIX_PATH = "./FedSAD_Results/fedsad_cm.png"
@@ -153,7 +154,7 @@ def run_zenodo(args):
         os.environ.setdefault(name, value)
     if args.output_dir is None:
         stamp = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y%m%d_%H%M%S_%f")
-        args.output_dir = PROJECT_ROOT / "results" / "ITU_SDN_ULAK" / f"rnep_{stamp}"
+        args.output_dir = REPO_ROOT / "results" / "ITU_SDN_ULAK" / f"rnep_{stamp}"
     output = args.output_dir.resolve()
     if output.exists() and (not output.is_dir() or any(output.iterdir())):
         raise FileExistsError(f"Output directory must be new or empty: {output}")
