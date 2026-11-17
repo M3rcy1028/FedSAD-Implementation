@@ -242,15 +242,17 @@ The results table and interpretation for this configuration will be updated afte
 
 ## Archived reconstruction-error figures
 
-The four panels below preserve the reconstruction-error distributions discussed in the manuscript. The caption and accompanying analysis are provided here as supplementary material. The figures link to the archived artifacts in `results/`.
+The five panels below present reconstruction-error distributions for KDD99, InSDN, CSE-CIC-IDS2018, UNSW-NB15 and GeNIS. The caption and accompanying analysis are provided here as supplementary material. The figures link to the archived artifacts in `results/`.
 
 | (a) KDD99 | (b) InSDN |
 | --- | --- |
 | ![KDD99 reconstruction error](results/KDD99/fedsad/KDD99_distribution.png) | ![InSDN reconstruction error](results/InSDN/fedsad/InSDN_distribution.png) |
 | **(c) CSE-CIC-IDS2018** | **(d) UNSW-NB15** |
 | ![CSE-CIC-IDS2018 reconstruction error](results/CSE-CIC-IDS2018/taae/CSE-CIC-IDS2018_distribution.png) | ![UNSW-NB15 reconstruction error](results/UNSW_NB15/taae/UNSW_NB15_distribution.png) |
+| **(e) GeNIS** | |
+| ![GeNIS reconstruction error](results/GeNIS/taae/GeNIS_distribution.png) | |
 
-**Figure caption.** Reconstruction error distributions for normal (green) and anomalous traffic across four datasets: (a) KDD99, (b) InSDN, (c) CSE-CIC-IDS2018 and (d) UNSW-NB15. The histograms display the density of reconstruction errors for each dataset, illustrating how normal samples generally cluster below the detection threshold, while anomalous samples tend toward higher values. The vertical blue dashed line denotes the detection threshold ($\tau$) determined from training reconstruction errors. Different colors distinguish the attack categories.
+**Figure caption.** Reconstruction error distributions for normal (green) and anomalous traffic across five datasets: (a) KDD99, (b) InSDN, (c) CSE-CIC-IDS2018, (d) UNSW-NB15 and (e) GeNIS. The histograms display the density of reconstruction errors for each dataset, illustrating how normal samples generally cluster below the detection threshold, while anomalous samples tend toward higher values. The vertical blue dashed line denotes the detection threshold ($\tau$) derived from normal training reconstruction errors. For GeNIS, the operating percentile is selected on the validation set. Different colors distinguish the attack categories.
 
 ### Relationship to recall and ROC performance
 
@@ -260,14 +262,9 @@ Certain attack categories resemble normal behavior, leading to overlapping error
 
 - **KDD99 — `back` attack (panel a).** The *back* distribution clusters near the normal region, with substantial density below the decision threshold. This overlap explains its lower recall compared with attack types whose reconstruction errors are concentrated above the threshold. The corresponding [KDD99 recall comparison](results/KDD99/KDD99_recall.png) shows this category-specific weakness alongside stronger detection of other attacks.
 - **CSE-CIC-IDS2018 — `Infiltration` (panel c).** Many *Infiltration* samples have reconstruction errors in the benign region, consistent with feature patterns that closely resemble normal activities. Their substantial overlap with normal traffic places many samples below the threshold, reducing recall. This overlap is a major contributor to the lower AUC and reduced detection performance on CSE-CIC-IDS2018. Infiltration is also challenging across the approaches evaluated in the manuscript, as reflected in the [CSE-CIC-IDS2018 recall comparison](results/CSE-CIC-IDS2018/CSE-CIC-IDS2018_recall.png).
+- **GeNIS — `recon-dns` (panel e).** The *recon-dns* errors lie in the low-error region occupied by normal traffic, below the selected threshold. All **10 test samples** have errors of approximately **0.00052–0.00110**, below $\tau \approx 0.00413$, and are classified as normal, giving **recall 0.0000**. The model reconstructs these DNS reconnaissance flows with small errors, consistent with a benign-like representation under the learned features. This is the same overlap-driven failure pattern observed for *back* and *Infiltration*. The other GeNIS attack categories are detected with high recall. Because *recon-dns* accounts for only 10 of the 4,373 attack samples, overall attack recall remains **0.9977** even though this category is missed entirely. The [GeNIS recall comparison](results/GeNIS/GeNIS_recall.png) and [per-attack summary](results/GeNIS/taae/GeNIS_summary.csv) show why aggregate scores should be interpreted alongside category-level results.
 
 The two effects should be distinguished: recall depends on the selected threshold, whereas ROC-AUC summarizes score ranking across thresholds. Lowering $\tau$ may recover overlapping attack samples but also flags more normal traffic as anomalous; changing the threshold alone does not change the ROC-AUC. The overlapping distributions therefore explain both the missed attacks at the chosen operating point and the weaker score separation reflected in the ROC curve.
-
-### Additional GeNIS distribution
-
-The GeNIS distribution is included as an additional result, separately from the four manuscript panels above.
-
-![GeNIS reconstruction error](results/GeNIS/taae/GeNIS_distribution.png)
 
 ### Combined ROC curves
 
