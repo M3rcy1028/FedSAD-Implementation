@@ -18,7 +18,7 @@ if __name__=="__main__":
     parser.add_argument("--normal_file", type=str, default=None)
     parser.add_argument("--result_path", type=str, default="results/CSE-CIC-IDS2018/gsad")
     parser.add_argument("--eval_dataset", type=str, default="cic", 
-                        choices=["cic", "unsw", "ciciot"], help="Select dataset: cic, unsw or ciciot")
+                        choices=["cic", "unsw"], help="Select dataset: cic or unsw")
     args = parser.parse_args()
 
     os.makedirs(args.result_path,exist_ok=True)
@@ -34,10 +34,6 @@ if __name__=="__main__":
         "unsw": {
             "normal_file": "UNSW_NB15_normal.csv",
             "anomaly_prefix": "UNSW_NB15_anomaly_"
-        },
-        "ciciot": {
-            "normal_file": "CICIoT_ae_normal.csv",
-            "anomaly_prefix": "CICIoT_anomaly_ae_"
         }
     }
 

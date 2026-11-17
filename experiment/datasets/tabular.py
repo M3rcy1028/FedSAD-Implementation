@@ -11,8 +11,7 @@ FILES = {"kdd99": ("KDD99_normal.csv", "KDD99_anomaly.csv"),
          "nsl-kdd": ("KDD_normal.csv", "KDD_anomaly.csv"),
          "insdn": ("InSDN_normal.csv", "InSDN_anomaly.csv"),
          "cic2018": ("CIC_ae_normal.csv", "CIC_ae_anomaly.csv"),
-         "unsw-nb15": ("UNSW_NB15_normal.csv", "UNSW_NB15_anomaly.csv"),
-         "ciciot2023": ("CICIoT_ae_normal.csv", "CICIoT_ae_anomaly.csv")}
+         "unsw-nb15": ("UNSW_NB15_normal.csv", "UNSW_NB15_anomaly.csv")}
 
 
 def directory(config):
@@ -22,8 +21,7 @@ def directory(config):
     return {"kdd99": base / "KDD99", "nsl-kdd": base / "NSL-KDD",
             "insdn": base / "InSDN/attack_data",
             "cic2018": Path("/data/SDP_Dataset/Unified_model/cic_rnep"),
-            "unsw-nb15": Path("/data/SDP_Dataset/Unified_model/unsw_rnep"),
-            "ciciot2023": Path("/data/SDP_Dataset/Unified_model/ciciot_rnep")}[config["dataset"]]
+            "unsw-nb15": Path("/data/SDP_Dataset/Unified_model/unsw_rnep")}[config["dataset"]]
 
 
 def sequence(values, shape, preserve_truncation=False):
@@ -40,23 +38,6 @@ def attack_names(folder, normal, attacks, dataset):
     """Subtype labels are metadata only; ambiguous feature matches remain explicit."""
     names = np.full(len(attacks), "Anomaly", dtype=object)
     coverage = {"source": "binary CSV", "known_rows": 0, "ambiguous_rows": 0}
-    if dataset == "ciciot2023":
-        from experiment.backends import load
-        mapping = load("utils.get_datasets").CICIOT_ATTACK_MAP
-        offset = 0
-        for index, label in sorted(mapping.items()):
-            path = folder / f"CICIoT_anomaly_ae_{index}.csv"
-            if not path.exists():
-                continue
-            frame = pd.read_csv(path)[normal.columns].apply(pd.to_numeric, errors="coerce")
-            frame = frame.replace([np.inf, -np.inf], np.nan).fillna(0).clip(lower=0)
-            if not np.array_equal(frame.to_numpy(), attacks.iloc[offset:offset + len(frame)].to_numpy()):
-                raise ValueError("CICIoT merged attack order differs from per-class files")
-            names[offset:offset + len(frame)] = label
-            offset += len(frame)
-        if offset != len(attacks):
-            raise ValueError("CICIoT attack files do not cover the merged data")
-        coverage = {"source": "verified per-class CSVs", "known_rows": offset, "ambiguous_rows": 0}
     encoded = folder / "KDD99_encoded.csv"
     if dataset == "kdd99" and encoded.exists():
         frame = pd.read_csv(encoded, low_memory=False)
@@ -93,7 +74,7 @@ def prepare(config):
     if config["dataset"] not in {"kdd99", "nsl-kdd"}:
         normal, attacks = [frame.replace([np.inf, -np.inf], np.nan).fillna(0)
                            for frame in [normal, attacks]]
-        if config["dataset"] == "ciciot2023" or (config["dataset"] == "cic2018" and config["model"] == "taae"):
+        if config["dataset"] == "cic2018" and config["model"] == "taae":
             normal, attacks = [frame.clip(lower=0) for frame in [normal, attacks]]
     if not all(np.isfinite(frame.to_numpy()).all() for frame in [normal, attacks]):
         raise ValueError("Nonfinite numeric data; use the cleaned dataset CSVs")
@@ -102,21 +83,14 @@ def prepare(config):
     if ratio is None:
         ratio = .5 if (config["dataset"] in {"kdd99", "nsl-kdd"} or
                        (config["dataset"] == "insdn" and config["model"] == "aelstm")) else .8
-    if config["dataset"] == "ciciot2023" and config["model"] != "taae":
-        return prepare_ciciot_sequence(config, folder)
     log_cols = []
-    if config["dataset"] == "ciciot2023":
-        log_cols = ["Flow Duration", "Tot Fwd Pkts", "Tot Bwd Pkts", "TotLen Fwd Pkts",
-                    "TotLen Bwd Pkts", "Flow Byts/s", "Flow Pkts/s", "Fwd Pkts/s", "Bwd Pkts/s",
-                    "Flow IAT Mean", "Fwd IAT Mean", "Bwd IAT Mean"]
-        normal[log_cols], attacks[log_cols] = np.log1p(normal[log_cols]), np.log1p(attacks[log_cols])
     normal = shuffle(normal, random_state=config["seed"])
     cut = int(len(normal) * ratio)
     normal_train, normal_test = normal.iloc[:cut], normal.iloc[cut:]
     scaler = MinMaxScaler().fit(normal_train)
     train = scaler.transform(normal_train)
     attack_order = np.arange(len(attacks))
-    if config["dataset"] == "ciciot2023" or (config["dataset"] == "cic2018" and config["model"] == "taae"):
+    if config["dataset"] == "cic2018" and config["model"] == "taae":
         attack_order = shuffle(attack_order, random_state=config["seed"])
         attacks, names = attacks.iloc[attack_order], names[attack_order]
     normal_test_values, attack_values = scaler.transform(normal_test), scaler.transform(attacks)
@@ -141,17 +115,6 @@ def prepare(config):
                      [f"{attack_name}:{i}" for i in attack_order[attack_cut:]]]
     labels = np.r_[np.full(len(normal_test_values), "Normal"), names[attack_cut:]]
     test, y_test, test_ids, labels = shuffle(test, y_test, test_ids, labels, random_state=config["seed"])
-    if config["dataset"] == "ciciot2023":
-        from sklearn.model_selection import train_test_split
-        normal_rows, attack_rows = np.flatnonzero(y_test == 0), np.flatnonzero(y_test == 1)
-        if len(attack_rows) > len(normal_rows):
-            from experiment.backends import load
-            ids = {label: index for index, label in load("utils.get_datasets").CICIOT_ATTACK_MAP.items()}
-            strata = np.array([ids[label] for label in labels[attack_rows]])
-            attack_rows, _ = train_test_split(attack_rows, train_size=len(normal_rows),
-                        random_state=config["seed"], stratify=strata)
-        chosen = shuffle(np.r_[normal_rows, attack_rows], random_state=config["seed"])
-        test, y_test, test_ids, labels = test[chosen], y_test[chosen], test_ids[chosen], labels[chosen]
     if set(train_ids) & set(test_ids):
         raise ValueError("Training rows overlap final test rows")
     if config["model"] != "taae":
@@ -179,46 +142,3 @@ def prepare(config):
     return {"X_train": train, "y_train": y_train, "train_ids": train_ids,
             "X_test": test, "y_test": y_test, "test_ids": test_ids, "test_labels": labels}, pipeline, report
 
-
-def prepare_ciciot_sequence(config, folder):
-    from experiment.backends import load
-    module = load("AE_LSTM" if config["model"] == "aelstm" else "CNN_LSTM")
-    function = (module.get_datasets_ciciot_semi if config["model"] == "aelstm"
-                else module.get_datasets_ciciot_supervised)
-    train, y_train, test, y_test, metadata = function(
-        str(folder), random_seed=config["seed"], train_ratio=config.get("normal_train_ratio") or .5,
-        anomaly_ratio=config.get("attack_fraction") if config.get("attack_fraction") is not None else .5,
-        return_metadata=True)
-    normal_path = folder / "CICIoT_ae_normal.csv"
-    normal = pd.read_csv(normal_path)
-    features = normal.columns.tolist()
-    normal = (normal.apply(pd.to_numeric, errors="coerce")
-              .replace([np.inf, -np.inf], np.nan).fillna(0).clip(lower=0))
-    # The preserved loader returns row IDs rather than its fitted scaler. Recover
-    # that exact normal-training subset without changing its returned arrays.
-    normal_ids = metadata["train_indices"][y_train == 0]
-    scaler = MinMaxScaler().fit(normal.iloc[normal_ids].to_numpy())
-    attack_map_path = folder.parent / "ciciot_attack_map.csv"
-    attack_map = pd.read_csv(attack_map_path).set_index("id")["class"].to_dict()
-    labels = np.array(["Normal" if value == 0 else attack_map[value]
-                       for value in metadata["test_attack_ids"]])
-    bundle = {"X_train": train, "y_train": y_train, "X_test": test, "y_test": y_test,
-              "train_ids": metadata["train_indices"].astype(str),
-              "test_ids": metadata["test_indices"].astype(str), "test_labels": labels}
-    if set(bundle["train_ids"]) & set(bundle["test_ids"]):
-        raise ValueError("CICIoT sequence training rows overlap final test rows")
-    pipeline = {"scaler": scaler, "feature_order": features, "log1p_columns": [],
-                "sequence_shape": list(train.shape[1:]), "seed": config["seed"],
-                "normal_train_ratio": config.get("normal_train_ratio") or .5,
-                "attack_train_fraction": config.get("attack_fraction") if config.get("attack_fraction") is not None else .5}
-    paths = [normal_path, attack_map_path] + [folder / f"CICIoT_anomaly_ae_{index}.csv"
-                                             for index in sorted(attack_map)]
-    return bundle, pipeline, {"dataset": "ciciot2023", "training_rows": len(train),
-                              "normal_training_rows": int((y_train == 0).sum()),
-                              "attack_training_rows": int((y_train == 1).sum()),
-                              "test_rows": len(test), "normal_test_rows": int((y_test == 0).sum()),
-                              "attack_test_rows": int((y_test == 1).sum()),
-                              "sequence_shape": list(train.shape[1:]),
-                              "raw_sha256": {str(path): sha256(path) for path in paths},
-                              "test_row_overlap": False,
-                              "validation": "per-client internal validation tail"}

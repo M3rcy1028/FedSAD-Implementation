@@ -1,4 +1,4 @@
-"""Run RNEP on CIC, CICIoT2023, ITU/ULAK, GeNIS, or Gotham."""
+"""Run RNEP on CIC, ITU/ULAK, GeNIS, or Gotham."""
 from datetime import datetime
 import hashlib
 import json
@@ -34,20 +34,14 @@ def run_legacy(args):
     from tensorflow.keras.optimizers import Adam
     import flwr as fl
     from flwr.common import parameters_to_ndarrays
-    from utils.get_datasets import get_datasets_cic_sam, get_datasets_ciciot, eval_server
+    from utils.get_datasets import get_datasets_cic_sam, eval_server
     from utils.metrics import save_and_plot_history
     from taae import SaveEvaluationRNEP, TransformerAAE, FLClient
 
     os.makedirs("./FedSAD_Results", exist_ok=True)
-    is_ciciot = args.eval_dataset == "ciciot"
-    model_kwargs = {"latent_dim": 32} if is_ciciot else {}
-    client_learning_rate = 3e-5 if is_ciciot else 1e-5
-    if args.eval_dataset == "ciciot":
-        X_train_scaled, X_test_scaled, y_test = get_datasets_ciciot(
-            f"{args.base_data_path}/ciciot_rnep", train_ratio=0.8
-        )
-    else:
-        X_train_scaled, X_test_scaled, y_test = get_datasets_cic_sam()
+    model_kwargs = {}
+    client_learning_rate = 1e-5
+    X_train_scaled, X_test_scaled, y_test = get_datasets_cic_sam()
     client_data = np.array_split(X_train_scaled, args.client_nums)
     
     # Prepare model/data for server evaluation
@@ -62,7 +56,7 @@ def run_legacy(args):
         "latent_dim": central_model.latent_dim,
         "client_learning_rate": client_learning_rate,
         "arguments": vars(args),
-        "normal_train_ratio": 0.5 if is_ciciot else None,
+        "normal_train_ratio": None,
     }
     with open("./FedSAD_Results/model_config.json", "w") as stream:
         json.dump(model_config, stream, indent=2, default=str)

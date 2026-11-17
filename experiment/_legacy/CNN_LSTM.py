@@ -182,89 +182,6 @@ def get_datasets_cic_multi_supervised(
     return X_train_seq, y_train, X_test_seq, y_test
 
 
-def get_datasets_ciciot_supervised(
-    base_dir="/data/SDP_Dataset/Unified_model/ciciot_rnep",
-    random_seed=123,
-    train_ratio=0.5,
-    anomaly_ratio=0.5,
-    timesteps=10,
-    features=8,
-    return_metadata=False,
-):
-    """Load CICIoT flows for CNN-LSTM with class-stratified 50:50 splits.
-
-    Normal-train alone fits the scaler; attack train rows and all test rows
-    only use that fitted transformation. Feature vectors are padded to 10x8.
-    """
-    if not 0 < train_ratio < 1 or not 0 < anomaly_ratio < 1:
-        raise ValueError("train_ratio and anomaly_ratio must be between 0 and 1")
-
-    df_normal = pd.read_csv(os.path.join(base_dir, "CICIoT_ae_normal.csv"))
-    columns = df_normal.columns.tolist()
-    if len(columns) != 78 or timesteps * features < len(columns):
-        raise ValueError("Expected 78 CICIoT features and enough sequence positions")
-
-    def clean(frame):
-        if frame.columns.tolist() != columns:
-            raise ValueError("Normal and attack feature columns/order must match")
-        return (frame.apply(pd.to_numeric, errors="coerce")
-                .replace([np.inf, -np.inf], np.nan).fillna(0).clip(lower=0))
-
-    df_normal = shuffle(clean(df_normal), random_state=random_seed)
-    split = int(len(df_normal) * train_ratio)
-    normal_train, normal_test = df_normal.iloc[:split], df_normal.iloc[split:]
-
-    attack_map = pd.read_csv(os.path.join(base_dir, "..", "ciciot_attack_map.csv"))
-    attack_frames, attack_classes = [], []
-    for attack_id in sorted(attack_map["id"].tolist()):
-        frame = clean(pd.read_csv(os.path.join(
-            base_dir, f"CICIoT_anomaly_ae_{attack_id}.csv"
-        )))
-        attack_frames.append(frame)
-        attack_classes.extend([attack_id] * len(frame))
-    attacks = pd.concat(attack_frames, ignore_index=True)
-    attack_train, attack_test = train_test_split(
-        attacks, train_size=anomaly_ratio, random_state=random_seed,
-        stratify=attack_classes,
-    )
-
-    scaler = MinMaxScaler().fit(normal_train.to_numpy())
-    train = pd.concat([normal_train, attack_train], ignore_index=True)
-    test = pd.concat([normal_test, attack_test], ignore_index=True)
-    X_train = scaler.transform(train.to_numpy()).astype(np.float32)
-    X_test = scaler.transform(test.to_numpy()).astype(np.float32)
-    y_train = np.r_[np.zeros(len(normal_train), dtype=np.int64),
-                    np.ones(len(attack_train), dtype=np.int64)]
-    y_test = np.r_[np.zeros(len(normal_test), dtype=np.int64),
-                  np.ones(len(attack_test), dtype=np.int64)]
-    train_indices = np.r_[normal_train.index.to_numpy(),
-                          len(df_normal) + attack_train.index.to_numpy()]
-    test_indices = np.r_[normal_test.index.to_numpy(),
-                         len(df_normal) + attack_test.index.to_numpy()]
-    test_attack_ids = np.r_[np.zeros(len(normal_test), dtype=np.int64),
-                           np.asarray(attack_classes)[attack_test.index.to_numpy()]]
-    X_train, y_train, train_indices = shuffle(
-        X_train, y_train, train_indices, random_state=random_seed
-    )
-    X_test, y_test, test_indices, test_attack_ids = shuffle(
-        X_test, y_test, test_indices, test_attack_ids, random_state=random_seed
-    )
-    X_train = reshape_for_sequence_nsl(X_train, timesteps, features)
-    X_test = reshape_for_sequence_nsl(X_test, timesteps, features)
-
-    print(f"[CICIoT2023 CNN-LSTM] Normal train/test: {len(normal_train)}/{len(normal_test)}")
-    print(f"Attack train/test: {len(attack_train)}/{len(attack_test)} (class-stratified)")
-    print(f"Train: {X_train.shape}, Test: {X_test.shape}")
-    if return_metadata:
-        return X_train, y_train, X_test, y_test, {
-            "train_indices": train_indices,
-            "test_indices": test_indices,
-            "test_attack_ids": test_attack_ids,
-        }
-    return X_train, y_train, X_test, y_test
-
-
-# KDD99 dataset preprocessing
 def get_datasets_kdd99_supervised(random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12):
     np.random.seed(random_seed)
     random.seed(random_seed)
@@ -510,14 +427,7 @@ def main():
         from utils.genis_sequence_experiment import run_genis_sequence
         return run_genis_sequence(args, "cnnlstm", get_datasets_genis_supervised)
     global WEIGHT_PATH, MATRIX_PATH, RESULT_PATH, ROC_PATH
-    if args.eval_dataset == "ciciot":
-        result_dir = "./results/CICIoT2023/cnnlstm"
-        WEIGHT_PATH = os.path.join(result_dir, "cnn_lstm_weights.h5")
-        MATRIX_PATH = os.path.join(result_dir, "cnn_lstm_cm.png")
-        RESULT_PATH = os.path.join(result_dir, "cnn_lstm_server.txt")
-        ROC_PATH = os.path.join(result_dir, "cnn_lstm_roc.png")
-    else:
-        result_dir = "./cnn_lstm"
+    result_dir = "./cnn_lstm"
     os.makedirs(result_dir, exist_ok=True)
     # X_train, y_train, X_test, y_test = get_datasets_nsl_supervised(
     #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
@@ -536,13 +446,7 @@ def main():
     #     random_seed=42, anomaly_ratio=0.2, timesteps=10, features=12
     # )
 
-    if args.eval_dataset == "ciciot":
-        X_train, y_train, X_test, y_test = get_datasets_ciciot_supervised(
-            base_dir=os.path.join(args.base_data_path, "ciciot_rnep"),
-            random_seed=args.random_seed, train_ratio=0.5, anomaly_ratio=0.5,
-        )
-    else:
-        X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=12, features=7)
+    X_train, y_train, X_test, y_test = get_datasets_insdn_supervised(timesteps=12, features=7)
     timesteps, features = X_train.shape[1:]
 
     # UNSW_NB15

@@ -1,6 +1,6 @@
 """Model names and supported input representations, loaded only when used."""
 MODELS = ("taae", "aelstm", "cnnlstm", "mvids", "mmfewshotsids")
-TABULAR = ("kdd99", "nsl-kdd", "insdn", "cic2018", "unsw-nb15", "ciciot2023", "genis")
+TABULAR = ("kdd99", "nsl-kdd", "insdn", "cic2018", "unsw-nb15", "genis")
 SUPPORT = {"taae": (*TABULAR, "gotham", "itu-ulak"),
            "aelstm": TABULAR, "cnnlstm": TABULAR,
            "mvids": ("cic2018", "unsw-nb15"),

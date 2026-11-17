@@ -198,23 +198,6 @@ DATASET_CONFIG = {
             14: "SQL Injection"
         }
     },
-    "CICIoT2023": {
-        "base_dir": "/data/SDP_Dataset/Unified_model/ciciot_rnep",
-        "normal_file": "CICIoT_ae_normal.csv", # 78 features (same as CSE-CIC-IDS2018)
-        "anomaly_prefix": "CICIoT_anomaly_ae_",
-        "merged_anomaly_file": "CICIoT_ae_anomaly.csv",
-        "plot_save_path": "./CICIoT2023_distribution.png",
-        "attack_map": {
-            1: "DDoS-UDP_Flood", 2: "DDoS-TCP_Flood", 3: "DDoS-PSHACK_Flood", 4: "DDoS-SYN_Flood",
-            5: "DDoS-RSTFINFlood", 6: "DDoS-SynonymousIP_Flood", 7: "DoS-UDP_Flood",
-            8: "DoS-TCP_Flood", 9: "DoS-SYN_Flood", 10: "Mirai-udpplain", 11: "VulnerabilityScan",
-            12: "DDoS-UDP_Fragmentation", 13: "DDoS-ACK_Fragmentation", 14: "DNS_Spoofing",
-            15: "Recon-HostDiscovery", 16: "Recon-OSScan", 17: "Recon-PortScan", 18: "DoS-HTTP_Flood",
-            19: "DDoS-HTTP_Flood", 20: "DDoS-SlowLoris", 21: "DictionaryBruteForce",
-            22: "BrowserHijacking", 23: "CommandInjection", 24: "SqlInjection", 25: "XSS",
-            26: "Backdoor_Malware", 27: "Uploading_Attack"
-        }
-    },
     "UNSW_NB15": {
         "base_dir": "./UNSW_NB15/ae_datas",
         "normal_file": "UNSW_NB15_normal.csv", 
@@ -450,10 +433,6 @@ MODEL_CONFIG = {
         "input_dim": 78,
         "weights": "results/CSE-CIC-IDS2018/taae/taae_cic_weights.h5"
     }, # P= 90, 0.000069
-    "CICIoT2023": {
-        "input_dim": 78,
-        "weights": "results/CICIoT2023/taae/fedsad_weights.h5"
-    }, # P=80.57
     "UNSW_NB15": {
         "input_dim": 43,
         "weights": "results/UNSW_NB15/taae/taae_unsw_weights.h5"
@@ -465,8 +444,8 @@ MODEL_CONFIG = {
 # --------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Evaluate saved TAAE weights")
-    parser.add_argument("--eval_dataset", default="CICIoT2023",
-                        choices=list(MODEL_CONFIG) + ["ciciot"])
+    parser.add_argument("--eval_dataset", default="CSE-CIC-IDS2018",
+                        choices=list(MODEL_CONFIG))
     parser.add_argument("--percentile", type=float, default=84)
     parser.add_argument("--train_ratio", type=float, default=None)
     parser.add_argument("--base_dir", type=Path, default=None)
@@ -477,8 +456,8 @@ def main():
     parser.add_argument("--check_only", action="store_true",
                         help="Check imports, paths, weights and a forward pass without full evaluation")
     args = parser.parse_args()
-    dataset = "CICIoT2023" if args.eval_dataset == "ciciot" else args.eval_dataset
-    train_ratio = args.train_ratio if args.train_ratio is not None else (0.5 if dataset == "CICIoT2023" else 0.8)
+    dataset = args.eval_dataset
+    train_ratio = args.train_ratio if args.train_ratio is not None else 0.8
     if not 0 < train_ratio < 1 or not 0 <= args.percentile <= 100:
         parser.error("train_ratio must be in (0, 1) and percentile must be in [0, 100]")
     weights_path = args.weights or Path(MODEL_CONFIG[dataset]["weights"])
@@ -508,8 +487,6 @@ def main():
         print(f"Check complete: imports, dataset path, saved weights, output shape {output.shape}")
         return
     result_path = args.result_path
-    if result_path is None and dataset == "CICIoT2023":
-        result_path = PROJECT_ROOT / "results/CICIoT2023/taae/eval"
     model.summary()
     evaluate_dataset(model, dataset, args.percentile, train_split_ratio=train_ratio,
                      base_dir=base_dir, result_path=result_path)

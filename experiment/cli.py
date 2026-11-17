@@ -9,7 +9,7 @@ from experiment.models.registry import MODELS, SUPPORT
 
 ALIASES = {"kdd": "kdd99", "nsl": "nsl-kdd", "cic": "cic2018",
            "cse-cic-ids2018": "cic2018", "unsw": "unsw-nb15", "unsw_nb15": "unsw-nb15",
-           "ciciot": "ciciot2023", "zenodo": "itu-ulak"}
+           "zenodo": "itu-ulak"}
 
 
 def parser():
@@ -36,7 +36,7 @@ def parser():
     p.add_argument("--prepared", type=Path, help="Reuse a frozen GeNIS/Gotham prepared directory")
     p.add_argument("--flow-interval", type=int, choices=[5, 10, 30, 60], default=10)
     p.add_argument("--normal-train-ratio", type=float,
-                   help="Defaults: KDD99/NSL-KDD and InSDN AE-LSTM 0.5; others 0.8 (CICIoT sequence models 0.5)")
+                   help="Defaults: KDD99/NSL-KDD and InSDN AE-LSTM 0.5; others 0.8")
     p.add_argument("--attack-fraction", type=float,
                    help="Sequence training attack ratio; KDD99 legacy defaults: AE 0.05, CNN 0.2")
     p.add_argument("--max-train-samples", type=int, default=150000,

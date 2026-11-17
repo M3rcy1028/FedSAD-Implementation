@@ -36,7 +36,7 @@ _pre.add_argument("--episode_gap", type=str, default="5min",
 _known, _ = _pre.parse_known_args()
 sys.argv = [sys.argv[0]]
 
-from taae import TransformerAAE
+from taae_previous import TransformerAAE  # archived FedSAD weights use the previous TAAE (latent_dim=64)
 from gsad import create_gsad_from_window, extract_gsad_features
 from utils.get_datasets import sanitize_numeric, fedsad_data_preprocessing
 import argparse
@@ -334,15 +334,6 @@ if __name__ == "__main__":
             "result_path": "results/CSE-CIC-IDS2018/fedsad",
             "normal_file": "CIC_ae_normal.csv", 
             "anomaly_prefix": "CIC_anomaly_ae_"
-        },
-        "ciciot": {
-            "taae_dir": f"{args.base_data_path}/ciciot_rnep",
-            "gsad_dir": f"{args.base_data_path}/ciciot_graph",
-            "taae_model": "results/CICIoT2023/taae/taae_ciciot_weights.h5",
-            "gsad_model": "results/CICIoT2023/gsad/normal_stats.pkl",
-            "result_path": "results/CICIoT2023/fedsad",
-            "normal_file": "CICIoT_ae_normal.csv",
-            "anomaly_prefix": "CICIoT_anomaly_ae_"
         },
         "unsw": {
             "taae_dir": f"{args.base_data_path}/unsw_rnep",
