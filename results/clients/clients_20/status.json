@@ -1,0 +1,33 @@
+{
+  "stage": "complete",
+  "clients": 20,
+  "completed_rounds": 10,
+  "elapsed_seconds": 5470.6,
+  "finished_at": "2026-11-16T18:12:47.271741+09:00",
+  "verification": {
+    "rounds_completed": 10,
+    "successful_client_fits": 200,
+    "successful_client_evaluations": 200,
+    "fit_failures": 0,
+    "evaluation_failures": 0,
+    "requested_epochs_completed": true,
+    "prepared_data_unchanged": true,
+    "source_files_unchanged": {
+      "rnep.py": true,
+      "taae.py": true,
+      "taae_previous.py": true,
+      "utils/__init__.py": true,
+      "utils/arguments.py": true,
+      "utils/metrics.py": true,
+      "utils/genis.py": true,
+      "utils/genis_experiment.py": true,
+      "utils/genis_outputs.py": true,
+      "utils/taae_checkpoint.py": true,
+      "utils/gotham.py": true,
+      "utils/gotham_experiment.py": true,
+      "utils/gotham_runtime.py": true,
+      "scripts/sweep_rnep_percentiles.py": true
+    },
+    "primary_percentile_selected_on_validation": true
+  }
+}

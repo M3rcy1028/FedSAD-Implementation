@@ -1,0 +1,17 @@
+{
+  "epochs": 30,
+  "rounds": 10,
+  "clients": 15,
+  "batch_size": 16,
+  "seed": 123,
+  "percentile": 82.0,
+  "taae_variant": "previous",
+  "dropout": 0.1,
+  "learning_rates": {
+    "taae": 3e-05,
+    "aelstm": 0.001,
+    "cnnlstm": 0.0001,
+    "mvids": 0.0001,
+    "mmfewshotsids": 0.0005
+  }
+}

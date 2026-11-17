@@ -1,0 +1,183 @@
+{
+  "checked_at": "2026-11-16T11:56:57.016869+09:00",
+  "original_directory_preserved": "/home/tako/naryun/etri_sdp_revision/FedSAD-Implementation-ciciot2023",
+  "original_source_file_hashes_rechecked": 334,
+  "unit_tests": {
+    "command": "python -B -m unittest discover -s tests -v",
+    "tests_run": 22,
+    "passed": true
+  },
+  "structure": {
+    "core_training_files_unchanged": [
+      "rnep.py",
+      "taae.py",
+      "taae_previous.py",
+      "AE_LSTM.py",
+      "CNN_LSTM.py",
+      "utils/get_datasets.py",
+      "utils/genis.py",
+      "utils/genis_sequences.py",
+      "utils/genis_experiment.py",
+      "utils/genis_sequence_experiment.py",
+      "utils/gotham.py",
+      "utils/gotham_experiment.py",
+      "utils/gotham_runtime.py",
+      "models/CML.py",
+      "models/FedAVG.py",
+      "models/__init__.py",
+      "models/model_aelstm.py",
+      "models/model_cnnlstm.py",
+      "models/model_mmfewshotsids.py",
+      "models/model_mvids.py",
+      "models/MMFEWSHOTSIDS/__init__.py",
+      "models/MMFEWSHOTSIDS/fusion.py",
+      "models/MMFEWSHOTSIDS/g_model.py",
+      "models/MMFEWSHOTSIDS/load_data.py",
+      "models/MMFEWSHOTSIDS/multimodal_ids.py",
+      "models/MMFEWSHOTSIDS/s_model.py",
+      "models/MMFEWSHOTSIDS/traffic_feature_graph.py",
+      "models/MMFEWSHOTSIDS/train.py",
+      "models/MVIDS/__init__.py",
+      "models/MVIDS/kg_builder.py",
+      "models/MVIDS/load_data.py",
+      "models/MVIDS/multiview.py",
+      "models/MVIDS/preprocess.py",
+      "models/MVIDS/train.py"
+    ],
+    "python_files_parsed": 61,
+    "png_files_verified": 111,
+    "h5_files_verified": 26,
+    "no_run_archives_checkpoints_or_caches": true
+  },
+  "cli_help_checks": [
+    {
+      "command": [
+        "rnep.py",
+        "--help"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "AE_LSTM.py",
+        "--help"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "CNN_LSTM.py",
+        "--help"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "test_taae.py",
+        "--help"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "test_taae_new.py",
+        "--help"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "-m",
+        "scripts.test_aelstm",
+        "--help"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "-m",
+        "scripts.test_cnnlstm",
+        "--help"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "genis_restored_weights_evaluation": [
+    {
+      "model": "aelstm",
+      "samples": 8746,
+      "confusion_matrix": [
+        [
+          4369,
+          4
+        ],
+        [
+          11,
+          4362
+        ]
+      ],
+      "predictions_match": true,
+      "prepared_data_hash_matches": true,
+      "max_score_difference": 1.8020889280823127e-07
+    },
+    {
+      "model": "cnnlstm",
+      "samples": 8746,
+      "confusion_matrix": [
+        [
+          4369,
+          4
+        ],
+        [
+          11,
+          4362
+        ]
+      ],
+      "predictions_match": true,
+      "prepared_data_hash_matches": true,
+      "max_score_difference": 0.000375441996002146
+    },
+    {
+      "model": "taae",
+      "samples": 8746,
+      "confusion_matrix": [
+        [
+          4226,
+          147
+        ],
+        [
+          10,
+          4363
+        ]
+      ],
+      "predictions_match": true,
+      "prepared_data_hash_matches": true,
+      "max_score_difference": 3.572494506887125e-07
+    }
+  ],
+  "cpu_inference_note": "Class decisions and confusion matrices match saved predictions for all 8746 rows of each model. CPU scores may differ slightly from stored GPU scores; published scores were not replaced.",
+  "plot_generation": {
+    "recall_datasets": [
+      "KDD99",
+      "InSDN",
+      "CSE-CIC-IDS2018",
+      "UNSW-NB15",
+      "GeNIS"
+    ],
+    "recall_legend": false,
+    "roc_datasets": 6,
+    "completed": true
+  },
+  "size": {
+    "original_results_bytes": 717645504,
+    "clean_results_bytes": 204609694,
+    "results_reduction_percent": 71.49
+  },
+  "not_run": [
+    "No new training runs",
+    "No full evaluation of every legacy dataset",
+    "No new environment installation",
+    "Optional PyTorch graph benchmarks not executed"
+  ],
+  "external_data": "Existing raw datasets and prepared caches remain outside this directory; see README."
+}

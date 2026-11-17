@@ -1,0 +1,228 @@
+{
+  "checked_at": "2026-11-16T14:11:50.294014+09:00",
+  "public_root_python_files": [
+    "run.py"
+  ],
+  "preserved_backend_files": 59,
+  "preserved_backend_hashes_match": true,
+  "python_files_parsed": 82,
+  "readme_local_figures_present": 6,
+  "unit_tests": {
+    "command": "python -B -m unittest discover -s tests -v",
+    "tests_run": 29,
+    "passed": true,
+    "log_sha256": "0136d4c7302acb4c123f44d29c63116a0ef2fc8041d24c2013bcd15ad90fd1da"
+  },
+  "execution_fixtures": {
+    "taae_cpu_serial": true,
+    "taae_gpu_ray": true,
+    "aelstm_cpu_serial": true,
+    "cnnlstm_cpu_serial": true,
+    "mvids_cpu": true,
+    "mmfewshotsids_cpu": true,
+    "saved_weight_reevaluation": [
+      "taae",
+      "aelstm",
+      "cnnlstm",
+      "mvids",
+      "mmfewshotsids"
+    ],
+    "plot_and_compare": true,
+    "note": "Small fixture runs verify execution, not benchmark performance.",
+    "taae_current_cpu_serial": true
+  },
+  "real_data_compatibility": {
+    "genis_shared_test_ids": [
+      "taae",
+      "aelstm",
+      "cnnlstm"
+    ],
+    "ciciot_taae_exact_retained_rows": true,
+    "ciciot_sequence_exact_saved_scalers": [
+      "aelstm",
+      "cnnlstm"
+    ],
+    "sequence_arrays_match_preserved_loaders": {
+      "insdn": [
+        "aelstm",
+        "cnnlstm"
+      ],
+      "unsw-nb15": [
+        "aelstm",
+        "cnnlstm"
+      ],
+      "cic2018": [
+        "aelstm",
+        "cnnlstm"
+      ]
+    }
+  },
+  "historical_paper_inventory": {
+    "present_unchanged": 181,
+    "changed_existing_files": [],
+    "absent_entries": [
+      "results/CICIoT2023/aelstm/ae_lstm_server.txt",
+      "results/CICIoT2023/aelstm/ae_lstm_weights.h5",
+      "results/CICIoT2023/aelstm/eval/CICIoT2023_cls_cm.png",
+      "results/CICIoT2023/aelstm/eval/CICIoT2023_cls_roc.png",
+      "results/CICIoT2023/aelstm/eval/CICIoT2023_metrics.json",
+      "results/CICIoT2023/aelstm/eval/CICIoT2023_predictions.csv",
+      "results/CICIoT2023/aelstm/eval/CICIoT2023_recon_cm.png",
+      "results/CICIoT2023/aelstm/eval/CICIoT2023_recon_roc.png",
+      "results/CICIoT2023/aelstm/eval/CICIoT2023_summary.csv",
+      "results/CICIoT2023/cnnlstm/cnn_lstm_server.txt",
+      "results/CICIoT2023/cnnlstm/cnn_lstm_weights.h5",
+      "results/CICIoT2023/cnnlstm/eval/CICIoT2023_cm.png",
+      "results/CICIoT2023/cnnlstm/eval/CICIoT2023_distribution.png",
+      "results/CICIoT2023/cnnlstm/eval/CICIoT2023_metrics.json",
+      "results/CICIoT2023/cnnlstm/eval/CICIoT2023_predictions.csv",
+      "results/CICIoT2023/cnnlstm/eval/CICIoT2023_roc.png",
+      "results/CICIoT2023/cnnlstm/eval/CICIoT2023_summary.csv",
+      "results/CICIoT2023/rnep/fedsad_cm.png",
+      "results/CICIoT2023/rnep/fedsad_history",
+      "results/CICIoT2023/rnep/fedsad_history.png",
+      "results/CICIoT2023/rnep/fedsad_roc.png",
+      "results/CICIoT2023/rnep/fedsad_server.txt",
+      "results/CICIoT2023/rnep/fedsad_weights.h5",
+      "results/CICIoT2023/rnep/model_config.json",
+      "results/CICIoT2023/taae/eval_new_1103/CICIoT2023_cm.png",
+      "results/CICIoT2023/taae/eval_new_1103/CICIoT2023_distribution.png",
+      "results/CICIoT2023/taae/eval_new_1103/CICIoT2023_distribution_overview.png",
+      "results/CICIoT2023/taae/eval_new_1103/CICIoT2023_metrics.json",
+      "results/CICIoT2023/taae/eval_new_1103/CICIoT2023_predictions.csv",
+      "results/CICIoT2023/taae/eval_new_1103/CICIoT2023_report.txt",
+      "results/CICIoT2023/taae/eval_new_1103/CICIoT2023_roc.png",
+      "results/CICIoT2023/taae/eval_new_1103/CICIoT2023_roc_data.csv",
+      "results/CICIoT2023/taae/eval_new_1103/CICIoT2023_summary.csv",
+      "results/CICIoT2023/taae/eval_new_1103/verification.json",
+      "results/CICIoT2023/taae/fedsad_history",
+      "results/CICIoT2023/taae/fedsad_server.txt",
+      "results/CICIoT2023/taae/fedsad_weights.h5",
+      "results/CICIoT2023/taae/model_config.json",
+      "results/Gotham/rnep/Gotham_cm.png",
+      "results/Gotham/rnep/Gotham_distribution.png",
+      "results/Gotham/rnep/Gotham_metrics.json",
+      "results/Gotham/rnep/Gotham_predictions.csv",
+      "results/Gotham/rnep/Gotham_report.txt",
+      "results/Gotham/rnep/Gotham_roc.png",
+      "results/Gotham/rnep/Gotham_roc_data.csv",
+      "results/Gotham/rnep/Gotham_summary.csv",
+      "results/Gotham/rnep/model_config.json",
+      "results/Gotham/rnep/percentile_summary.json",
+      "results/Gotham/rnep/preprocessing.joblib",
+      "results/Gotham/rnep/preprocessing_report.json",
+      "results/Gotham/rnep/rnep_frame_gotham_weights.h5",
+      "results/Gotham/rnep/rnep_history.csv",
+      "results/Gotham/rnep/rnep_history.png",
+      "results/Gotham/rnep/rnep_server.txt",
+      "results/Gotham/rnep/scores.npz",
+      "results/Gotham/rnep/selected_threshold.json",
+      "results/Gotham/rnep/verification.json",
+      "results/ITU_SDN_ULAK/rnep/distribution.png",
+      "results/ITU_SDN_ULAK/rnep/distribution_overview.png",
+      "results/ITU_SDN_ULAK/rnep/fedsad_weights.h5",
+      "results/ITU_SDN_ULAK/rnep/final_report.txt",
+      "results/ITU_SDN_ULAK/rnep/history.png",
+      "results/ITU_SDN_ULAK/rnep/metrics.json",
+      "results/ITU_SDN_ULAK/rnep/model_config.json",
+      "results/ITU_SDN_ULAK/rnep/per_attack.csv",
+      "results/ITU_SDN_ULAK/rnep/predictions.csv",
+      "results/ITU_SDN_ULAK/rnep/preprocessing.joblib",
+      "results/ITU_SDN_ULAK/rnep/preprocessing_report.json",
+      "results/ITU_SDN_ULAK/rnep/roc.png",
+      "results/ITU_SDN_ULAK/rnep/server_report.txt",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/baseline_report.txt",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/best_accuracy_report.txt",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/best_macro_f1_normal_recall80_report.txt",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/best_macro_f1_report.txt",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/best_minimum_class_recall_report.txt",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/candidate_comparison.csv",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/per_attack_comparison.csv",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/percentile_metrics.csv",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/percentile_tradeoffs.png",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/recommended_normal_recall80_report.txt",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/recommended_predictions.csv",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/score_checkpoint_verification.json",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/summary.json",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/threshold_config.json",
+      "results/ITU_SDN_ULAK/rnep/threshold_analysis/verification.json",
+      "results/ITU_SDN_ULAK/rnep/verification.json"
+    ],
+    "note": "This earlier inventory predates the refactor. Absent entries are recorded without attributing their removal or restoring them; the original repository remains separate."
+  },
+  "kdd99_experiment": {
+    "output": "outputs/kdd99/taae/kdd99_taae_epoch30",
+    "model": "taae",
+    "variant": "previous",
+    "epochs": 30,
+    "clients": 15,
+    "rounds": 10,
+    "status": {
+      "stage": "complete",
+      "finished_at": "2026-11-16T14:11:31.926584+09:00",
+      "clients": 15,
+      "rounds": 10,
+      "epochs": 30,
+      "accuracy": 0.9453573171214179
+    },
+    "verification": {
+      "checked_at": "2026-11-16T14:11:50.293354+09:00",
+      "rounds_completed": 10,
+      "successful_client_fits": 150,
+      "epochs_per_client_per_round": 30,
+      "training_rows": 38406,
+      "test_rows": 151658,
+      "test_normal": 38406,
+      "test_attack": 113252,
+      "train_test_row_overlap": false,
+      "evaluation_cache_hash_matches": true,
+      "source_snapshot_hashes_match": true,
+      "weight_datasets_finite": true,
+      "png_files_verified": [
+        "confusion_matrix.png",
+        "per_attack_recall.png",
+        "reconstruction_error.png",
+        "roc.png",
+        "round_metrics.png"
+      ],
+      "confusion_matrix": [
+        [
+          31416,
+          6990
+        ],
+        [
+          1297,
+          111955
+        ]
+      ],
+      "roc_auc": 0.9958464958942692,
+      "classification_report": {
+        "Normal": {
+          "precision": 0.9603521535780882,
+          "recall": 0.8179971879393845,
+          "f1-score": 0.8834769892715026,
+          "support": 38406.0
+        },
+        "Anomaly": {
+          "precision": 0.9412333431417882,
+          "recall": 0.9885476636174195,
+          "f1-score": 0.9643104777408839,
+          "support": 113252.0
+        },
+        "accuracy": 0.9453573171214179,
+        "macro avg": {
+          "precision": 0.9507927483599382,
+          "recall": 0.9032724257784019,
+          "f1-score": 0.9238937335061932,
+          "support": 151658.0
+        },
+        "weighted avg": {
+          "precision": 0.9460750068431197,
+          "recall": 0.9453573171214179,
+          "f1-score": 0.9438401368544481,
+          "support": 151658.0
+        }
+      }
+    }
+  }
+}

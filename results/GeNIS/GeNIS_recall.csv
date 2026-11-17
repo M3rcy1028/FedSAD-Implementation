@@ -1,0 +1,11 @@
+Attack_Type,CNN-LSTM,AE-LSTM,TAAE (Ours),Support
+bruteforce-ftp,1.0,1.0,1.0,484
+bruteforce-smb,1.0,1.0,1.0,484
+bruteforce-ssh,1.0,1.0,1.0,485
+dos-hulk,1.0,1.0,1.0,485
+dos-icmp,1.0,1.0,1.0,485
+dos-pushack,1.0,1.0,1.0,485
+dos-slowloris,1.0,1.0,1.0,485
+dos-udp,1.0,1.0,1.0,485
+recon-dns,0.0,0.0,0.0,10
+recon-nmap,0.9979381443298969,0.9979381443298969,1.0,485

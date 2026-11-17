@@ -1,0 +1,44 @@
+{
+  "dataset": "GeNIS",
+  "percentile": 97.81,
+  "threshold": 0.004202971753571179,
+  "score_kind": "reconstruction_error",
+  "roc_auc": 0.990053510594422,
+  "classification_report": {
+    "Normal": {
+      "precision": 0.9976308931532812,
+      "recall": 0.962954493482735,
+      "f1-score": 0.9799860367698394,
+      "support": 4373.0
+    },
+    "Anomaly": {
+      "precision": 0.9641988950276243,
+      "recall": 0.9977132403384404,
+      "f1-score": 0.9806698134412227,
+      "support": 4373.0
+    },
+    "accuracy": 0.9803338669105877,
+    "macro avg": {
+      "precision": 0.9809148940904528,
+      "recall": 0.9803338669105877,
+      "f1-score": 0.980327925105531,
+      "support": 8746.0
+    },
+    "weighted avg": {
+      "precision": 0.9809148940904528,
+      "recall": 0.9803338669105877,
+      "f1-score": 0.980327925105531,
+      "support": 8746.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      4211,
+      162
+    ],
+    [
+      10,
+      4363
+    ]
+  ]
+}

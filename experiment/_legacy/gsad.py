@@ -1,0 +1,229 @@
+import pandas as pd
+import os
+import networkx as nx
+import numpy as np
+import pickle
+from itertools import combinations
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+from tqdm import tqdm
+from utils.arguments import get_gsad_args
+from utils.metrics import save_report, plt_confusion_matrix
+from utils.get_datasets import normal_split_indices
+
+# ===============================
+#   GSAD-based Feature Extraction
+# ===============================
+def create_gsad_from_window(df_window):
+    if df_window.empty:
+        return None
+
+    nodes = df_window['Dst Port'].unique()
+    G = nx.Graph()
+    G.add_nodes_from(nodes)
+
+    if len(nodes) > 1:
+        for node_pair in combinations(nodes, 2):
+            G.add_edge(*node_pair)
+
+    return G
+
+
+def extract_gsad_features(G):
+    if G is None or G.number_of_nodes() == 0:
+        return {'num_nodes': 0, 'num_edges': 0, 'density': 0, 'avg_degree': 0}
+
+    density = nx.density(G)
+    degrees = [val for (_, val) in G.degree()]
+    avg_degree = np.mean(degrees) if len(degrees) else 0
+
+    return {
+        'num_nodes': G.number_of_nodes(),
+        'num_edges': G.number_of_edges(),
+        'density': density,
+        'avg_degree': avg_degree
+    }
+
+
+# ===============================
+#   Statistics Computation
+# ===============================
+def compute_stats_from_df(df, time_window):
+    if df.empty:
+        empty = pd.Series({'num_nodes': 0, 'num_edges': 0,
+                           'density': 0, 'avg_degree': 0}, dtype=float)
+        return {"count": 0, "mean": empty, "var": empty}
+
+    df = df.copy()
+
+    if "Timestamp" not in df.columns:
+        raise KeyError("❌ 'Timestamp' column is required.")
+
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], dayfirst=True, errors="coerce")
+    df.set_index("Timestamp", inplace=True)
+    df.sort_index(inplace=True)
+
+    features = []
+
+    for _, df_window in df.groupby(pd.Grouper(freq=time_window)):
+        G = create_gsad_from_window(df_window)
+        if G:
+            features.append(extract_gsad_features(G))
+
+    if not features:
+        empty = pd.Series({'num_nodes': 0, 'num_edges': 0,
+                           'density': 0, 'avg_degree': 0}, dtype=float)
+        return {"count": 0, "mean": empty, "var": empty}
+
+    df_feat = pd.DataFrame(features)
+
+    return {
+        "count": len(df_feat),
+        "mean": df_feat.mean(numeric_only=True),
+        "var": df_feat.var(numeric_only=True, ddof=0)
+    }
+
+
+# ===============================
+#   Training
+# ===============================
+def train_single_model(args, normal_file,savefile_path):
+    if not os.path.exists(normal_file):
+        raise FileNotFoundError(f"❌ {normal_file} not found")
+
+    df_normal = pd.read_csv(normal_file)
+    train_idx, _ = normal_split_indices(df_normal)
+    df_train = df_normal.iloc[train_idx].copy()
+
+    stats = compute_stats_from_df(df_train, args.time_window)
+
+    mean = stats["mean"]
+    std = np.sqrt(stats["var"].clip(lower=0))
+
+    normal_stats = pd.DataFrame([mean, std], index=["mean", "std"])
+    normal_stats = normal_stats[["num_nodes", "num_edges", "density", "avg_degree"]]
+
+
+    with open(savefile_path, "wb") as f:
+        pickle.dump(normal_stats, f)
+
+    print("\n=== Train ===")
+    print(f"Saved to: {savefile_path}")
+    print(normal_stats)
+
+    return normal_stats
+
+
+# ===============================
+#   Evaluation
+# ===============================
+def run_anomaly_detection(args, normal_file, anomaly_files, model_path):
+
+    with open(model_path, "rb") as f:
+        normal_stats = pickle.load(f)
+
+    df_normal = pd.read_csv(normal_file)
+    _, test_idx = normal_split_indices(df_normal)
+    df_test = df_normal.iloc[test_idx].copy()
+
+    df_test["Timestamp"] = pd.to_datetime(df_test["Timestamp"], dayfirst=True, errors="coerce")
+    df_test.set_index("Timestamp", inplace=True)
+    df_test.sort_index(inplace=True)
+
+    y_true, y_pred = [], []
+
+    def check(feat):
+        for name, val in feat.items():
+            if name not in normal_stats.columns:
+                continue
+
+            mean = float(normal_stats.loc["mean", name])
+            std = float(normal_stats.loc["std", name])
+
+            lower = mean - args.threshold_std * std
+            upper = mean + args.threshold_std * std
+
+            if not (lower <= val <= upper):
+                return 1
+        return 0
+
+    # normal
+    for _, df_window in tqdm(df_test.groupby(pd.Grouper(freq=args.time_window))):
+        G = create_gsad_from_window(df_window)
+        if not G:
+            continue
+        y_pred.append(check(extract_gsad_features(G)))
+        y_true.append(0)
+
+    # anomaly
+    df_anomaly = pd.concat([pd.read_csv(f) for f in anomaly_files], ignore_index=True)
+
+    df_anomaly["Timestamp"] = pd.to_datetime(df_anomaly["Timestamp"], dayfirst=True, errors="coerce")
+    df_anomaly.set_index("Timestamp", inplace=True)
+    df_anomaly.sort_index(inplace=True)
+
+    for _, df_window in tqdm(df_anomaly.groupby(pd.Grouper(freq=args.time_window))):
+        G = create_gsad_from_window(df_window)
+        if not G:
+            continue
+        y_pred.append(check(extract_gsad_features(G)))
+        y_true.append(1)
+
+    return y_true, y_pred
+
+
+# ===============================
+#   Main
+# ===============================
+if __name__ == "__main__":
+
+    args = get_gsad_args()
+
+    os.makedirs(args.result_path,exist_ok=True)
+    model_path=os.path.join(args.result_path, "normal_stats.pkl")
+    report_path=os.path.join(args.result_path,"gsad_server.txt")
+    matrix_path=os.path.join(args.result_path,"gsad_cm.png")
+
+    dataset_file_configs = {
+    "cic": {
+        "normal_file": "CIC_ae_normal.csv",
+        "anomaly_prefix": "CIC_anomaly_ae_"
+    },
+        "unsw": {
+            "normal_file": "UNSW_NB15_normal.csv",
+            "anomaly_prefix": "UNSW_NB15_anomaly_"
+        },
+        "ciciot": {
+            "normal_file": "CICIoT_ae_normal.csv",
+            "anomaly_prefix": "CICIoT_anomaly_ae_"
+        },
+        "genis": {
+            "normal_file": "GeNIS_ae_normal.csv",
+            "anomaly_prefix": "GeNIS_anomaly_ae_"
+        },
+        "genis_frame": {
+            "normal_file": "GeNIS_frame_normal.csv",
+            "anomaly_prefix": "GeNIS_frame_anomaly_"
+
+        }
+    }
+
+    file_config = dataset_file_configs.get(args.eval_dataset.lower())
+    if not file_config:
+        print(f"[ERROR] Dataset '{args.eval_dataset}' is not supported.")
+        exit(1)
+
+    normal_file = args.normal_file or os.path.join(args.ae_data_dir, file_config["normal_file"])
+
+    anomaly_files = [
+        os.path.join(args.ae_data_dir, f)
+        for f in os.listdir(args.ae_data_dir)
+        if f.startswith(file_config["anomaly_prefix"]) and f.endswith(".csv")
+    ]
+
+    train_single_model(args, normal_file,model_path)
+    y_true,y_pred=run_anomaly_detection(args, normal_file, anomaly_files, model_path)
+
+    
+    save_report(y_true,y_pred,report_path)
+    plt_confusion_matrix(y_true,y_pred,matrix_path)
