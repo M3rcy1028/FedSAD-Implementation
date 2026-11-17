@@ -27,4 +27,3 @@ The [full comparison CSV](client_comparison.csv) contains both the validation-se
 - **The conclusion is specific to this protocol.** These are single-seed measurements with a shared shuffled-row partitioning recipe. They support 15 clients as a reference setting for this GeNIS experiment, but do not establish a universally optimal client count or a statistically significant advantage. Repeated seeds and non-IID client partitions would be needed to assess how reliably the ordering generalizes.
 
 Per-client artifacts, confusion matrices and completion checks are under `results/clients/clients_<N>/`; see the [study README](README.md) for the directory contents.
-
