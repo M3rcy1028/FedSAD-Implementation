@@ -11,7 +11,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from taae import get_datasets_zenodo
+from models.taae_current import get_datasets_zenodo
 
 
 class ZenodoLoaderTests(unittest.TestCase):

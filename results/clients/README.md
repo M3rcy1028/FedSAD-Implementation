@@ -57,12 +57,12 @@ cat results/clients/status.json
 cat results/clients/final_comparison_table.md
 ```
 
-백그라운드 실행을 관리하는 코드는 `experiment/_legacy/scripts/run_genis_client_sweep.py`다.
+백그라운드 실행을 관리하는 코드는 `experiment/core/scripts/run_genis_client_sweep.py`다.
 실험이 실행 중일 때 중복으로 시작하면 파일 잠금으로 거부한다.
 추가 실험용 `genis_clients_10` 세션은 `--wait-lock`으로 기존 작업이 끝나기를 기다린 뒤 10 clients를 실행했다.
 완료된 기존 client 수는 다시 학습하지 않았으며, 10-client 결과도 같은 비교 CSV와 PNG에 합쳤다.
 실행이 종료된 뒤 기존 결과 표·그림만 다시 수집하려면 다음 명령을 사용한다.
 
 ```bash
-python experiment/_legacy/scripts/run_genis_client_sweep.py --collect-only
+python experiment/core/scripts/run_genis_client_sweep.py --collect-only
 ```

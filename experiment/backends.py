@@ -6,11 +6,11 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-LEGACY = ROOT / "experiment/_legacy"
+CORE = ROOT / "experiment/core"
 
 
 def activate():
-    for path in [LEGACY / "models", LEGACY]:
+    for path in [CORE / "models", CORE]:
         if str(path) not in sys.path:
             sys.path.insert(0, str(path))
 

@@ -12,7 +12,7 @@ from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score
 
 DISPLAY = {"kdd99": "KDD99", "nsl-kdd": "NSL-KDD", "insdn": "InSDN",
            "cic2018": "CSE-CIC-IDS2018", "unsw-nb15": "UNSW-NB15",
-           "ciciot2023": "CICIoT2023", "genis": "GeNIS", "gotham": "Gotham", "itu-ulak": "ITU/ULAK"}
+           "genis": "GeNIS", "gotham": "Gotham", "itu-ulak": "ITU/ULAK"}
 
 
 def render(output, frame, config):

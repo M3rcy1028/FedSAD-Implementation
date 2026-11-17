@@ -5,11 +5,11 @@ from pathlib import Path
 import sys
 
 from experiment.artifacts import ROOT
-from experiment.models.registry import MODELS, SUPPORT
+from experiment.registry import MODELS, SUPPORT
 
 ALIASES = {"kdd": "kdd99", "nsl": "nsl-kdd", "cic": "cic2018",
            "cse-cic-ids2018": "cic2018", "unsw": "unsw-nb15", "unsw_nb15": "unsw-nb15",
-           "ciciot": "ciciot2023", "zenodo": "itu-ulak"}
+           "zenodo": "itu-ulak"}
 
 
 def parser():
@@ -36,7 +36,7 @@ def parser():
     p.add_argument("--prepared", type=Path, help="Reuse a frozen GeNIS/Gotham prepared directory")
     p.add_argument("--flow-interval", type=int, choices=[5, 10, 30, 60], default=10)
     p.add_argument("--normal-train-ratio", type=float,
-                   help="Defaults: KDD99/NSL-KDD and InSDN AE-LSTM 0.5; others 0.8 (CICIoT sequence models 0.5)")
+                   help="Defaults: KDD99/NSL-KDD and InSDN AE-LSTM 0.5; others 0.8")
     p.add_argument("--attack-fraction", type=float,
                    help="Sequence training attack ratio; KDD99 legacy defaults: AE 0.05, CNN 0.2")
     p.add_argument("--max-train-samples", type=int, default=150000,
@@ -55,6 +55,12 @@ def parser():
     p.add_argument("--repeats", type=int, default=1, help="Independent runs with seed, seed+1, ...")
     p.add_argument("--k-train", type=int, default=15)
     p.add_argument("--k-test", type=int, default=30)
+    fedsad = p.add_argument_group("FedSAD (--model fedsad)")
+    fedsad.add_argument("--time-window", default="1min", help="Detection window, e.g. 30s, 1min, 2min, 4min")
+    fedsad.add_argument("--threshold-std", type=float,
+                        help="GSAD deviation threshold k (defaults: CIC2018 0.25, UNSW-NB15 5, GeNIS 1)")
+    fedsad.add_argument("--episode-gap", default="5min", help="Gap that starts a new attack episode (time-to-detect)")
+    fedsad.add_argument("--taae-weights", type=Path, help="TAAE weights; defaults to the archived weights in results/")
     return p
 
 
@@ -89,7 +95,7 @@ def main(argv=None):
     config = vars(args).copy()
     # Workers execute from a frozen source directory, so resolve user paths
     # against the invoking shell before starting a subprocess.
-    for key in ["config", "data_root", "data_dir", "prepared", "output_root", "run"]:
+    for key in ["config", "data_root", "data_dir", "prepared", "output_root", "run", "taae_weights"]:
         if config.get(key) is not None:
             config[key] = Path(config[key]).expanduser().resolve()
     if config.get("runs"):
@@ -106,10 +112,17 @@ def main(argv=None):
     config["dropout"] = args.dropout if args.dropout is not None else {"aelstm": .001, "mvids": .3}.get(config["model"], defaults["dropout"])
     if config["model"] == "cnnlstm" and args.dropout is not None:
         p.error("CNN-LSTM preserves its source architecture's dropout rates (0.25/0.5)")
-    if config["model"] in {"mvids", "mmfewshotsids"}:
+    if config["model"] in {"mvids", "mmfewshotsids", "fedsad"}:
         if {"clients", "rounds"} & provided:
-            p.error("--clients/--rounds are FL options; graph models use --epochs and --repeats")
+            p.error("--clients/--rounds are FL options; train TAAE with --model taae, graph models use --epochs")
         config.update(clients=[1], rounds=1)
+    if config["model"] == "fedsad":
+        if args.mode in {"evaluate", "plot"}:
+            p.error("FedSAD is evaluated while it runs; use --mode train (or compare)")
+        if config["threshold_std"] is None:
+            config["threshold_std"] = {"cic2018": .25, "unsw-nb15": 5.0, "genis": 1.0}.get(config["dataset"])
+        if config["threshold_std"] is not None and config["threshold_std"] <= 0:
+            p.error("--threshold-std must be positive")
     if config["dataset"] not in SUPPORT[config["model"]] and args.mode == "train":
         p.error(f"{config['model']} supports: {', '.join(SUPPORT[config['model']])}")
     if args.latent_dim is not None and config["model"] not in {"taae", "aelstm"}:
@@ -125,7 +138,7 @@ def main(argv=None):
     if args.attack_fraction is not None and not 0 <= args.attack_fraction < 1:
         p.error("--attack-fraction must be in [0,1)")
     defaults = json.loads((ROOT / "configs/defaults.json").read_text())
-    config["lr"] = args.lr if args.lr is not None else defaults["learning_rates"][config["model"]]
+    config["lr"] = args.lr if args.lr is not None else defaults["learning_rates"].get(config["model"], defaults["learning_rates"]["taae"])
     config["latent_dim"] = (args.latent_dim if args.latent_dim is not None else
                             (32 if config["model"] == "taae" and args.variant == "current" else 64))
     if config["lr"] <= 0 or config["latent_dim"] < 1 or args.gpu_per_client < 0:

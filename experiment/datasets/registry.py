@@ -51,7 +51,7 @@ def store(config, bundle, pipeline, report):
 def prepare_itu(config):
     from experiment.backends import load
     folder = Path(config["data_dir"]) if config.get("data_dir") else Path(config["data_root"]) / "ITU_SDN_ULAK/raw"
-    train, test, y_test, metadata = load("taae").get_datasets_zenodo(
+    train, test, y_test, metadata = load("models.taae_current").get_datasets_zenodo(
         folder, random_seed=config["seed"], max_train_samples=config["max_train_samples"],
         balance_test=True, return_metadata=True)
     ids = metadata["test_source_rows"]
