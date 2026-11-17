@@ -1,6 +1,6 @@
 """Train/test MV-IDS and MM-FewShot-IDS on GeNIS with the same test flows as FedSAD.
 
-Data: scripts/build_genis_baseline.py
+Data: python scripts/preprocess_genis.py baseline
   split=train : training pool (normal train rows + validation normal/attack rows)
   split=test  : FedSAD test rows (normal 4373 + attack 4373)
 

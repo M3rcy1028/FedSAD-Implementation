@@ -353,7 +353,7 @@ if __name__ == "__main__":
             "normal_file": "GeNIS_ae_normal.csv",
             "anomaly_prefix": "GeNIS_anomaly_ae_"
         },
-        # GeNIS with the RNEP "frame" model (99-d prepared vectors, scripts/build_genis_frame.py)
+        # GeNIS with the RNEP "frame" model (99-d prepared vectors, scripts/preprocess_genis.py frame)
         "genis_frame": {
             "taae_dir": "/data/SDP_Dataset/GeNIS/processed/genis_frame_rnep",
             "gsad_dir": "/data/SDP_Dataset/GeNIS/processed/genis_frame_graph",
