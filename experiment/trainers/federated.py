@@ -31,7 +31,7 @@ def train(config, bundle):
     chunks = np.array_split(train_x, config["clients"])
     labels = np.array_split(train_y, config["clients"])
     if config["model"] == "taae":
-        backend = load("taae_previous" if config["variant"] == "previous" else "taae")
+        backend = load("taae_previous" if config["variant"] == "previous" else "taae_current")
         base_strategy = backend.SaveEvaluationRNEP
     else:
         base_strategy = fl.server.strategy.FedAvg

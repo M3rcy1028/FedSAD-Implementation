@@ -39,7 +39,7 @@ def collect(root):
     failed = [count for count, state in states.items() if state["stage"] == "failed"]
     if failed:
         return {"stage": "failed", "clients": failed,
-                "message": f"GeNIS client 비교 실험 중 {failed} clients 실험이 실패해 최종 비교표를 아직 완성할 수 없어. 상태 파일: {root}"}
+                "message": f"GeNIS client comparison: runs for {failed} clients failed, so the final table is incomplete. Status files: {root}"}
     completed = [count for count, state in states.items() if state["stage"] == "complete"]
     if len(completed) != len(COUNTS):
         return {"stage": "waiting", "completed_clients": completed}
@@ -64,10 +64,10 @@ def collect(root):
                                    ("attack_f1", "f1-score")]:
             assert abs(float(row[source_key]) - report["Anomaly"][metric]) < 1e-12
     rows.sort(key=lambda row: int(row["clients"]))
-    message = ("GeNIS의 **5·10·15·20·25·30 clients 실험이 모두 완료됐어.**\n\n"
+    message = ("GeNIS **5/10/15/20/25/30-client runs are complete.**\n\n"
                + render(rows) + "\n\n"
-               "모두 로컬 70 epochs·서버 10 rounds·seed 123, 같은 테스트 8,746개(정상·공격 각 4,373개) 기준이야. "
-               "임계값은 검증 macro F1으로 선택했고, Precision·Recall·F1-score는 공격(Anomaly) 클래스 기준이야.")
+               "All runs use 70 local epochs, 10 server rounds, seed 123 and the same 8,746 test flows (4,373 normal / 4,373 attack). "
+               "Thresholds are selected by validation macro F1; precision, recall and F1-score are for the attack (Anomaly) class.")
     markdown = root / "final_comparison_table.md"
     table = root / "final_comparison_table.csv"
     stream = io.StringIO()

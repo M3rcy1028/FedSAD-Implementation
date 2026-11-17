@@ -37,7 +37,7 @@ def choose_threshold(config, train_errors, val_scores, y_val):
         raise ValueError("Validation threshold selection needs independent validation with both classes")
     if policy == "validation" or (policy == "auto" and independent):
         from experiment.backends import load
-        sweep = load("scripts.sweep_rnep_percentiles")
+        sweep = load("utils.threshold_search")
         rows = sweep.threshold_metrics(train_errors, val_scores, y_val,
                                        np.round(np.linspace(0, 100, 10001), 2))
         best = sweep.best_row(rows, "macro_f1")
