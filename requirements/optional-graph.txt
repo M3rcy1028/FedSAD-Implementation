@@ -1,0 +1,3 @@
+# Additional dependencies for MM-FewShot-IDS and MV-IDS.
+# Select a PyTorch wheel compatible with your CUDA environment.
+torch

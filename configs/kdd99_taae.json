@@ -1,0 +1,14 @@
+{
+  "model": "taae",
+  "dataset": "kdd99",
+  "variant": "previous",
+  "epochs": 30,
+  "clients": [
+    15
+  ],
+  "rounds": 10,
+  "batch_size": 16,
+  "seed": 123,
+  "percentile": 82,
+  "threshold_policy": "fixed"
+}

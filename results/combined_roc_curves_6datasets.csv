@@ -1,0 +1,7 @@
+dataset,auc,samples,normal,anomaly,source
+InSDN,0.9865750267122307,289150,13685,275465,/home/tako/naryun/etri_sdp_revision/FedSAD-Implementation-clean/results/InSDN/InSDN_roc_data.csv
+KDD99,0.9965319202080625,128615,15363,113252,/home/tako/naryun/etri_sdp_revision/FedSAD-Implementation-clean/results/KDD99/KDD99_roc_data.csv
+UNSW-NB15,0.9872003645941219,491598,391955,99643,/home/tako/naryun/etri_sdp_revision/FedSAD-Implementation-clean/results/UNSW_NB15/UNSW_NB15_roc_data.csv
+CSE-CIC-IDS2018,0.9217278243125,240000,40000,200000,/home/tako/naryun/etri_sdp_revision/FedSAD-Implementation-clean/results/CSE-CIC-IDS2018/CSE-CIC-IDS2018_roc_data.csv
+NSL-KDD,0.9854743824759902,72416,12289,60127,/home/tako/naryun/etri_sdp_revision/FedSAD-Implementation-clean/results/NSL-KDD/NSL-KDD_roc_data.csv
+GeNIS,0.9904201346965761,8746,4373,4373,/home/tako/naryun/etri_sdp_revision/FedSAD-Implementation-clean/results/GeNIS/taae/GeNIS_roc_data.csv

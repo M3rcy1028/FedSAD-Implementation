@@ -1,0 +1,10 @@
+{
+  "model": "aelstm",
+  "dataset": "genis",
+  "epochs": 30,
+  "clients": [
+    15
+  ],
+  "rounds": 10,
+  "seed": 123
+}

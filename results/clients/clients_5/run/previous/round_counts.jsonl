@@ -1,0 +1,10 @@
+{"round": 1, "fits": 5, "failures": 0, "epochs_per_client": 70, "pairs": [[1, 4], [3, 0], [2]]}
+{"round": 2, "fits": 5, "failures": 0, "epochs_per_client": 70, "pairs": [[0, 3], [2, 4], [1]]}
+{"round": 3, "fits": 5, "failures": 0, "epochs_per_client": 70, "pairs": [[3, 1], [2, 0], [4]]}
+{"round": 4, "fits": 5, "failures": 0, "epochs_per_client": 70, "pairs": [[1, 2], [3, 4], [0]]}
+{"round": 5, "fits": 5, "failures": 0, "epochs_per_client": 70, "pairs": [[0, 4], [2, 3], [1]]}
+{"round": 6, "fits": 5, "failures": 0, "epochs_per_client": 70, "pairs": [[3, 1], [0, 2], [4]]}
+{"round": 7, "fits": 5, "failures": 0, "epochs_per_client": 70, "pairs": [[0, 2], [1, 3], [4]]}
+{"round": 8, "fits": 5, "failures": 0, "epochs_per_client": 70, "pairs": [[1, 0], [3, 4], [2]]}
+{"round": 9, "fits": 5, "failures": 0, "epochs_per_client": 70, "pairs": [[2, 0], [4, 1], [3]]}
+{"round": 10, "fits": 5, "failures": 0, "epochs_per_client": 70, "pairs": [[0, 4], [1, 2], [3]]}

@@ -1,0 +1,12 @@
+{
+  "model": "taae",
+  "dataset": "genis",
+  "variant": "previous",
+  "epochs": 30,
+  "clients": [
+    15
+  ],
+  "rounds": 10,
+  "seed": 123,
+  "threshold_policy": "auto"
+}

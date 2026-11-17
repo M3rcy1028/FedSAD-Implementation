@@ -1,0 +1,10 @@
+Attack_Type,CNN-LSTM,AE-LSTM,TAAE (Ours)
+analysis,0.98626,0.8484,0.99863
+backdoor,0.99042,0.8578,0.99294
+dos,0.98217,0.9006,0.99347
+exploits,0.99159,0.9355,0.99696
+fuzzers,0.82776,0.3757,0.99936
+generic,0.76129,0.3114,0.99945
+reconnaissance,0.97148,0.9196,0.99895
+shellcode,0.99735,0.9682,1.0
+worms,1.0,0.9825,1.0

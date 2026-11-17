@@ -1,0 +1,27 @@
+{
+  "clients": 30,
+  "round": 8,
+  "evaluation_set": "validation",
+  "threshold_policy": "fixed_training_percentile",
+  "percentile": 82.0,
+  "accuracy": 0.9062909567496723,
+  "macro_f1": 0.905493237919,
+  "normal_precision": 0.9977520873474631,
+  "normal_recall": 0.8144167758846658,
+  "normal_f1": 0.8968105065666041,
+  "attack_precision": 0.8432240921169176,
+  "attack_recall": 0.998165137614679,
+  "attack_f1": 0.914175969271396,
+  "roc_auc": 0.991066580322896,
+  "threshold": 0.0013795386068522922,
+  "confusion_matrix": [
+    [
+      3107,
+      708
+    ],
+    [
+      7,
+      3808
+    ]
+  ]
+}

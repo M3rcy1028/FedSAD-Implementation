@@ -1,0 +1,139 @@
+{
+  "moves": [
+    {
+      "from": "results/TAAE_ROC/CSE-CIC-IDS2018_roc_data.csv",
+      "to": "results/CSE-CIC-IDS2018/CSE-CIC-IDS2018_roc_data.csv",
+      "sha256_before": "4dd8cd858ca62f3d20b8d596ccb90d3b3017b83a4cac5cc05d66f4dde0b00fc0",
+      "sha256_after": "4dd8cd858ca62f3d20b8d596ccb90d3b3017b83a4cac5cc05d66f4dde0b00fc0"
+    },
+    {
+      "from": "results/TAAE_ROC/InSDN_roc_data.csv",
+      "to": "results/InSDN/InSDN_roc_data.csv",
+      "sha256_before": "34538df6f4d2639685198468e451e60efd6bfb37d1fa07a62a0045a123efbd6a",
+      "sha256_after": "34538df6f4d2639685198468e451e60efd6bfb37d1fa07a62a0045a123efbd6a"
+    },
+    {
+      "from": "results/TAAE_ROC/KDD99_roc_data.csv",
+      "to": "results/KDD99/KDD99_roc_data.csv",
+      "sha256_before": "b21bc7f79437f00be47bd9cd13c58b44e0ef697f5c06512b22353e015c3461ce",
+      "sha256_after": "b21bc7f79437f00be47bd9cd13c58b44e0ef697f5c06512b22353e015c3461ce"
+    },
+    {
+      "from": "results/TAAE_ROC/NSL-KDD_roc_data.csv",
+      "to": "results/NSL-KDD/NSL-KDD_roc_data.csv",
+      "sha256_before": "40140ad70411e758f1c2c41a926f156683102c8055d0b50cf60c9a1240f387fa",
+      "sha256_after": "40140ad70411e758f1c2c41a926f156683102c8055d0b50cf60c9a1240f387fa"
+    },
+    {
+      "from": "results/TAAE_ROC/UNSW_NB15_roc_data.csv",
+      "to": "results/UNSW_NB15/UNSW_NB15_roc_data.csv",
+      "sha256_before": "cb507ce44fdefb8975ff01754fbf56338da68b5f16a7aa816760bb5b60501062",
+      "sha256_after": "cb507ce44fdefb8975ff01754fbf56338da68b5f16a7aa816760bb5b60501062"
+    },
+    {
+      "from": "results/TAAE_ROC/combined_roc_curves.png",
+      "to": "results/combined_roc_curves.png",
+      "sha256_before": "734621cfb0b7e898a32e29444b601d265c75d3f5fc2c95f78596c3cf88df210a",
+      "sha256_after": "734621cfb0b7e898a32e29444b601d265c75d3f5fc2c95f78596c3cf88df210a"
+    },
+    {
+      "from": "results/TAAE_ROC/combined_roc_curves_6datasets.csv",
+      "to": "results/combined_roc_curves_6datasets.csv",
+      "sha256_before": "f4ff29e7434d7138b21d4d7a9779ff22041bb7c675af1cc465b41bd6ce0cc24a",
+      "sha256_after": "b46bceabe50d598b9d0dcf237778abad55c597e4a5c0110f7740a8c3044c7665"
+    },
+    {
+      "from": "results/TAAE_ROC/combined_roc_curves_6datasets.png",
+      "to": "results/combined_roc_curves_6datasets.png",
+      "sha256_before": "3beaeb32ef15258f59582c90e5c70ca83bded545b326106b350d3ed0f9604f12",
+      "sha256_after": "3beaeb32ef15258f59582c90e5c70ca83bded545b326106b350d3ed0f9604f12"
+    },
+    {
+      "from": "results/recall_bar/CSE-CIC-IDS2018_recall.csv",
+      "to": "results/CSE-CIC-IDS2018/CSE-CIC-IDS2018_recall.csv",
+      "sha256_before": "06d6889aac741141fbf6a3b84fe3c931377093aaf09d92bc1cb24856a8a070ec",
+      "sha256_after": "06d6889aac741141fbf6a3b84fe3c931377093aaf09d92bc1cb24856a8a070ec"
+    },
+    {
+      "from": "results/recall_bar/CSE-CIC-IDS2018_recall.png",
+      "to": "results/CSE-CIC-IDS2018/CSE-CIC-IDS2018_recall.png",
+      "sha256_before": "459b6f7df94deae81ec2d5e081efd8c65713c6775c836a09ce3fef694478c776",
+      "sha256_after": "459b6f7df94deae81ec2d5e081efd8c65713c6775c836a09ce3fef694478c776"
+    },
+    {
+      "from": "results/recall_bar/InSDN_recall.csv",
+      "to": "results/InSDN/InSDN_recall.csv",
+      "sha256_before": "72c92706c820e1f7706cfc98c71652f8c7ff539bf80c03b4a464afa444cff6cf",
+      "sha256_after": "72c92706c820e1f7706cfc98c71652f8c7ff539bf80c03b4a464afa444cff6cf"
+    },
+    {
+      "from": "results/recall_bar/InSDN_recall.png",
+      "to": "results/InSDN/InSDN_recall.png",
+      "sha256_before": "8e070c6df31276ac574a7d12fa161277af2a5979a30d74bb35c6e0a8ac63561e",
+      "sha256_after": "8e070c6df31276ac574a7d12fa161277af2a5979a30d74bb35c6e0a8ac63561e"
+    },
+    {
+      "from": "results/recall_bar/KDD99_recall.csv",
+      "to": "results/KDD99/KDD99_recall.csv",
+      "sha256_before": "1c43a96d6bbf016695f1dfb1cc39d12a2098abf71c8645de1407e804f55d7146",
+      "sha256_after": "1c43a96d6bbf016695f1dfb1cc39d12a2098abf71c8645de1407e804f55d7146"
+    },
+    {
+      "from": "results/recall_bar/KDD99_recall.png",
+      "to": "results/KDD99/KDD99_recall.png",
+      "sha256_before": "a64cc9646ddbd6540038bb6722caeed2fbc83dcdc6542f258a89643543edc211",
+      "sha256_after": "a64cc9646ddbd6540038bb6722caeed2fbc83dcdc6542f258a89643543edc211"
+    },
+    {
+      "from": "results/recall_bar/UNSW-NB15_recall.csv",
+      "to": "results/UNSW_NB15/UNSW-NB15_recall.csv",
+      "sha256_before": "29682b78f09d8c224db86f33e9c0d9023fb8ae872f2379e015308319e521ce3e",
+      "sha256_after": "29682b78f09d8c224db86f33e9c0d9023fb8ae872f2379e015308319e521ce3e"
+    },
+    {
+      "from": "results/recall_bar/UNSW-NB15_recall.png",
+      "to": "results/UNSW_NB15/UNSW-NB15_recall.png",
+      "sha256_before": "2c23aef9fa1a502f2ff4d85a5a8088a0b9c36457f51263e5b385ec06bf40080e",
+      "sha256_after": "2c23aef9fa1a502f2ff4d85a5a8088a0b9c36457f51263e5b385ec06bf40080e"
+    },
+    {
+      "from": "results/recall_bar/GeNIS_recall.png",
+      "to": "results/GeNIS/GeNIS_recall.png",
+      "sha256_before": "8a6d29fe071a8802570ddbf208c4684276e4c2c4a8064d5eca9bf8cf0c6326b7",
+      "sha256_after": "8a6d29fe071a8802570ddbf208c4684276e4c2c4a8064d5eca9bf8cf0c6326b7"
+    },
+    {
+      "from": "results/recall_bar/GeNIS_recall.csv",
+      "to": "results/GeNIS/GeNIS_recall.csv",
+      "sha256_before": "e4c520a9ae1064110d44f1e74e2d3b9f7ffcfc3f66548e4e4b55efa82514e48a",
+      "sha256_after": "e4c520a9ae1064110d44f1e74e2d3b9f7ffcfc3f66548e4e4b55efa82514e48a"
+    }
+  ],
+  "source_changes_before": {
+    "experiment/_legacy/scripts/plot_taae_combined_roc.py": "e23fc66a5857123d616b76b4fb5242e3d4749d102d914cbce572b61eab81164c",
+    "experiment/_legacy/scripts/plot_recall_comparison.py": "6679e3e068d595afa88d65f3c3aa7b787f9b10aa0cb22e40da8c0f47090a6297"
+  },
+  "split_thresholds": {
+    "from": "results/TAAE_ROC/threshold.csv",
+    "original_text": "CSE-CIC-IDS2018\n0.00006846865714039350\nUNSW_NB15\n0.00622848722735291817",
+    "sha256_before": "5f96a36e5ffd96c8717df5393b46842bb9cda9e13297e4d95e30ee36f83aac58",
+    "outputs": [
+      "results/CSE-CIC-IDS2018/threshold.csv",
+      "results/UNSW_NB15/threshold.csv"
+    ]
+  },
+  "updated_csv_source_paths": "results/combined_roc_curves_6datasets.csv",
+  "source_changes_after": {
+    "experiment/_legacy/scripts/plot_taae_combined_roc.py": "943b16b7b58f987a486ca8a86941ff48511aaf1101c842650619ad5ce878e880",
+    "experiment/_legacy/scripts/plot_recall_comparison.py": "d49415aa95a5577e9f02e2fe4b132e3465c6002e96934c24a9903e70a9dba7f3"
+  },
+  "checked_at": "2026-11-16T14:17:19.082844+09:00",
+  "verification": {
+    "moved_files": 18,
+    "png_and_score_data_hashes_preserved": true,
+    "threshold_numeric_text_preserved": true,
+    "combined_csv_source_paths_exist": true,
+    "readme_figure_links_exist": true,
+    "obsolete_directories_removed": true
+  }
+}

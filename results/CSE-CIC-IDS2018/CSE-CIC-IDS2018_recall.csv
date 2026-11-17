@@ -1,0 +1,15 @@
+Attack_Type,CNN-LSTM,AE-LSTM,TAAE (Ours)
+DDOS attack-HOIC,0.95287,0.75012,1.0
+DDoS attacks-LOIC-HTTP,0.44537,0.96531,0.4647
+DoS attacks-Hulk,0.97895,0.44334,1.0
+Bot,0.99812,0.99674,1.0
+FTP-BruteForce,1.0,0.99844,1.0
+SSH-Bruteforce,1.0,1.0,1.0
+Infiltration,0.1929,0.49891,0.3568
+DoS attacks-SlowHTTPTest,1.0,0.03674,1.0
+DoS attacks-GoldenEye,0.62116,1.0,1.0
+DoS attacks-Slowloris,0.88963,0.66072,1.0
+DDOS attack-LOIC-UDP,0.98844,0.90419,1.0
+Brute Force -Web,0.02455,0.02081,0.6727
+Brute Force -XSS,0.0,0.00491,0.5
+SQL Injection,0.02299,0.0,0.6092
