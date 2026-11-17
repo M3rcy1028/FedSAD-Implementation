@@ -219,6 +219,18 @@ results/
 
 Some archived file names predate the current naming (for example `taae/fedsad_kdd_weights.h5` and `fedavg/avg_*.h5`); they are kept as recorded.
 
+### FedSAD and GSAD confusion matrices
+
+Confusion matrices of FedSAD and GSAD alone on 1-minute windows (Anomaly is the positive class). FedSAD uses `--threshold-std` 0.25 (CIC2018), 5 (UNSW-NB15) and 1 (GeNIS).
+
+| Dataset | FedSAD (GSAD + TAAE) | GSAD |
+| --- | --- | --- |
+| CSE-CIC-IDS2018 | ![FedSAD CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/fedsad/fedsad_cm.png) | ![GSAD CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/gsad/gsad_cm.png) |
+| UNSW-NB15 | ![FedSAD UNSW-NB15](results/UNSW-NB15/fedsad/fedsad_cm.png) | ![GSAD UNSW-NB15](results/UNSW-NB15/gsad/gsad_cm.png) |
+| GeNIS (RNEP frame data) | ![FedSAD GeNIS](results/GeNIS/frame/fedsad_1min_k1.0/fedsad_cm.png) | ![GSAD GeNIS](results/GeNIS/frame/gsad/gsad_cm.png) |
+
+Per-window metrics, including inference time and detection delay, are in `window_metrics.json` under `results/<dataset>/window_sweep/<window>/` and `results/GeNIS/frame/fedsad_1min_k1.0/`; the window-size study is summarized in `results/window_sweep_summary.csv`.
+
 ### Reconstruction-error distributions
 
 The five panels below present reconstruction-error distributions for KDD99, InSDN, CSE-CIC-IDS2018, UNSW-NB15 and GeNIS. The caption and accompanying analysis are provided here as supplementary material. The figures link to the archived artifacts in `results/`.

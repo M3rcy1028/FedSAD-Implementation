@@ -1,11 +1,19 @@
-import pickle
-import numpy as np
-import pandas as pd
-from tqdm import tqdm
-from gsad import run_anomaly_detection
-from utils.metrics import save_report, plt_confusion_matrix
+"""Evaluate archived GSAD normal statistics (<result_path>/normal_stats.pkl).
+
+Writes gsad_server.txt and gsad_cm.png next to the statistics, so point
+--result_path at a copy when evaluating the archive in results/.
+"""
 import argparse
 import os
+from pathlib import Path
+import sys
+
+CORE = Path(__file__).resolve().parents[1]
+if str(CORE) not in sys.path:
+    sys.path.insert(0, str(CORE))
+
+from gsad import run_anomaly_detection
+from utils.metrics import save_report, plt_confusion_matrix
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
@@ -18,7 +26,8 @@ if __name__=="__main__":
     parser.add_argument("--normal_file", type=str, default=None)
     parser.add_argument("--result_path", type=str, default="results/CSE-CIC-IDS2018/gsad")
     parser.add_argument("--eval_dataset", type=str, default="cic", 
-                        choices=["cic", "unsw"], help="Select dataset: cic or unsw")
+                        choices=["cic", "unsw", "genis", "genis_frame"],
+                        help="Select dataset: cic, unsw, genis or genis_frame")
     args = parser.parse_args()
 
     os.makedirs(args.result_path,exist_ok=True)
@@ -34,6 +43,14 @@ if __name__=="__main__":
         "unsw": {
             "normal_file": "UNSW_NB15_normal.csv",
             "anomaly_prefix": "UNSW_NB15_anomaly_"
+        },
+        "genis": {
+            "normal_file": "GeNIS_ae_normal.csv",
+            "anomaly_prefix": "GeNIS_anomaly_ae_"
+        },
+        "genis_frame": {
+            "normal_file": "GeNIS_frame_normal.csv",
+            "anomaly_prefix": "GeNIS_frame_anomaly_"
         }
     }
 
