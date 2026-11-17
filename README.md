@@ -71,6 +71,8 @@ Archived ROC score tables and recall comparison PNG/CSV files are stored directl
 
 The Git repository includes archived figures, metrics, final weights and client-study completion records. Raw datasets, new `outputs/`, `runtime/`, intermediate checkpoints, local notification state and redundant client-run artifacts stay outside version control. Round checkpoint links are local artifacts; published round results retain their validation metrics.
 
+The merged `main` branch's GeNIS frame-data preparation, graph-baseline and FedSAD window-sweep helpers are retained under `experiment/_legacy/scripts/`. Their archived GeNIS frame results and CIC2018/UNSW window-study artifacts remain under `results/`; new helper runs default to `outputs/`.
+
 ## Models and dataset support
 
 | Model option | Training | Supported datasets |

@@ -6,8 +6,10 @@ import networkx as nx
 import pandas as pd
 from tqdm import tqdm
 import tensorflow as tf
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, FunctionTransformer
 import sys
+import json
+import time as _time
 
 import argparse as _ap
 _pre = _ap.ArgumentParser(add_help=False)
@@ -23,6 +25,14 @@ _pre.add_argument("--client_epochs", type=int, default=30)
 _pre.add_argument("--set_verbose", type=int, default=2)
 _pre.add_argument("--server_rounds", type=int, default=10)
 _pre.add_argument("--threshold_std", type=float, default=0.25) # unsw 5
+# Window-size experiment options (defaults keep the original 1-minute behaviour)
+_pre.add_argument("--time_window", type=str, default="1T",
+                  help="pandas offset alias for the detection window, e.g. 30s, 1min, 2min, 4min")
+_pre.add_argument("--gsad_model", type=str, default=None,
+                  help="Override GSAD normal_stats.pkl (must be built with the same --time_window)")
+_pre.add_argument("--result_path", type=str, default=None, help="Override result directory")
+_pre.add_argument("--episode_gap", type=str, default="5min",
+                  help="Gap between anomaly flows that starts a new attack episode (for time-to-detect)")
 _known, _ = _pre.parse_known_args()
 sys.argv = [sys.argv[0]]
 
@@ -31,18 +41,20 @@ from gsad import create_gsad_from_window, extract_gsad_features
 from utils.get_datasets import sanitize_numeric, fedsad_data_preprocessing
 import argparse
 from utils.metrics import save_report, plt_confusion_matrix, print_latency, timed_step, GLOBAL_TIMER
+from utils.window_metrics import compute_window_metrics, format_window_metrics
 
 # GPU Configuration
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2" 
 TF_DEVICE='/CPU:0'
 
 # Global constants for evaluation
-TIME_WINDOW = '1T'
+TIME_WINDOW = _known.time_window
 RANDOM_STATE = 123
 THRESHOLD_PERCENTILE = 82  
 
 # Global model and scaler instances
 SCALER = MinMaxScaler()
+PRESCALED = False
 TAAE_FEATURE_COLUMNS = []
 TRAIN_NORMAL_SCALED = None
 GSAD_MODEL=None
@@ -63,8 +75,7 @@ def build_and_load_taae(n_features: int,taae_model_path: str):
         TAAE_MODEL = model
         print(f"[INFO] TAAE model loaded successfully")
     except Exception as e:
-        print(f"[WARN] Failed to load RNEP model: {e}")
-        TAAE_MODEL = None
+        raise RuntimeError(f"Failed to load RNEP model from {taae_model_path}: {e}") from e
 
 def gsad_model_predict(feat):
     """Compute DS mass based on graph feature deviation."""
@@ -129,7 +140,8 @@ def taae_model_predict(window_df):
 
     # Align columns with training features
     window_df = window_df.reindex(columns=TAAE_FEATURE_COLUMNS, fill_value=0)
-    window_df = sanitize_numeric(window_df)
+    if not PRESCALED:
+        window_df = sanitize_numeric(window_df)
     arr = SCALER.transform(window_df.values)
 
     with tf.device(TF_DEVICE):
@@ -238,9 +250,6 @@ def evaluate(df_gsad, df_taae, label,
 
     gb_gsad = df_gsad.groupby(pd.Grouper(freq=TIME_WINDOW))
 
-    taae_idx = 0
-    total_taae_rows = len(df_taae)
-
     y_true, y_pred = [], []
     results = []
 
@@ -249,27 +258,21 @@ def evaluate(df_gsad, df_taae, label,
         if df_gsad_window.empty:
             continue
 
+        t_start = _time.perf_counter()
+
         # GSAD
         m_gsad = gsad_pipeline(df_gsad_window)
 
-        # TAAE window
+        # TAAE window: the same flows (row_id) that fall into this GSAD time window
         size = len(df_gsad_window)
-        if taae_idx + size <= total_taae_rows:
-            df_taae_window = df_taae.iloc[taae_idx:taae_idx + size].copy()
-            taae_idx += size
-        else:
-            remain = (taae_idx + size) - total_taae_rows
-            df_taae_window = pd.concat([
-                df_taae.iloc[taae_idx:],
-                df_taae.iloc[:remain]
-            ], ignore_index=True)
-            taae_idx = remain
+        df_taae_window = df_taae.loc[df_gsad_window["row_id"].values]
 
         m_taae = taae_pipeline(df_taae_window)
 
         # Fusion
         m_comb = fusion_pipeline(m_gsad, m_taae)
         pred = 1 if m_comb["anomaly"] > m_comb["normal"] else 0
+        infer_ms = (_time.perf_counter() - t_start) * 1000.0
 
         y_pred.append(pred)
         y_true.append(0 if label == "Normal" else 1)
@@ -280,7 +283,11 @@ def evaluate(df_gsad, df_taae, label,
             "m_taae": m_taae,
             "m_comb": m_comb,
             "pred": pred,
-            "label": label
+            "label": label,
+            "n_rows": int(size),
+            "first_ts": df_gsad_window.index.min(),
+            "last_ts": df_gsad_window.index.max(),
+            "infer_ms": infer_ms,
         })
 
     return y_pred, y_true, results
@@ -343,8 +350,28 @@ if __name__ == "__main__":
             "taae_model": "results/UNSW_NB15/taae/taae_unsw_weights.h5",
             "gsad_model": "results/UNSW_NB15/gsad/normal_stats.pkl",
             "result_path": "results/UNSW_NB15/fedsad",
-            "normal_file": "UNSW_NB15_normal.csv", 
+            "normal_file": "UNSW_NB15_normal.csv",
             "anomaly_prefix": "UNSW_NB15_anomaly_"
+        },
+        "genis": {
+            "taae_dir": "/data/SDP_Dataset/GeNIS/processed/genis_rnep",
+            "gsad_dir": "/data/SDP_Dataset/GeNIS/processed/genis_graph",
+            "taae_model": "results/GeNIS/taae/taae_genis_weights.h5",
+            "gsad_model": "results/GeNIS/gsad/normal_stats.pkl",
+            "result_path": "results/GeNIS/fedsad",
+            "normal_file": "GeNIS_ae_normal.csv",
+            "anomaly_prefix": "GeNIS_anomaly_ae_"
+        },
+        # GeNIS with the RNEP "frame" model (99-d prepared vectors, scripts/preprocess_genis.py frame)
+        "genis_frame": {
+            "taae_dir": "/data/SDP_Dataset/GeNIS/processed/genis_frame_rnep",
+            "gsad_dir": "/data/SDP_Dataset/GeNIS/processed/genis_frame_graph",
+            "taae_model": "results/GeNIS/rnep/rnep_frame_genis_weights.h5",
+            "gsad_model": "results/GeNIS/frame/gsad/normal_stats.pkl",
+            "result_path": "results/GeNIS/frame/fedsad",
+            "normal_file": "GeNIS_frame_normal.csv",
+            "anomaly_prefix": "GeNIS_frame_anomaly_",
+            "prescaled": True
         }
     }
 
@@ -352,6 +379,13 @@ if __name__ == "__main__":
     if not config:
         print(f"[ERROR] Dataset '{args.eval_dataset}' is not supported.")
         exit(1)
+
+    if _known.gsad_model:
+        config["gsad_model"] = _known.gsad_model
+    if _known.result_path:
+        config["result_path"] = _known.result_path
+    print(f"[INFO] time_window={TIME_WINDOW} | threshold_std={args.threshold_std} | "
+          f"gsad_model={config['gsad_model']} | result_path={config['result_path']}")
 
     os.makedirs(config["result_path"], exist_ok=True)
     model_path = os.path.join(config["result_path"], "fedsad.pkl")
@@ -372,6 +406,11 @@ if __name__ == "__main__":
         if f.startswith(config["anomaly_prefix"]) and f.endswith(".csv")
     ]
 
+    PRESCALED = bool(config.get("prescaled", False))
+    if PRESCALED:
+        # Inputs are already preprocessed by the RNEP training pipeline: identity scaler
+        SCALER = FunctionTransformer()
+
     # Load models
     with open(config["gsad_model"], "rb") as f:
         GSAD_MODEL = pickle.load(f)
@@ -380,7 +419,8 @@ if __name__ == "__main__":
                                                                                                                     taae_anomaly_files,
                                                                                                                     gsad_normal_file,
                                                                                                                     gsad_anomaly_files,
-                                                                                                                    SCALER)
+                                                                                                                    SCALER,
+                                                                                                                    prescaled=PRESCALED)
     TAAE_FEATURE_COLUMNS=taae_normal_test.columns.tolist()
 
     # Load TAAE model
@@ -420,4 +460,16 @@ if __name__ == "__main__":
         pickle.dump(results, f)
 
     print(f"\nSaved ensemble results to {model_path}")
+
+    # Window-size experiment metrics
+    wm = compute_window_metrics(results, TIME_WINDOW, episode_gap=_known.episode_gap,
+                                anomaly_timestamps=gsad_anomaly_test.index)
+    wm.update({"dataset": args.eval_dataset, "threshold_std": args.threshold_std,
+               "gsad_model": config["gsad_model"], "latency_breakdown_ms": GLOBAL_TIMER.summary()})
+    print(format_window_metrics(wm))
+    with open(report_path, "a") as f:
+        f.write(format_window_metrics(wm) + "\n")
+    with open(os.path.join(config["result_path"], "window_metrics.json"), "w") as f:
+        json.dump(wm, f, indent=2, default=float)
+    print(f"Saved window metrics to {os.path.join(config['result_path'], 'window_metrics.json')}")
 

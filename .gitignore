@@ -25,3 +25,19 @@ FedSAD_Results/
 !/results/clients/clients_*/run/previous/round_counts.jsonl
 !/results/clients/clients_*/run/previous/evaluation_counts.jsonl
 !/results/clients/clients_*/run/previous/round_validation_metrics.jsonl
+
+# External raw datasets and large baseline tensors.
+/CIC2018/
+/KDD99/
+/NSL-KDD/
+/UNSW_NB15/
+/CICIoT2023/
+/GeNIS/
+/IDS_Datasets/
+/DAPT-2020/
+/lanl_auth_data/
+/lanl_auth_data_extracted/
+/kaggle.json
+/FedSAD_env/
+results/**/*.npy
+results/**/mmfewshotsids/*.pt

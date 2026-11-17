@@ -1,0 +1,51 @@
+===== MM-FewShot-IDS on GeNIS (frame test rows) =====
+few-shot train rows=270 (k=15 per attack type, 9 types, skipped=['recon-dns']) | epochs=40 lr=0.0005
+Inference: 1.2733 ms/flow
+
+📊 [Flow-level Classification Report (n=8746)]
+
+              precision    recall  f1-score   support
+
+      Normal     0.9566    0.9826    0.9694      4373
+     Anomaly     0.9821    0.9554    0.9686      4373
+
+    accuracy                         0.9690      8746
+   macro avg     0.9694    0.9690    0.9690      8746
+weighted avg     0.9694    0.9690    0.9690      8746
+
+🧾 [Confusion Matrix]
+                Predicted Normal  Predicted Anomaly
+Actual Normal               4297                 76
+Actual Anomaly               195               4178
+
+📊 [1min Window Classification Report (rule=any, windows normal=771 anomaly=375)]
+
+              precision    recall  f1-score   support
+
+      Normal     0.9916    0.9209    0.9549       771
+     Anomaly     0.8581    0.9840    0.9168       375
+
+    accuracy                         0.9415      1146
+   macro avg     0.9249    0.9524    0.9359      1146
+weighted avg     0.9479    0.9415    0.9425      1146
+
+🧾 [Confusion Matrix]
+                Predicted Normal  Predicted Anomaly
+Actual Normal                710                 61
+Actual Anomaly                 6                369
+
+📊 [1min Window Classification Report (rule=majority, windows normal=771 anomaly=375)]
+
+              precision    recall  f1-score   support
+
+      Normal     0.9922    0.9857    0.9889       771
+     Anomaly     0.9711    0.9840    0.9775       375
+
+    accuracy                         0.9852      1146
+   macro avg     0.9816    0.9849    0.9832      1146
+weighted avg     0.9853    0.9852    0.9852      1146
+
+🧾 [Confusion Matrix]
+                Predicted Normal  Predicted Anomaly
+Actual Normal                760                 11
+Actual Anomaly                 6                369

@@ -163,7 +163,8 @@ def get_gsad_args():
     parser.add_argument("--normal_file", type=str, default=None)
     parser.add_argument("--result_path", type=str, default="results/CSE-CIC-IDS2018/gsad")
     parser.add_argument("--eval_dataset", type=str, default="cic", 
-                        choices=["cic", "unsw", "ciciot"], help="Select dataset: cic, unsw or ciciot")
+                        choices=["cic", "unsw", "ciciot", "genis", "genis_frame"],
+                        help="Select dataset: cic, unsw, ciciot, genis or genis_frame")
     args = parser.parse_args()
     
     return args
