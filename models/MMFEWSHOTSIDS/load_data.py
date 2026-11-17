@@ -80,7 +80,32 @@ S_CONT_CANDIDATES_UNSW = [
     "ct_src_dport_ltm", "ct_dst_sport_ltm", "ct_dst_src_ltm"
 ]
 
+# GeNIS (Argus flow features, same inputs as the RNEP frame model; ports + categoricals discrete)
+S_CONT_CANDIDATES_GENIS = [
+    "Trans", "Dur", "RunTime", "Mean", "StdDev", "Sum", "Min", "Max",
+    "sTos", "dTos", "sTtl", "dTtl", "sHops", "dHops",
+    "TotPkts", "SrcPkts", "DstPkts", "TotBytes", "SrcBytes", "DstBytes",
+    "TotAppByte", "SAppBytes", "DAppBytes", "PCRatio",
+    "Load", "SrcLoad", "DstLoad", "Loss", "SrcLoss", "DstLoss", "pLoss",
+    "Retrans", "SrcRetra", "DstRetra", "pRetran", "SrcGap", "DstGap",
+    "Rate", "SrcRate", "DstRate",
+    "SIntPkt", "SIntPktMin", "SIntPktMax", "SIntPktAct", "SIntPktIdl",
+    "DIntPkt", "DIntPktMin", "DIntPktMax", "DIntPktAct", "DIntPktIdl",
+    "SrcJitter", "SrcJitAct", "DstJitter", "DstJitAct", "SrcWin", "DstWin",
+    "TcpRtt", "SynAck", "AckDat",
+    "sMeanPktSz", "dMeanPktSz", "sMaxPktSz", "dMaxPktSz", "sMinPktSz", "dMinPktSz",
+]
+S_DISC_CANDIDATES_GENIS = ["Sport", "Dport", "Proto", "Flgs", "Dir", "State", "Cause", "TcpOpt"]
+G_COL_CANDIDATES_GENIS = list(S_CONT_CANDIDATES_GENIS)
+
 DATASET_PRESETS = {
+    "genis": {
+        "g_candidates": G_COL_CANDIDATES_GENIS,
+        "s_disc_candidates": S_DISC_CANDIDATES_GENIS,
+        "s_cont_candidates": S_CONT_CANDIDATES_GENIS,
+        "label_col": "label",
+        "label_names": ["Benign", "Attack"],
+    },
     "cicids2018": {
         "g_candidates": G_COL_CANDIDATES_CICIDS,
         "s_disc_candidates": S_DISC_CANDIDATES_CICIDS,

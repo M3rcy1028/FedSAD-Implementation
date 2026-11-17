@@ -33,3 +33,6 @@ results/*/mmfewshotsids/*
 results/*/mvids/*
 !results/*/mmfewshotsids/*.png
 !results/*/mvids/*.png
+# large baseline artifacts
+results/**/*.npy
+results/**/mmfewshotsids/*.pt

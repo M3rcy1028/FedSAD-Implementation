@@ -192,6 +192,14 @@ if __name__ == "__main__":
         "unsw": {
             "normal_file": "UNSW_NB15_normal.csv",
             "anomaly_prefix": "UNSW_NB15_anomaly_"
+        },
+        "genis": {
+            "normal_file": "GeNIS_ae_normal.csv",
+            "anomaly_prefix": "GeNIS_anomaly_ae_"
+        },
+        "genis_frame": {
+            "normal_file": "GeNIS_frame_normal.csv",
+            "anomaly_prefix": "GeNIS_frame_anomaly_"
         }
     }
 

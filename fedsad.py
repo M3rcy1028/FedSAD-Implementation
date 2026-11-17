@@ -6,7 +6,7 @@ import networkx as nx
 import pandas as pd
 from tqdm import tqdm
 import tensorflow as tf
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, FunctionTransformer
 import sys
 import json
 import time as _time
@@ -54,6 +54,7 @@ THRESHOLD_PERCENTILE = 82
 
 # Global model and scaler instances
 SCALER = MinMaxScaler()
+PRESCALED = False
 TAAE_FEATURE_COLUMNS = []
 TRAIN_NORMAL_SCALED = None
 GSAD_MODEL=None
@@ -139,7 +140,8 @@ def taae_model_predict(window_df):
 
     # Align columns with training features
     window_df = window_df.reindex(columns=TAAE_FEATURE_COLUMNS, fill_value=0)
-    window_df = sanitize_numeric(window_df)
+    if not PRESCALED:
+        window_df = sanitize_numeric(window_df)
     arr = SCALER.transform(window_df.values)
 
     with tf.device(TF_DEVICE):
@@ -341,6 +343,26 @@ if __name__ == "__main__":
             "result_path": "results/UNSW_NB15/fedsad",
             "normal_file": "UNSW_NB15_normal.csv",
             "anomaly_prefix": "UNSW_NB15_anomaly_"
+        },
+        "genis": {
+            "taae_dir": "/data/SDP_Dataset/GeNIS/processed/genis_rnep",
+            "gsad_dir": "/data/SDP_Dataset/GeNIS/processed/genis_graph",
+            "taae_model": "results/GeNIS/taae/taae_genis_weights.h5",
+            "gsad_model": "results/GeNIS/gsad/normal_stats.pkl",
+            "result_path": "results/GeNIS/fedsad",
+            "normal_file": "GeNIS_ae_normal.csv",
+            "anomaly_prefix": "GeNIS_anomaly_ae_"
+        },
+        # GeNIS with the RNEP "frame" model (99-d prepared vectors, scripts/preprocess_genis.py frame)
+        "genis_frame": {
+            "taae_dir": "/data/SDP_Dataset/GeNIS/processed/genis_frame_rnep",
+            "gsad_dir": "/data/SDP_Dataset/GeNIS/processed/genis_frame_graph",
+            "taae_model": "results/GeNIS/rnep/rnep_frame_genis_weights.h5",
+            "gsad_model": "results/GeNIS/frame/gsad/normal_stats.pkl",
+            "result_path": "results/GeNIS/frame/fedsad",
+            "normal_file": "GeNIS_frame_normal.csv",
+            "anomaly_prefix": "GeNIS_frame_anomaly_",
+            "prescaled": True
         }
     }
 
@@ -375,6 +397,11 @@ if __name__ == "__main__":
         if f.startswith(config["anomaly_prefix"]) and f.endswith(".csv")
     ]
 
+    PRESCALED = bool(config.get("prescaled", False))
+    if PRESCALED:
+        # Inputs are already preprocessed by the RNEP training pipeline: identity scaler
+        SCALER = FunctionTransformer()
+
     # Load models
     with open(config["gsad_model"], "rb") as f:
         GSAD_MODEL = pickle.load(f)
@@ -383,7 +410,8 @@ if __name__ == "__main__":
                                                                                                                     taae_anomaly_files,
                                                                                                                     gsad_normal_file,
                                                                                                                     gsad_anomaly_files,
-                                                                                                                    SCALER)
+                                                                                                                    SCALER,
+                                                                                                                    prescaled=PRESCALED)
     TAAE_FEATURE_COLUMNS=taae_normal_test.columns.tolist()
 
     # Load TAAE model

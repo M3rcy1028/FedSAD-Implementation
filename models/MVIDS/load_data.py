@@ -15,6 +15,7 @@ from models.MVIDS.preprocess import MultiViewPreprocessor
 from models.MVIDS.multiview import MultiViewKnowledgeNet
 from models.MVIDS.preprocess import (
     CICIDS2018_VIEW_SCHEMA,
+    GENIS_VIEW_SCHEMA,
     MultiViewPreprocessor,
     UNSW_VIEW_SCHEMA,
 )
@@ -23,6 +24,7 @@ from tqdm.auto import tqdm
 VIEW_SCHEMAS = {
     "unsw": UNSW_VIEW_SCHEMA,
     "cic": CICIDS2018_VIEW_SCHEMA,
+    "genis": GENIS_VIEW_SCHEMA,
 }
 
 
