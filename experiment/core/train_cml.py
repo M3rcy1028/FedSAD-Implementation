@@ -15,7 +15,7 @@ ROC_PATH = "./cml/cml_roc1.png"
 
 EPOCHS = 300
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
 
 def main():
     # 1. Get dataset

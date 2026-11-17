@@ -45,7 +45,7 @@ from utils.metrics import save_report, plt_confusion_matrix, print_latency, time
 from utils.window_metrics import compute_window_metrics, format_window_metrics
 
 # GPU Configuration
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2" 
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0,1,2")  # an existing setting (e.g. run.py --gpus) wins
 TF_DEVICE='/CPU:0'
 
 # Global constants for evaluation

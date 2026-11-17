@@ -28,7 +28,7 @@ def sha256(path):
 
 
 def run_training(args):
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
+    os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0,1,2")
     import numpy as np
     import tensorflow as tf
     from tensorflow.keras.optimizers import Adam
