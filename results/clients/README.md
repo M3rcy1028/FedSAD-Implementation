@@ -5,7 +5,8 @@
 이번 수정에서는 문서만 변경했고, 학습·평가를 다시 실행하지 않았다.
 
 **5·10·15·20·25·30 clients의 학습과 평가가 모두 완료됐다.**
-최종 성능 표와 결과 해석은 [프로젝트 README](../../README.md#effect-of-client-count-on-genis)에 정리했다.
+기존 성능 표와 결과 해석은 [측정 결과 아카이브](reference_measurements.md)에 정리했다.
+30-epoch 재실험 후 사용할 문장 초안은 [프로젝트 README](../../README.md#effect-of-client-count-on-genis)에 있다.
 전체 수치는 [client_comparison.csv](client_comparison.csv), 요약 표는 [final_comparison_table.md](final_comparison_table.md)에서 확인할 수 있다.
 
 비교 대상은 5, 10, 15, 20, 25, 30 clients다. 원래 실행 순서는 5 → 15 → 20 → 25 → 30이며,
