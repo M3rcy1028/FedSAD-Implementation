@@ -49,20 +49,19 @@ Choose a PyTorch build compatible with the machine's CUDA environment. The Tenso
 ├── configs/                       # Default values and reusable JSON experiment settings
 ├── experiment/
 │   ├── cli.py                     # Model/dataset/parameter selection and validation
+│   ├── registry.py                # Supported model/dataset pairs and model construction
 │   ├── runner.py                  # Prepare → train → evaluate → export
 │   ├── artifacts.py               # Run directories, provenance and results/ protection
 │   ├── backends.py                # Lazy imports of the implementations in core/
 │   ├── datasets/                  # Dataset paths, transformations, splits and frozen arrays
-│   ├── models/                    # Model registry and construction
 │   ├── trainers/                  # RNEP/FedAvg, graph-model and FedSAD adapters
 │   ├── evaluation/                # Prediction scores, thresholds and metric export
 │   ├── plotting/                  # CM, ROC, reconstruction error and recall figures
 │   └── core/                      # Model implementations and original pipelines
 │       ├── fedsad.py, gsad.py     # FedSAD (GSAD + TAAE fusion) and GSAD
-│       ├── taae_previous.py       # TAAE used by the archived weights (latent 64)
-│       ├── taae_current.py        # Newer TAAE variant (latent 32)
 │       ├── train_*.py             # Training entry points (taae, aelstm, cnnlstm, fedavg, cml, mvids, mmfewshotsids)
-│       ├── models/                # AE-LSTM, CNN-LSTM, MV-IDS and MM-FewShot-IDS definitions
+│       ├── models/                # All model definitions: TAAE (taae_previous = archived weights, latent 64;
+│       │                          #   taae_current = newer, latent 32), AE-LSTM, CNN-LSTM, MV-IDS, MM-FewShot-IDS
 │       ├── scripts/               # evaluate_*.py, GeNIS preprocessing/baselines, window sweep, paper figures
 │       └── utils/                 # Loaders, metrics, GeNIS/Gotham helpers
 ├── tests/                         # Regression tests, not benchmark evaluation entry points

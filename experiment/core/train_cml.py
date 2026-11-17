@@ -4,7 +4,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 import tensorflow as tf
 from utils.get_datasets import get_datasets_nsl, eval_server
 from utils.arguments import get_args
-from taae_previous import TransformerAAE, FLClient  # archived CML weights use the previous TAAE
+from models.taae_previous import TransformerAAE, FLClient  # archived CML weights use the previous TAAE
 
 args=get_args()
 

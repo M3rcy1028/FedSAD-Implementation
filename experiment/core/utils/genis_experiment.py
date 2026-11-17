@@ -15,7 +15,7 @@ from utils.genis import file_sha256, prepare_genis
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_FILES = [
-    "train_taae.py", "taae_current.py", "taae_previous.py", "utils/__init__.py", "utils/arguments.py", "utils/metrics.py",
+    "train_taae.py", "models/__init__.py", "models/taae_current.py", "models/taae_previous.py", "utils/__init__.py", "utils/arguments.py", "utils/metrics.py",
     "utils/genis.py", "utils/genis_experiment.py", "utils/genis_outputs.py", "utils/taae_checkpoint.py",
     "utils/gotham.py", "utils/gotham_experiment.py", "utils/gotham_runtime.py",
     "utils/threshold_search.py",
@@ -176,7 +176,7 @@ def run_single(args):
             ["X_train", "X_val", "X_test", "y_val", "y_test"]]
         client_ids = (z["train_client_ids"] if args.eval_dataset == "gotham"
                       and args.gotham_client_partition == "devices" else None)
-    module_name = "taae_previous" if args.taae_version == "previous" else "taae_current"
+    module_name = "models.taae_previous" if args.taae_version == "previous" else "models.taae_current"
     module = importlib.import_module(module_name)
     tf.keras.utils.set_random_seed(args.random_seed)
     devices = tf.config.list_physical_devices("GPU")

@@ -42,7 +42,7 @@ def run_gotham(args):
     dump(output / "preprocessing_report.json", report)
     dump(output / "run_config.json", {"arguments": vars(args), "prepared_data": prepared,
          "prepared_data_sha256": file_sha256(prepared / "prepared_data.npz"), "source_sha256": hashes,
-         "model": "taae_previous.TransformerAAE", "normal_only_training": True})
+         "model": "models.taae_previous.TransformerAAE", "normal_only_training": True})
     print(f"[Gotham] normal training={report['normal_training_rows']}, validation={report['validation_rows']}, "
           f"test={report['test_rows']}, features={report['input_dim']}; "
           f"clients={args.client_nums} ({args.gotham_client_partition}); model=taae_previous", flush=True)

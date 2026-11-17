@@ -13,7 +13,7 @@ def build(config, shape):
     from experiment.backends import load
     import tensorflow as tf
     if config["model"] == "taae":
-        module = load("taae_previous" if config["variant"] == "previous" else "taae_current",
+        module = load("models.taae_previous" if config["variant"] == "previous" else "models.taae_current",
                       config["batch_size"], config["percentile"], config["dropout"])
         model = module.TransformerAAE(input_dim=shape[-1], latent_dim=config["latent_dim"],
                                       dropout_rate=config["dropout"])

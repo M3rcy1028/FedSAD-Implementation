@@ -84,7 +84,7 @@ def get_args(argv=None):
         if args.gotham_eval_samples < 1:
             parser.error("Gotham evaluation sample count must be positive")
         if args.eval_dataset == "gotham" and args.taae_version != "previous":
-            parser.error("Gotham uses taae_previous.py; keep --taae_version previous")
+            parser.error("Gotham uses models/taae_previous.py; keep --taae_version previous")
     return args
 
 def get_fedsad_args():
@@ -167,7 +167,7 @@ def get_taae_args():
     parser.add_argument('--dropout_rate', type=float, default=0.1)
     parser.add_argument('--percentile', type=float, default=82)
 
-    # taae_current.py / taae_previous.py are imported by train_taae.py and fedsad.py, so ignore their flags (e.g. --eval_dataset)
+    # models/taae_current.py / models/taae_previous.py are imported by train_taae.py and fedsad.py, so ignore their flags (e.g. --eval_dataset)
     args, _ = parser.parse_known_args()
     
     return args

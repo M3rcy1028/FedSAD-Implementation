@@ -12,7 +12,7 @@ def train(config, bundle):
     import tensorflow as tf
     import flwr as fl
     from experiment.backends import load, worker_setup
-    from experiment.models.registry import build
+    from experiment.registry import build
     from experiment.evaluation.metrics import report, score
 
     runtime, output = Path(config["runtime"]), Path(config["output"])
@@ -31,7 +31,7 @@ def train(config, bundle):
     chunks = np.array_split(train_x, config["clients"])
     labels = np.array_split(train_y, config["clients"])
     if config["model"] == "taae":
-        backend = load("taae_previous" if config["variant"] == "previous" else "taae_current")
+        backend = load("models.taae_previous" if config["variant"] == "previous" else "models.taae_current")
         base_strategy = backend.SaveEvaluationRNEP
     else:
         base_strategy = fl.server.strategy.FedAvg

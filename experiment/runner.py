@@ -123,7 +123,7 @@ def compare(config, runs):
 
 def evaluate_saved(request):
     import numpy as np
-    from experiment.models.registry import build
+    from experiment.registry import build
     from experiment.evaluation.export import evaluate
     source = Path(request["run"]).expanduser().resolve()
     config = json.loads((source / "config.json").read_text())

@@ -14,7 +14,7 @@ from sklearn.preprocessing import MinMaxScaler, RobustScaler
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, confusion_matrix, roc_curve, auc
 from sklearn.utils import shuffle
 import tensorflow as tf
-from taae_current import TransformerAAE  # this model class is required
+from models.taae_current import TransformerAAE  # this model class is required
 from utils.taae_checkpoint import resolve_latent_dim
 import matplotlib.pyplot as plt
 import seaborn as sns

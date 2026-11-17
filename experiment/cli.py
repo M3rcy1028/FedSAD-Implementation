@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 from experiment.artifacts import ROOT
-from experiment.models.registry import MODELS, SUPPORT
+from experiment.registry import MODELS, SUPPORT
 
 ALIASES = {"kdd": "kdd99", "nsl": "nsl-kdd", "cic": "cic2018",
            "cse-cic-ids2018": "cic2018", "unsw": "unsw-nb15", "unsw_nb15": "unsw-nb15",

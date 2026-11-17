@@ -36,7 +36,7 @@ def run_training(args):
     from flwr.common import parameters_to_ndarrays
     from utils.get_datasets import get_datasets_cic_sam, eval_server
     from utils.metrics import save_and_plot_history
-    from taae_current import SaveEvaluationRNEP, TransformerAAE, FLClient
+    from models.taae_current import SaveEvaluationRNEP, TransformerAAE, FLClient
 
     os.makedirs("./FedSAD_Results", exist_ok=True)
     model_kwargs = {}
@@ -166,7 +166,7 @@ def run_zenodo(args):
     import joblib
     import tensorflow as tf
     import flwr as fl
-    from taae_current import TransformerAAE, FLClient, SaveEvaluationRNEP, get_datasets_zenodo
+    from models.taae_current import TransformerAAE, FLClient, SaveEvaluationRNEP, get_datasets_zenodo
     from utils.metrics import save_and_plot_history
 
     tf.keras.utils.set_random_seed(args.random_seed)
@@ -176,7 +176,7 @@ def run_zenodo(args):
     if args.gpu_per_client and not physical_gpus:
         raise RuntimeError("No GPU detected; use --gpu_per_client 0 for CPU training")
     sources = {}
-    for name in ["taae_current.py", "train_taae.py", "utils/arguments.py", "utils/metrics.py"]:
+    for name in ["models/taae_current.py", "train_taae.py", "utils/arguments.py", "utils/metrics.py"]:
         src = PROJECT_ROOT / name
         target = output / "sources" / name
         target.parent.mkdir(parents=True, exist_ok=True)

@@ -7,7 +7,7 @@ from flwr.common import parameters_to_ndarrays
 from utils.get_datasets import get_datasets_cic_sam, eval_server
 from utils.metrics import save_and_plot_history
 from utils.arguments import get_args
-from taae_previous import SaveEvaluationFedAvg, TransformerAAE, FLClient  # archived FedAvg weights use the previous TAAE
+from models.taae_previous import SaveEvaluationFedAvg, TransformerAAE, FLClient  # archived FedAvg weights use the previous TAAE
 
 WEIGHT_PATH = "./fedavg/fedavg_vae_transformer_weights.h5"
 MATRIX_PATH = "./fedavg/fedavg_cm.png"
