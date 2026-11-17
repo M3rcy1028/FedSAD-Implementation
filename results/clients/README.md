@@ -1,5 +1,9 @@
 # GeNIS client 수 비교
 
+문서의 실행 설정은 **로컬 30 epochs·서버 10 rounds**로 맞춘다.
+아래에 연결된 기존 성능 표와 그림은 **70 epochs로 측정한 아카이브**이며, 30-epoch 결과로 변경한 것이 아니다.
+이번 수정에서는 문서만 변경했고, 학습·평가를 다시 실행하지 않았다.
+
 **5·10·15·20·25·30 clients의 학습과 평가가 모두 완료됐다.**
 최종 성능 표와 결과 해석은 [프로젝트 README](../../README.md#effect-of-client-count-on-genis)에 정리했다.
 전체 수치는 [client_comparison.csv](client_comparison.csv), 요약 표는 [final_comparison_table.md](final_comparison_table.md)에서 확인할 수 있다.
@@ -7,10 +11,17 @@
 비교 대상은 5, 10, 15, 20, 25, 30 clients다. 원래 실행 순서는 5 → 15 → 20 → 25 → 30이며,
 나중에 추가한 10 clients는 기존 실행이 끝나 잠금이 해제된 뒤 이어서 학습했다.
 10-client 실행 상태는 `clients_10/status.json`, 대기 및 실행 관리 로그는 `clients_10/queue.log`에 저장했다.
-모든 실험은 server 10 rounds,
-previous TAAE(latent 64), 로컬 70 epochs, batch 16, learning rate 3e-5,
-seed 123, dropout 0.1로 실행한다. 이 값은 기존 게시된 GeNIS TAAE 설정에서 읽었다.
-이 기존 비교 연구의 로컬 epoch는 70이며, 새 통합 인터페이스의 기본 epoch 30과 구분된다.
+문서에서 사용하는 설정은 server 10 rounds,
+previous TAAE(latent 64), 로컬 30 epochs, batch 16, learning rate 3e-5,
+seed 123, dropout 0.1이다. 기존 실행의 실제 설정은 `experiment_config.json`에 보존한다.
+
+30-epoch 설정의 실행 명령은 다음과 같다. 아래 명령은 실행 안내이며 이번 수정 중에는 실행하지 않았다.
+
+```bash
+python run.py --model taae --dataset genis --variant previous \
+  --clients 5 10 15 20 25 30 --rounds 10 --epochs 30 \
+  --latent-dim 64 --batch-size 16 --lr 3e-5 --dropout 0.1 --seed 123
+```
 
 정상 학습 31,123행의 같은 shuffle 순서를 `numpy.array_split`으로 분할한다.
 공통 검증 데이터는 7,630행, 테스트 데이터는 8,746행이며 정상:공격이 1:1이다.

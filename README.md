@@ -232,7 +232,11 @@ Comparisons are saved to `outputs/comparisons/`. Logs, source snapshots and chec
 
 ## Effect of client count on GeNIS
 
-We evaluated **5, 10, 15, 20, 25 and 30 clients** with the preserved **previous TAAE model and RNEP aggregation**. Every experiment completed **10 server rounds with 70 local epochs per client per round**, latent dimension 64, batch size 16, learning rate `3e-5`, dropout 0.1 and seed 123. These archived runs use **70 local epochs**, whereas the unified interface defaults to **30** for new runs.
+The intended client-count configuration is **5, 10, 15, 20, 25 and 30 clients**, **10 server rounds and 30 local epochs per client per round**, using the preserved **previous TAAE model and RNEP aggregation**, latent dimension 64, batch size 16, learning rate `3e-5`, dropout 0.1 and seed 123. Use `--epochs 30`, as in the experiment command above.
+
+### Archived measurements
+
+The table and figures below retain the existing measurements, which were produced with **70 local epochs per client per round**. They are an archive of that configuration and **are not 30-epoch results**. This update changes the documented experiment setting to 30 epochs; the archived measurements have not been recomputed.
 
 The same ordered pool of **31,123 normal training rows** was partitioned using `numpy.array_split`; increasing the client count changes the partition sizes, not the total training pool. All runs share the same **7,630 validation rows** (3,815 normal and 3,815 attack) and **8,746 test rows** (4,373 normal and 4,373 attack), with the same preprocessing and frozen implementation source. The recorded source/data hashes, partition sizes and full settings are in [experiment_config.json](results/clients/experiment_config.json) and [partition_summary.csv](results/clients/partition_summary.csv).
 
@@ -251,7 +255,7 @@ The [full comparison CSV](results/clients/client_comparison.csv) contains both t
 
 ![GeNIS performance by client count after 10 rounds](results/clients/client_comparison.png)
 
-### Interpretation
+### Interpretation of the archived measurements
 
 - **15 clients performs best in this run.** Relative to 5 clients, accuracy improves by **2.20 percentage points**. Most of the difference comes from fewer normal samples being flagged as attacks: false positives fall from **335 to 147**, and Normal recall rises from **92.34% to 96.64%**. Missed attacks also decrease from 14 to 10. Thus the gain reflects improved balance between normal acceptance and attack detection, while attack recall remains high.
 - **More clients do not produce a monotonic improvement.** With 10–30 clients, accuracy stays within **97.90–98.20%**, a spread of approximately **0.31 percentage points**. Increasing the count beyond 15 gives no consistent predictive benefit in these measurements. The training pool per client decreases from 6,224–6,225 rows at 5 clients to 1,037–1,038 at 30 clients. Smaller partitions, fewer optimizer steps per client per local epoch and different RNEP pairings are possible contributors to the trend; this experiment does not isolate their individual effects.
@@ -350,7 +354,7 @@ This implementation uses the published **10-second scenario CSVs** by default. I
 
 The archived seed-123 comparison uses 31,123 normal TAAE training rows, 7,630 validation rows and 8,746 test rows. Validation and test are each balanced between normal and attack traffic. AE-LSTM and CNN-LSTM use the same validation/test source rows as TAAE, while preserving their supervised training protocol. A sequence input packs the features of one flow; it is not a temporal window across unrelated flows. The preprocessing report records feature dimensions, overlap checks and attack types absent from training.
 
-The archived GeNIS TAAE checkpoint used **70 local epochs and 10 server rounds**. The new interface defaults to **30 epochs**; use an explicit `--epochs 70` and the matching saved split when reproducing that historical setup. Dataset and preprocessing hashes are recorded for every new experiment.
+The documented GeNIS experiment configuration uses **30 local epochs and 10 server rounds**, matching the unified interface default. Existing checkpoints retain the actual training settings recorded in their `model_config.json`; their evaluation results are tied to those saved settings and splits. Dataset and preprocessing hashes are recorded for every new experiment.
 
 ## Dataset Preprocessing
 
