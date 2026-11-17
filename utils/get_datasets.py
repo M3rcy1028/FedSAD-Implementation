@@ -22,7 +22,12 @@ def rnep_normal_split(n_rows: int, train_ratio: float = 0.8, seed: int = RANDOM_
 
 
 def normal_split_indices(df: pd.DataFrame):
-    """Normal train/test positional indices (RNEP random split, see rnep_normal_split)."""
+    """Normal train/test positional indices. Uses an explicit `split` column (train/test)
+    when the CSV carries one (e.g. GeNIS frame data built from the RNEP training pipeline),
+    otherwise the RNEP random split (rnep_normal_split)."""
+    if "split" in df.columns:
+        split = df["split"].astype(str).values
+        return np.flatnonzero(split == "train"), np.flatnonzero(split == "test")
     return rnep_normal_split(len(df))
 
 # For datasets
@@ -430,7 +435,7 @@ def _gsad_by_time(df_gsad):
 
 
 def fedsad_data_preprocessing(taae_normal_file, taae_anomaly_file,
-                              gsad_normal_file, gsad_anomaly_file, SCALER):
+                              gsad_normal_file, gsad_anomaly_file, SCALER, prescaled=False):
     """RNEP and GSAD CSVs are row-aligned (same flow on the same line). Every row gets a
     `row_id`; the normal split is taken in file order exactly like the RNEP loaders
     (rnep_normal_split), and GSAD windows later fetch their RNEP rows by row_id.
@@ -452,13 +457,15 @@ def fedsad_data_preprocessing(taae_normal_file, taae_anomaly_file,
     df_gsad_normal_raw["row_id"] = np.arange(len(df_gsad_normal_raw))
 
     train_idx, test_idx = normal_split_indices(df_gsad_normal_raw)
+    df_gsad_normal_raw = df_gsad_normal_raw.drop(columns=["split"], errors="ignore")
 
     df_taae_normal_train_raw = df_taae_normal_raw.iloc[train_idx]
     df_taae_normal_test = df_taae_normal_raw.iloc[test_idx].copy()
     df_gsad_normal_test = _gsad_by_time(df_gsad_normal_raw.iloc[test_idx])
 
     # RNEP scaler (fit on RNEP train rows only)
-    taae_train_features = sanitize_numeric(df_taae_normal_train_raw)
+    # prescaled: vectors are already imputed/scaled/encoded (keep negatives, no clipping)
+    taae_train_features = df_taae_normal_train_raw if prescaled else sanitize_numeric(df_taae_normal_train_raw)
     SCALER.fit(taae_train_features.values)
     train_normal_scaled = SCALER.transform(taae_train_features.values)
     print(f"[INFO] TAAE scaler fitted on {train_normal_scaled.shape[1]} features "

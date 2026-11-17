@@ -190,6 +190,40 @@ CICIDS2018_VIEW_SCHEMA: "OrderedDict[str, Dict[str, list[str]]]" = OrderedDict(
 )
 
 
+# GeNIS (Argus flow features, same 67 numeric + 6 categorical inputs as the RNEP frame model).
+# Views follow the UNSW grouping: flow volume / basic header / content-rate / timing / extra.
+GENIS_VIEW_SCHEMA: "OrderedDict[str, Dict[str, list[str]]]" = OrderedDict(
+    [
+        ("flow", {
+            "numeric": ["Trans", "Dur", "TotPkts", "SrcPkts", "DstPkts", "TotBytes", "SrcBytes",
+                        "DstBytes", "TotAppByte", "SAppBytes", "DAppBytes", "PCRatio"],
+            "categorical": [],
+        }),
+        ("basic", {
+            "numeric": ["sTos", "dTos", "sTtl", "dTtl", "sHops", "dHops", "SrcWin", "DstWin",
+                        "sMeanPktSz", "dMeanPktSz", "sMaxPktSz", "dMaxPktSz", "sMinPktSz", "dMinPktSz"],
+            "categorical": ["Proto", "State", "Flgs", "Dir"],
+        }),
+        ("content", {
+            "numeric": ["Load", "SrcLoad", "DstLoad", "Rate", "SrcRate", "DstRate", "Loss", "SrcLoss",
+                        "DstLoss", "pLoss", "Retrans", "SrcRetra", "DstRetra", "pRetran"],
+            "categorical": [],
+        }),
+        ("time", {
+            "numeric": ["RunTime", "Mean", "StdDev", "Sum", "Min", "Max", "SrcGap", "DstGap",
+                        "SIntPkt", "SIntPktMin", "SIntPktMax", "SIntPktAct", "SIntPktIdl",
+                        "DIntPkt", "DIntPktMin", "DIntPktMax", "DIntPktAct", "DIntPktIdl",
+                        "SrcJitter", "SrcJitAct", "DstJitter", "DstJitAct", "TcpRtt", "SynAck", "AckDat"],
+            "categorical": [],
+        }),
+        ("additional", {
+            "numeric": ["Sport", "Dport"],
+            "categorical": ["Cause", "TcpOpt"],
+        }),
+    ]
+)
+
+
 def _ensure_list(cols: Optional[Sequence[str]]) -> List[str]:
     if cols is None:
         return []
