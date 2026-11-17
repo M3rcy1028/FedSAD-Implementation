@@ -40,3 +40,11 @@ FedSAD_Results/
 /FedSAD_env/
 results/**/*.npy
 results/**/mmfewshotsids/*.pt
+
+# Re-creatable baseline artifacts (data splits, predictions) and weights over GitHub's 50 MB guideline.
+results/**/mmfewshotsids/train_split.csv
+results/**/mmfewshotsids/test_split.csv
+results/**/mmfewshotsids/fewshot_train_test.csv
+results/**/mmfewshotsids/nf_adapter.csv
+results/**/test_predictions.csv
+results/CSE-CIC-IDS2018/mvids/mvids_weights.pt
