@@ -1,0 +1,19 @@
+
+📊 [Classification Report]
+              precision    recall  f1-score   support
+
+      Normal     0.9973    0.9938    0.9956      1133
+     Anomaly     0.9804    0.9915    0.9860       354
+
+    accuracy                         0.9933      1487
+   macro avg     0.9889    0.9927    0.9908      1487
+weighted avg     0.9933    0.9933    0.9933      1487
+
+
+🪟 [Window Metrics] time_window=4min (240s)
+Windows: normal=1133 anomaly=354 | TN=1126 FP=7 FN=3 TP=351
+Precision=0.9804 Recall=0.9915 F1=0.9860 FPR=0.0062
+Inference per window: 118.032 ± 31.952 ms (p95 136.001) | per flow: 0.73130 ms
+Flows per window (median): all=20 normal=17 anomaly=119
+Window detection delay (TP windows): mean=226.85s median=239.12s
+Episodes (gap>5min): 26/27 detected | time-to-detect mean=142.33s median=149.62s
