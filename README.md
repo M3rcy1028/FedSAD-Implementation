@@ -10,7 +10,7 @@ This repository provides the core logic for the FedSAD model, including comparis
 
 ## Unified experiment interface
 
-This branch adds a single public entry point, **`run.py`**, for model selection, data preparation, training, evaluation and figure generation. The previous implementations are preserved in `experiment/_legacy/` and loaded through adapters; their model source files remain available for inspection. Evaluation programs are separate from the regression tests in `tests/`.
+**`run.py`** is the single entry point for model selection, data preparation, training, evaluation and figure generation. Model implementations and the original experiment pipelines live in `experiment/core/` and are loaded through adapters. Evaluation scripts for the archived weights are in `experiment/core/scripts/evaluate_*.py`, separate from the regression tests in `tests/`.
 
 - **`results/`** contains the archived manuscript artifacts and is not a destination for new experiments.
 - **`outputs/`** contains newly generated weights, PNG figures, metrics, predictions and resolved settings.
@@ -31,7 +31,7 @@ python run.py --help
 python run.py --list
 ```
 
-Core versions: TensorFlow 2.14.1, Keras 2.14.0, Flower 1.19.0, Ray 2.31.0, NumPy 1.25.2, pandas 2.3.1 and scikit-learn 1.6.1. `requirements.txt` records the versions from the working environment; `requirements/legacy.txt` preserves the previous dependency list. A fresh installation and every CUDA combination have not been separately validated.
+Core versions: TensorFlow 2.14.1, Keras 2.14.0, Flower 1.19.0, Ray 2.31.0, NumPy 1.25.2, pandas 2.3.1 and scikit-learn 1.6.1. `requirements.txt` records the versions from the working environment. A fresh installation and every CUDA combination have not been separately validated.
 
 MV-IDS and MM-FewShot-IDS additionally require the PyTorch dependencies:
 
@@ -51,27 +51,33 @@ Choose a PyTorch build compatible with the machine's CUDA environment. The Tenso
 │   ├── cli.py                     # Model/dataset/parameter selection and validation
 │   ├── runner.py                  # Prepare → train → evaluate → export
 │   ├── artifacts.py               # Run directories, provenance and results/ protection
-│   ├── backends.py                # Lazy imports of the preserved model implementations
+│   ├── backends.py                # Lazy imports of the implementations in core/
 │   ├── datasets/                  # Dataset paths, transformations, splits and frozen arrays
 │   ├── models/                    # Model registry and construction
-│   ├── trainers/                  # RNEP, FedAvg and graph-model training adapters
+│   ├── trainers/                  # RNEP/FedAvg, graph-model and FedSAD adapters
 │   ├── evaluation/                # Prediction scores, thresholds and metric export
 │   ├── plotting/                  # CM, ROC, reconstruction error and recall figures
-│   └── _legacy/                   # Preserved implementation source; internal adapter dependency
+│   └── core/                      # Model implementations and original pipelines
+│       ├── fedsad.py, gsad.py     # FedSAD (GSAD + TAAE fusion) and GSAD
+│       ├── taae_previous.py       # TAAE used by the archived weights (latent 64)
+│       ├── taae_current.py        # Newer TAAE variant (latent 32)
+│       ├── train_*.py             # Training entry points (taae, aelstm, cnnlstm, fedavg, cml, mvids, mmfewshotsids)
+│       ├── models/                # AE-LSTM, CNN-LSTM, MV-IDS and MM-FewShot-IDS definitions
+│       ├── scripts/               # evaluate_*.py, GeNIS preprocessing/baselines, window sweep, paper figures
+│       └── utils/                 # Loaders, metrics, GeNIS/Gotham helpers
 ├── tests/                         # Regression tests, not benchmark evaluation entry points
 ├── plot_data/                     # Original numeric inputs for manuscript comparison plots
 ├── results/                       # Archived manuscript results, kept separate from new runs
 ├── outputs/                       # New final artifacts (created on first run, Git-ignored)
 ├── runtime/                       # Logs/checkpoints/source/cache (created on first run, Git-ignored)
-├── docs/                          # Original README, architecture summary and audit manifests
-└── requirements/                  # Historical and optional dependency lists
+└── requirements/                  # Optional dependency lists
 ```
 
-Archived ROC score tables and recall comparison PNG/CSV files are stored directly in their corresponding `results/<dataset>/` directories. Combined ROC figures and their summary CSV are stored directly under `results/`. The former shared plot directories have been removed; [docs/results_layout.json](docs/results_layout.json) records the moves and associated plotting-script path updates.
+Archived ROC score tables and recall comparison PNG/CSV files are stored directly in their corresponding `results/<dataset>/` directories. Combined ROC figures and their summary CSV are stored directly under `results/`.
 
 The Git repository includes archived figures, metrics, final weights and client-study completion records. Raw datasets, new `outputs/`, `runtime/`, intermediate checkpoints, local notification state and redundant client-run artifacts stay outside version control. Round checkpoint links are local artifacts; published round results retain their validation metrics.
 
-The merged `main` branch's GeNIS frame-data preparation, graph-baseline and FedSAD window-sweep helpers are retained under `experiment/_legacy/scripts/`. Their archived GeNIS frame results and CIC2018/UNSW window-study artifacts remain under `results/`; new helper runs default to `outputs/`.
+GeNIS frame-data preparation, graph baselines and the FedSAD window sweep are under `experiment/core/scripts/`. Their archived GeNIS frame results and CIC2018/UNSW window-study artifacts remain under `results/`; new helper runs default to `outputs/`.
 
 ## Models and dataset support
 
@@ -82,6 +88,7 @@ The merged `main` branch's GeNIS frame-data preparation, graph-baseline and FedS
 | `cnnlstm` | Labeled CNN-LSTM with FedAvg | KDD99, NSL-KDD, InSDN, CSE-CIC-IDS2018, UNSW-NB15, GeNIS |
 | `mvids` | MV-IDS centralized multi-view model | CSE-CIC-IDS2018 and UNSW-NB15, using the original feature schema |
 | `mmfewshotsids` | Centralized multimodal few-shot classifier | CSE-CIC-IDS2018 and UNSW-NB15, using the original feature schema |
+| `fedsad` | GSAD + TAAE with Dempster-Shafer fusion, per detection window | CSE-CIC-IDS2018, UNSW-NB15, GeNIS (RNEP frame data) |
 
 `mnids` is accepted as an alias for this repository's `mvids` implementation. Unsupported combinations are rejected before training. Adding a dataset to the CLI does not invent missing graph or packet-sequence features.
 
@@ -159,6 +166,15 @@ python run.py --model mvids --dataset unsw-nb15 --epochs 30 \
 python run.py --model mmfewshotsids --dataset cic2018 --epochs 30 \
   --data-dir /path/to/NF-CICIDS2018-v3-balanced.csv --gpus 0
 ```
+
+Run FedSAD. It fits the GSAD statistics for the chosen window and fuses them with TAAE weights (the archived weights in `results/` unless `--taae-weights` is given). `--threshold-std` defaults to 0.25 (CIC2018), 5 (UNSW-NB15) and 1 (GeNIS):
+
+```bash
+python run.py --model fedsad --dataset unsw --time-window 1min
+python run.py --model fedsad --dataset cic --time-window 2min --taae-weights outputs/cic2018/taae/<run-id>/weights/model.h5
+```
+
+A FedSAD run writes `tables/window_metrics.json`, `tables/fedsad_server.txt`, `figures/confusion_matrix.png` and the GSAD statistics in `weights/normal_stats.pkl`. It is evaluated while it runs, so `--mode evaluate/plot` do not apply.
 
 Use a JSON preset. Explicit command-line options override the JSON values:
 
@@ -246,9 +262,9 @@ These figures link to the manuscript artifacts in `results/`; they are not regen
 
 | KDD99 | InSDN |
 | --- | --- |
-| ![KDD99 reconstruction error](results/KDD99/fedsad/KDD99_distribution.png) | ![InSDN reconstruction error](results/InSDN/fedsad/InSDN_distribution.png) |
+| ![KDD99 reconstruction error](results/KDD99/taae/KDD99_distribution.png) | ![InSDN reconstruction error](results/InSDN/taae/InSDN_distribution.png) |
 | **CSE-CIC-IDS2018** | **UNSW-NB15** |
-| ![CSE-CIC-IDS2018 reconstruction error](results/CSE-CIC-IDS2018/taae/CSE-CIC-IDS2018_distribution.png) | ![UNSW-NB15 reconstruction error](results/UNSW_NB15/taae/UNSW_NB15_distribution.png) |
+| ![CSE-CIC-IDS2018 reconstruction error](results/CSE-CIC-IDS2018/taae/CSE-CIC-IDS2018_distribution.png) | ![UNSW-NB15 reconstruction error](results/UNSW-NB15/taae/UNSW_NB15_distribution.png) |
 | **GeNIS** | |
 | ![GeNIS reconstruction error](results/GeNIS/taae/GeNIS_distribution.png) | |
 
@@ -262,11 +278,10 @@ The archived combined ROC curve includes GeNIS:
 CUDA_VISIBLE_DEVICES=-1 python -B -m unittest discover -s tests -v
 ```
 
-The original source README is preserved in `docs/upstream_README.md`. `docs/backend_source_hashes.json` records the original backend hashes; later plotting-path updates are recorded separately in `docs/results_layout.json`. Old `test_*.py` programs inside `_legacy/` are internal evaluation adapters; the public evaluation command is `run.py --mode evaluate`. Optional graph-model adapters require their own installed framework and feature CSVs; the TensorFlow regression checks do not establish graph benchmark performance.
+`experiment/core/scripts/evaluate_*.py` re-evaluate the archived weights in `results/`; `run.py --mode evaluate` re-evaluates runs created by `run.py`. Optional graph-model adapters require their own installed framework and feature CSVs; the TensorFlow regression checks do not establish graph benchmark performance.
 
 Interface verification covers all five model adapters on small fixtures, saved-weight reevaluation, plotting and run comparison. The optional graph paths were exercised separately on CPU with PyTorch 2.6.0. Actual GeNIS adapters were checked for identical evaluation row IDs across TAAE, AE-LSTM and CNN-LSTM. These checks establish execution and data compatibility, not benchmark accuracy.
 
-The refactor checks and the KDD99 verification run are recorded in [docs/refactor_verification.json](docs/refactor_verification.json).
 
 ## Original study details
 

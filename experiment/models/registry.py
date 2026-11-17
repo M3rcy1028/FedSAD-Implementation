@@ -1,10 +1,12 @@
 """Model names and supported input representations, loaded only when used."""
-MODELS = ("taae", "aelstm", "cnnlstm", "mvids", "mmfewshotsids")
+MODELS = ("taae", "aelstm", "cnnlstm", "mvids", "mmfewshotsids", "fedsad")
 TABULAR = ("kdd99", "nsl-kdd", "insdn", "cic2018", "unsw-nb15", "genis")
 SUPPORT = {"taae": (*TABULAR, "gotham", "itu-ulak"),
            "aelstm": TABULAR, "cnnlstm": TABULAR,
            "mvids": ("cic2018", "unsw-nb15"),
-           "mmfewshotsids": ("cic2018", "unsw-nb15")}
+           "mmfewshotsids": ("cic2018", "unsw-nb15"),
+           # FedSAD = GSAD + archived TAAE weights; GeNIS uses the RNEP frame data
+           "fedsad": ("cic2018", "unsw-nb15", "genis")}
 
 
 def build(config, shape):

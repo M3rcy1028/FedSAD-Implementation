@@ -54,6 +54,15 @@ class UnifiedInterfaceTests(unittest.TestCase):
         result=subprocess.run([sys.executable,'-B','-c',script],cwd=ROOT,capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stderr)
 
+    def test_fedsad_options_and_dataset_thresholds(self):
+        cic = self.resolve('--model','fedsad','--dataset','cic')
+        self.assertEqual((cic['time_window'], cic['threshold_std'], cic['clients']), ('1min', .25, [1]))
+        self.assertEqual(self.resolve('--model','fedsad','--dataset','unsw')['threshold_std'], 5.0)
+        genis = self.resolve('--model','fedsad','--dataset','genis','--time-window','2min','--threshold-std','2')
+        self.assertEqual((genis['time_window'], genis['threshold_std']), ('2min', 2.0))
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            main(['--model','fedsad','--dataset','kdd99','--dry-run'])
+
     def test_unsupported_model_dataset_fails_before_creating_output(self):
         with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit):
             main(['--model','mvids','--dataset','genis','--dry-run'])

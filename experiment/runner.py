@@ -28,6 +28,9 @@ def worker(config):
         if config["model"] in {"mvids", "mmfewshotsids"}:
             from experiment.trainers.graph import train
             metrics = train(config)
+        elif config["model"] == "fedsad":
+            from experiment.trainers.fedsad import train
+            metrics = train(config)
         else:
             from experiment.datasets.registry import prepare
             from experiment.trainers.federated import train

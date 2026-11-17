@@ -31,6 +31,7 @@ _pre.add_argument("--time_window", type=str, default="1T",
 _pre.add_argument("--gsad_model", type=str, default=None,
                   help="Override GSAD normal_stats.pkl (must be built with the same --time_window)")
 _pre.add_argument("--result_path", type=str, default=None, help="Override result directory")
+_pre.add_argument("--taae_model", type=str, default=None, help="Override the TAAE weights (.h5)")
 _pre.add_argument("--episode_gap", type=str, default="5min",
                   help="Gap between anomaly flows that starts a new attack episode (for time-to-detect)")
 _known, _ = _pre.parse_known_args()
@@ -374,6 +375,8 @@ if __name__ == "__main__":
         config["gsad_model"] = _known.gsad_model
     if _known.result_path:
         config["result_path"] = _known.result_path
+    if _known.taae_model:
+        config["taae_model"] = _known.taae_model
     print(f"[INFO] time_window={TIME_WINDOW} | threshold_std={args.threshold_std} | "
           f"gsad_model={config['gsad_model']} | result_path={config['result_path']}")
 
