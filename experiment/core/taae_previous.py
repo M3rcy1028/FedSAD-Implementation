@@ -166,7 +166,24 @@ class SaveEvaluationRNEP(fl.server.strategy.FedAvg):
         # 4) Loss / metrics returned to Flower
         loss = float(mean_squared_error(X_test_scaled, pred_test))
         return loss, {"loss": loss, "acc": acc}
-        
+
+class SaveEvaluationFedAvg(fl.server.strategy.FedAvg):
+    """Plain FedAvg aggregation (baseline for RNEP) with the same server-side evaluation."""
+    def __init__(self, eval_server_args: Optional[Dict] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.eval_server_args = eval_server_args
+        self.round_history = []
+        self.final_parameters = None
+
+    def aggregate_fit(self, rnd, results, failures):
+        aggregated_parameters, metrics = super().aggregate_fit(rnd, results, failures)
+        if aggregated_parameters is not None:
+            self.final_parameters = aggregated_parameters  # keep the last aggregated weights
+        return aggregated_parameters, metrics
+
+    evaluate = SaveEvaluationRNEP.evaluate
+
+
 @register_keras_serializable(package="Custom")
 class GradientReversal(layers.Layer):
     def __init__(self, lambd=1.0, **kwargs):

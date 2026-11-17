@@ -7,14 +7,14 @@ from flwr.common import parameters_to_ndarrays
 from utils.get_datasets import get_datasets_cic_sam, eval_server
 from utils.metrics import save_and_plot_history
 from utils.arguments import get_args
-from taae_current import SaveEvaluationFedAvg, TransformerAAE, FLClient  # FLClient class can be used if imported
+from taae_previous import SaveEvaluationFedAvg, TransformerAAE, FLClient  # archived FedAvg weights use the previous TAAE
 
 WEIGHT_PATH = "./fedavg/fedavg_vae_transformer_weights.h5"
 MATRIX_PATH = "./fedavg/fedavg_cm.png"
 RESULT_PATH = "./fedavg/fedavg_server.txt"
 ROC_PATH = "./fedavg/fedavg_roc.png"
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1" 
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "1")
 
 def main():
     args = get_args()
@@ -70,6 +70,8 @@ def main():
         )
 
     # Clear previous results file
+    os.makedirs(os.path.dirname(RESULT_PATH), exist_ok=True)
+    os.makedirs("./FedSAD_Results", exist_ok=True)  # FLClient.evaluate writes client.txt here
     with open(RESULT_PATH, "w") as f:
         f.write("[Server Evaluation Report]\n")
 
