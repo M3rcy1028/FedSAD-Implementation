@@ -1,12 +1,9 @@
 # GeNIS client 수 비교
 
-문서의 실행 설정은 **로컬 30 epochs·서버 10 rounds**로 맞춘다.
-아래에 연결된 기존 성능 표와 그림은 **70 epochs로 측정한 아카이브**이며, 30-epoch 결과로 변경한 것이 아니다.
-이번 수정에서는 문서만 변경했고, 학습·평가를 다시 실행하지 않았다.
-
 **5·10·15·20·25·30 clients의 학습과 평가가 모두 완료됐다.**
-기존 성능 표와 결과 해석은 [측정 결과 아카이브](reference_measurements.md)에 정리했다.
-30-epoch 재실험 후 사용할 문장 초안은 [프로젝트 README](../../README.md#effect-of-client-count-on-genis)에 있다.
+성능 표·비교 그림·결과 해석은 [프로젝트 README 본문](../../README.md#effect-of-client-count-on-genis)에 함께 정리했다.
+기존 측정 설정은 로컬 70 epochs·서버 10 rounds이며, 새 실행의 기본값은 로컬 30 epochs다.
+
 전체 수치는 [client_comparison.csv](client_comparison.csv), 요약 표는 [final_comparison_table.md](final_comparison_table.md)에서 확인할 수 있다.
 
 비교 대상은 5, 10, 15, 20, 25, 30 clients다. 원래 실행 순서는 5 → 15 → 20 → 25 → 30이며,
