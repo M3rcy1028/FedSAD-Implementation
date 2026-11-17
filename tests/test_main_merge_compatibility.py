@@ -1,4 +1,4 @@
-"""Protect main's window tools and the retained CICIoT integration after relocation."""
+"""Protect main's window tools and GeNIS integration after relocation."""
 from pathlib import Path
 import sys
 import tempfile
@@ -15,7 +15,7 @@ from experiment.backends import load
 class MainMergeCompatibilityTests(unittest.TestCase):
     def test_gsad_accepts_both_branches_dataset_options(self):
         arguments = load("utils.arguments")
-        for name in ["cic", "unsw", "ciciot", "genis", "genis_frame"]:
+        for name in ["cic", "unsw", "genis", "genis_frame"]:
             with self.subTest(dataset=name), patch.object(sys, "argv", ["gsad.py", "--eval_dataset", name]):
                 self.assertEqual(arguments.get_gsad_args().eval_dataset, name)
 

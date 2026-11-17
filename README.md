@@ -77,9 +77,9 @@ The merged `main` branch's GeNIS frame-data preparation, graph-baseline and FedS
 
 | Model option | Training | Supported datasets |
 | --- | --- | --- |
-| `taae` | Normal-only Transformer AAE with RNEP aggregation | KDD99, NSL-KDD, InSDN, CSE-CIC-IDS2018, UNSW-NB15, CICIoT2023, GeNIS, Gotham, ITU/ULAK |
-| `aelstm` | Labeled AE-LSTM with FedAvg | KDD99, NSL-KDD, InSDN, CSE-CIC-IDS2018, UNSW-NB15, CICIoT2023, GeNIS |
-| `cnnlstm` | Labeled CNN-LSTM with FedAvg | KDD99, NSL-KDD, InSDN, CSE-CIC-IDS2018, UNSW-NB15, CICIoT2023, GeNIS |
+| `taae` | Normal-only Transformer AAE with RNEP aggregation | KDD99, NSL-KDD, InSDN, CSE-CIC-IDS2018, UNSW-NB15, GeNIS, Gotham, ITU/ULAK |
+| `aelstm` | Labeled AE-LSTM with FedAvg | KDD99, NSL-KDD, InSDN, CSE-CIC-IDS2018, UNSW-NB15, GeNIS |
+| `cnnlstm` | Labeled CNN-LSTM with FedAvg | KDD99, NSL-KDD, InSDN, CSE-CIC-IDS2018, UNSW-NB15, GeNIS |
 | `mvids` | MV-IDS centralized multi-view model | CSE-CIC-IDS2018 and UNSW-NB15, using the original feature schema |
 | `mmfewshotsids` | Centralized multimodal few-shot classifier | CSE-CIC-IDS2018 and UNSW-NB15, using the original feature schema |
 
@@ -108,15 +108,15 @@ IDS_Datasets/
 
 For GeNIS, download the official `0-info.zip` and `3-scenarios.zip` archives from the [dataset record](https://zenodo.org/records/14919237), and arrange the extracted files as shown above. `--data-dir` should point to the `GeNIS` directory. `--prepared` can instead reuse an existing prepared split whose source hash, seed and flow interval match.
 
-`--data-root` defaults to `~/IDS_Datasets`; `--data-dir` overrides a dataset's location. The installed CIC2018, CICIoT2023 and UNSW numeric CSV defaults use `/data/SDP_Dataset/Unified_model/`. Graph models use `--data-dir /path/to/features.csv` and require their respective published feature columns. They cannot directly consume the 115-feature KDD99 CSVs.
+`--data-root` defaults to `~/IDS_Datasets`; `--data-dir` overrides a dataset's location. The installed CIC2018 and UNSW numeric CSV defaults use `/data/SDP_Dataset/Unified_model/`. Graph models use `--data-dir /path/to/features.csv` and require their respective published feature columns. They cannot directly consume the 115-feature KDD99 CSVs.
 
 Numeric KDD99/NSL-KDD TAAE runs retain the normal 50:50 train/test split and all attack rows in the final test. MinMax is fitted on normal training rows. Thus KDD99's native test is **38,406 normal + 113,252 attack rows**, not a balanced test. Supervised KDD99 recipes retain their original attack-training fractions (AE-LSTM 0.05, CNN-LSTM 0.2). These legacy protocols are distinct from the shared GeNIS holdout.
 
-CICIoT2023 retains its model-specific preparation: TAAE uses the existing selected-column `log1p` transform, an 80:20 normal split and a balanced 40,000:40,000 final test. AE-LSTM/CNN-LSTM retain their original normal/attack 50:50 splits, normal-training MinMax scaling and padded `(10, 8)` input. UNSW sequence models retain the original `(6, 7)` reshape, including the legacy truncation to 42 positions; the data report identifies the feature columns actually used.
+UNSW sequence models retain the original `(6, 7)` reshape, including the legacy truncation to 42 positions; the data report identifies the feature columns actually used.
 
 The original InSDN AE-LSTM loader uses a 50:50 normal split, whereas the InSDN TAAE and CNN-LSTM loaders use 80:20. These model-specific defaults are retained and can be explicitly overridden with `--normal-train-ratio`.
 
-The default attack-training fractions for AE-LSTM are 0.05 on KDD99/InSDN/UNSW and 0.2 on NSL-KDD/CIC2018. CNN-LSTM uses 0.4 on InSDN and 0.2 on those other numeric benchmarks. Both use 0.5 on CICIoT2023/GeNIS; `--attack-fraction` overrides these defaults.
+The default attack-training fractions for AE-LSTM are 0.05 on KDD99/InSDN/UNSW and 0.2 on NSL-KDD/CIC2018. CNN-LSTM uses 0.4 on InSDN and 0.2 on those other numeric benchmarks. Both use 0.5 on GeNIS; `--attack-fraction` overrides these defaults.
 
 For numeric benchmarks, round validation uses each client's original internal validation tail, and TAAE uses a fixed normal-training percentile. GeNIS/Gotham provide independent labeled validation, allowing validation-selected thresholds. The test is used only for final reporting. Dataset reports record the actual split and sample counts.
 
@@ -264,7 +264,7 @@ CUDA_VISIBLE_DEVICES=-1 python -B -m unittest discover -s tests -v
 
 The original source README is preserved in `docs/upstream_README.md`. `docs/backend_source_hashes.json` records the original backend hashes; later plotting-path updates are recorded separately in `docs/results_layout.json`. Old `test_*.py` programs inside `_legacy/` are internal evaluation adapters; the public evaluation command is `run.py --mode evaluate`. Optional graph-model adapters require their own installed framework and feature CSVs; the TensorFlow regression checks do not establish graph benchmark performance.
 
-Interface verification covers all five model adapters on small fixtures, saved-weight reevaluation, plotting and run comparison. The optional graph paths were exercised separately on CPU with PyTorch 2.6.0. Actual GeNIS adapters were checked for identical evaluation row IDs across TAAE, AE-LSTM and CNN-LSTM; CICIoT transformations were checked against the preserved loaders. These checks establish execution and data compatibility, not benchmark accuracy.
+Interface verification covers all five model adapters on small fixtures, saved-weight reevaluation, plotting and run comparison. The optional graph paths were exercised separately on CPU with PyTorch 2.6.0. Actual GeNIS adapters were checked for identical evaluation row IDs across TAAE, AE-LSTM and CNN-LSTM. These checks establish execution and data compatibility, not benchmark accuracy.
 
 The refactor checks and the KDD99 verification run are recorded in [docs/refactor_verification.json](docs/refactor_verification.json).
 

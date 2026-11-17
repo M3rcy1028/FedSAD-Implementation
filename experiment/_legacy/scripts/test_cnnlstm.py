@@ -26,7 +26,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 from models.model_cnnlstm import CNN_LSTM
-from CNN_LSTM import get_datasets_ciciot_supervised
 
 def _clean_dataframe(df):
     """Drops 'Label'/'label' columns, replaces 'inf'/'nan' values with 0, and clips large values."""
@@ -125,23 +124,6 @@ DATASET_CONFIG = {
         "attack_map": {
             0: "BFA", 1: "BOTNET", 2: "DDoS", 3: "DoS",
             4: "Probe", 5: "U2R", 6: "Web-Attack"
-        }
-    },
-    "CICIoT2023": {
-        "base_dir": "./CICIoT2023/ciciot_rnep",
-        "normal_file": "CICIoT_ae_normal.csv", # 78 features (same as CSE-CIC-IDS2018)
-        "anomaly_prefix": "CICIoT_anomaly_ae_",
-        "merged_anomaly_file": "CICIoT_ae_anomaly.csv",
-        "plot_save_path": "./cnn_lstm/CICIoT2023_cnn_lstm_distribution.png",
-        "attack_map": {
-            1: "DDoS-UDP_Flood", 2: "DDoS-TCP_Flood", 3: "DDoS-PSHACK_Flood", 4: "DDoS-SYN_Flood",
-            5: "DDoS-RSTFINFlood", 6: "DDoS-SynonymousIP_Flood", 7: "DoS-UDP_Flood",
-            8: "DoS-TCP_Flood", 9: "DoS-SYN_Flood", 10: "Mirai-udpplain", 11: "VulnerabilityScan",
-            12: "DDoS-UDP_Fragmentation", 13: "DDoS-ACK_Fragmentation", 14: "DNS_Spoofing",
-            15: "Recon-HostDiscovery", 16: "Recon-OSScan", 17: "Recon-PortScan", 18: "DoS-HTTP_Flood",
-            19: "DDoS-HTTP_Flood", 20: "DDoS-SlowLoris", 21: "DictionaryBruteForce",
-            22: "BrowserHijacking", 23: "CommandInjection", 24: "SqlInjection", 25: "XSS",
-            26: "Backdoor_Malware", 27: "Uploading_Attack"
         }
     },
     "UNSW_NB15": {
@@ -364,89 +346,6 @@ def evaluate_cnn_lstm_by_type(model, dataset_name, model_params, train_split_rat
 # --------------------------------------------------
 
 # model parameters and weight paths trained in main_cnnlstm_fl.py
-def evaluate_ciciot_cnnlstm(model, base_dir, save_dir, random_seed=123,
-                          batch_size=512, weights_path=None):
-    """Evaluate the same held-out normal/attack halves as the training loader."""
-    if batch_size < 1:
-        raise ValueError("batch_size must be positive")
-    X_train, y_train, X_test, y_test, split = get_datasets_ciciot_supervised(
-        base_dir=str(base_dir), random_seed=random_seed,
-        train_ratio=0.5, anomaly_ratio=0.5, return_metadata=True,
-    )
-    if np.intersect1d(split["train_indices"], split["test_indices"]).size:
-        raise ValueError("Training and evaluation source rows overlap")
-    del X_train
-    print("[CICIoT2023] Evaluating held-out normal and attack rows...", flush=True)
-    probabilities = model.predict(X_test, batch_size=batch_size, verbose=0).reshape(-1)
-    if not np.isfinite(probabilities).all():
-        raise ValueError("Model produced non-finite evaluation scores")
-    predicted = (probabilities > 0.5).astype(int)
-    attack_ids = split["test_attack_ids"]
-    attack_map = pd.read_csv(Path(base_dir).parent / "ciciot_attack_map.csv")
-    groups = [(0, "All", np.ones(len(y_test), dtype=bool))]
-    groups.extend((int(row.id), row[1], (y_test == 0) | (attack_ids == row.id))
-                  for row in attack_map.itertuples(index=False))
-    rows = []
-    for attack_id, name, mask in groups:
-        truth = y_test[mask]
-        fpr, tpr, _ = roc_curve(truth, probabilities[mask])
-        rows.append({
-            "Attack_ID": attack_id, "Attack": name, "Samples": int(mask.sum()),
-            "Normal": int((truth == 0).sum()), "Anomaly": int((truth == 1).sum()),
-            "Accuracy": accuracy_score(truth, predicted[mask]),
-            "Precision": precision_score(truth, predicted[mask], zero_division=0),
-            "Recall": recall_score(truth, predicted[mask], zero_division=0),
-            "F1": f1_score(truth, predicted[mask], zero_division=0),
-            "AUC": auc(fpr, tpr),
-            "Pred_Normal": int((predicted[mask] == 0).sum()),
-            "Pred_Anomaly": int((predicted[mask] == 1).sum()),
-        })
-    save_dir = Path(save_dir)
-    save_dir.mkdir(parents=True, exist_ok=True)
-    summary = pd.DataFrame(rows)
-    summary.to_csv(save_dir / "CICIoT2023_summary.csv", index=False)
-    pd.DataFrame({"flow_index": split["test_indices"], "attack_id": attack_ids,
-                  "y_true": y_test, "probability": probabilities,
-                  "y_pred": predicted}).to_csv(save_dir / "CICIoT2023_predictions.csv", index=False)
-    metadata = {"dataset": "CICIoT2023", "random_seed": random_seed,
-                "data_dir": str(Path(base_dir).resolve()),
-                "weights_path": str(weights_path) if weights_path else None,
-                "normal_train_ratio": 0.5, "attack_train_ratio": 0.5,
-                "train_rows": len(y_train), "test_rows": len(y_test),
-                "normal_test_rows": int((y_test == 0).sum()),
-                "attack_test_rows": int((y_test == 1).sum()),
-                "classifier_threshold": 0.5, "source_rows_disjoint": True,
-                "overall": rows[0]}
-    (save_dir / "CICIoT2023_metrics.json").write_text(json.dumps(metadata, indent=2) + "\n")
-    _plot_and_print_cm(y_test, predicted, str(save_dir / "CICIoT2023_cm.png"),
-                       ["Normal", "Anomaly"], "CNN-LSTM - CICIoT2023")
-    fpr, tpr, _ = roc_curve(y_test, probabilities)
-    plt.figure(figsize=(7, 5))
-    plt.plot(fpr, tpr, label=f"AUC = {auc(fpr, tpr):.4f}")
-    plt.plot([0, 1], [0, 1], linestyle="--", color="gray")
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(save_dir / "CICIoT2023_roc.png", dpi=200)
-    plt.close()
-    plt.figure(figsize=(12, 7))
-    plt.hist(probabilities[y_test == 0], bins=100, density=True, alpha=0.5, label="Normal", range=(0, 1))
-    for row in attack_map.itertuples(index=False):
-        plt.hist(probabilities[attack_ids == row.id], bins=100, density=True,
-                 alpha=0.4, label=row[1], range=(0, 1))
-    plt.axvline(0.5, color="black", linestyle="--")
-    plt.xlabel("Classifier probability")
-    plt.ylabel("Density")
-    plt.legend(fontsize=7, ncol=2)
-    plt.tight_layout()
-    plt.savefig(save_dir / "CICIoT2023_distribution.png", dpi=200)
-    plt.close()
-    print(summary.round(6).to_string(index=False))
-    print(f"Results saved to: {save_dir}", flush=True)
-    return summary, metadata
-
-
 MODEL_EVAL_CONFIG = {
     "GeNIS": {"weights": "results/GeNIS/cnnlstm/cnn_lstm_weights.h5"},
     "KDD99": {
@@ -462,10 +361,6 @@ MODEL_EVAL_CONFIG = {
         "model_params": {"timesteps": 12, "features": 7}, # 83 -> 90 (padding)
         "weights": "results/InSDN/cnnlstm/cnn_lstm_weights.h5" # (modify if path differs)
     },
-    "CICIoT2023": {
-        "model_params": {"timesteps": 10, "features": 8}, # 78 -> 80 (padding)
-        "weights": "results/CICIoT2023/cnnlstm/cnn_lstm_weights.h5"
-    },
     "UNSW_NB15": {
         # use 83-feature csv if trained with (10, 9) etc. for 83 features
         "model_params": {"timesteps": 6, "features": 7}, # 83 -> 90 (padding)
@@ -478,15 +373,15 @@ MODEL_EVAL_CONFIG = {
 # --------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Evaluate saved CNN-LSTM weights")
-    parser.add_argument("--eval_dataset", default="CICIoT2023",
-                        choices=["ciciot", "genis", *MODEL_EVAL_CONFIG])
+    parser.add_argument("--eval_dataset", default="CSE-CIC-IDS2018",
+                        choices=["genis", *MODEL_EVAL_CONFIG])
     parser.add_argument("--base_data_path", default="/data/SDP_Dataset/Unified_model")
     parser.add_argument("--weights", default=None)
     parser.add_argument("--result_path", default=None)
     parser.add_argument("--random_seed", type=int, default=123)
     parser.add_argument("--batch_size", type=int, default=512)
     args = parser.parse_args()
-    dataset = {"ciciot": "CICIoT2023", "genis": "GeNIS"}.get(args.eval_dataset, args.eval_dataset)
+    dataset = {"genis": "GeNIS"}.get(args.eval_dataset, args.eval_dataset)
     config = MODEL_EVAL_CONFIG[dataset]
     weights_path = (Path(args.weights).expanduser().resolve() if args.weights
                     else PROJECT_ROOT / config["weights"])
@@ -501,17 +396,8 @@ def main():
     model(tf.zeros((1, params["timesteps"], params["features"])))
     model.load_weights(str(weights_path))
     print(f"Loaded weights: {weights_path}", flush=True)
-    if dataset == "CICIoT2023":
-        save_dir = (Path(args.result_path).expanduser().resolve() if args.result_path
-                    else PROJECT_ROOT / "results/CICIoT2023/cnnlstm/eval")
-        evaluate_ciciot_cnnlstm(
-            model, Path(args.base_data_path) / "ciciot_rnep", save_dir,
-            random_seed=args.random_seed, batch_size=args.batch_size,
-            weights_path=weights_path,
-        )
-    else:
-        os.makedirs("./cnn_lstm", exist_ok=True)
-        evaluate_cnn_lstm_by_type(model, dataset, params, train_split_ratio=0.8)
+    os.makedirs("./cnn_lstm", exist_ok=True)
+    evaluate_cnn_lstm_by_type(model, dataset, params, train_split_ratio=0.8)
 
 
 if __name__ == "__main__":

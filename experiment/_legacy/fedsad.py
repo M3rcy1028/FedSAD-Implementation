@@ -335,15 +335,6 @@ if __name__ == "__main__":
             "normal_file": "CIC_ae_normal.csv", 
             "anomaly_prefix": "CIC_anomaly_ae_"
         },
-        "ciciot": {
-            "taae_dir": f"{args.base_data_path}/ciciot_rnep",
-            "gsad_dir": f"{args.base_data_path}/ciciot_graph",
-            "taae_model": "results/CICIoT2023/taae/taae_ciciot_weights.h5",
-            "gsad_model": "results/CICIoT2023/gsad/normal_stats.pkl",
-            "result_path": "results/CICIoT2023/fedsad",
-            "normal_file": "CICIoT_ae_normal.csv",
-            "anomaly_prefix": "CICIoT_anomaly_ae_"
-        },
         "unsw": {
             "taae_dir": f"{args.base_data_path}/unsw_rnep",
             "gsad_dir": f"{args.base_data_path}/unsw_graph",

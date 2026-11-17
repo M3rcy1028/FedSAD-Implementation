@@ -44,7 +44,7 @@ def balance(frame, seed):
     if len(normal) > count:
         normal = normal.sample(n=count, random_state=seed)
     if len(attack) > count:
-        # Reuse the class-cap strategy from the earlier CICIoT experiments:
+        # Class-cap strategy:
         # large floods cannot consume the entire balanced evaluation budget.
         counts = attack.SubCategoryLabel.value_counts().sort_index()
         lower, upper = 0, count
