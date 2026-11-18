@@ -301,8 +301,6 @@ Confusion matrices of FedSAD and GSAD alone on 1-minute windows (Anomaly is the 
 | CSE-CIC-IDS2018 | ![FedSAD CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/fedsad/fedsad_cm.png) | ![GSAD CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/gsad/gsad_cm.png) |
 | UNSW-NB15 | ![FedSAD UNSW-NB15](results/UNSW-NB15/fedsad/fedsad_cm.png) | ![GSAD UNSW-NB15](results/UNSW-NB15/gsad/gsad_cm.png) |
 
-Per-window metrics, including inference time and detection delay, are in `window_metrics.json` under `results/<dataset>/window_sweep/<window>/`; the window-size study is summarized in `results/window_sweep_summary.csv`.
-
 ### Pipeline latency
 
 Per-window inference latency and throughput of the full FedSAD pipeline (1-minute detection windows).
