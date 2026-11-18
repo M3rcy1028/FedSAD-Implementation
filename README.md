@@ -219,17 +219,6 @@ results/
 
 Some archived file names predate the current naming (for example `taae/fedsad_kdd_weights.h5` and `fedavg/avg_*.h5`); they are kept as recorded.
 
-### FedSAD and GSAD confusion matrices
-
-Confusion matrices of FedSAD and GSAD alone on 1-minute windows (Anomaly is the positive class). FedSAD uses `--threshold-std` 0.25 (CIC2018) and 5 (UNSW-NB15).
-
-| Dataset | FedSAD (GSAD + TAAE) | GSAD |
-| --- | --- | --- |
-| CSE-CIC-IDS2018 | ![FedSAD CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/fedsad/fedsad_cm.png) | ![GSAD CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/gsad/gsad_cm.png) |
-| UNSW-NB15 | ![FedSAD UNSW-NB15](results/UNSW-NB15/fedsad/fedsad_cm.png) | ![GSAD UNSW-NB15](results/UNSW-NB15/gsad/gsad_cm.png) |
-
-Per-window metrics, including inference time and detection delay, are in `window_metrics.json` under `results/<dataset>/window_sweep/<window>/`; the window-size study is summarized in `results/window_sweep_summary.csv`.
-
 ### Reconstruction-error distributions
 
 The five panels below present reconstruction-error distributions for KDD99, InSDN, CSE-CIC-IDS2018, UNSW-NB15 and GeNIS. The caption and accompanying analysis are provided here as supplementary material. The figures link to the archived artifacts in `results/`.
@@ -302,6 +291,33 @@ The [full comparison CSV](results/clients/client_comparison.csv) contains both t
 - **The conclusion is specific to this protocol.** These are single-seed measurements with a shared shuffled-row partitioning recipe. They support 15 clients as a reference setting for this GeNIS experiment, but do not establish a universally optimal client count or a statistically significant advantage. Repeated seeds and non-IID client partitions would be needed to assess how reliably the ordering generalizes.
 
 Per-client artifacts, confusion matrices and completion checks are under `results/clients/clients_<N>/`; see the [study artifact index](results/clients/README.md) for the directory contents.
+
+### FedSAD and GSAD confusion matrices
+
+Confusion matrices of FedSAD and GSAD alone on 1-minute windows (Anomaly is the positive class). FedSAD uses `--threshold-std` 0.25 (CIC2018) and 5 (UNSW-NB15).
+
+| Dataset | FedSAD (GSAD + TAAE) | GSAD |
+| --- | --- | --- |
+| CSE-CIC-IDS2018 | ![FedSAD CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/fedsad/fedsad_cm.png) | ![GSAD CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/gsad/gsad_cm.png) |
+| UNSW-NB15 | ![FedSAD UNSW-NB15](results/UNSW-NB15/fedsad/fedsad_cm.png) | ![GSAD UNSW-NB15](results/UNSW-NB15/gsad/gsad_cm.png) |
+
+Per-window metrics, including inference time and detection delay, are in `window_metrics.json` under `results/<dataset>/window_sweep/<window>/`; the window-size study is summarized in `results/window_sweep_summary.csv`.
+
+### Pipeline latency
+
+Per-window inference latency and throughput of the full FedSAD pipeline (1-minute detection windows).
+
+<table>
+  <thead>
+    <tr><th rowspan="2">Metric</th><th colspan="2">CSE-CIC-IDS2018</th><th colspan="2">UNSW-NB15</th></tr>
+    <tr><th>Normal</th><th>Anomaly</th><th>Normal</th><th>Anomaly</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>GSAD (ms)</td><td>0.201 ± 0.011</td><td>0.201 ± 0.011</td><td>0.214 ± 0.018</td><td>0.198 ± 0.014</td></tr>
+    <tr><td>TAAE (ms)</td><td>103.580 ± 12.666</td><td>110.074 ± 15.748</td><td>115.166 ± 26.083</td><td>108.126 ± 9.924</td></tr>
+    <tr><td>Throughput (win/sec)</td><td>9.59</td><td>8.99</td><td>7.88</td><td>9.14</td></tr>
+  </tbody>
+</table>
 
 ## Datasets and paths
 
