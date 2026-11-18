@@ -139,3 +139,31 @@ def print_latency(label, registry=GLOBAL_TIMER):
 
     total_mean = sum(v["mean"] for v in stats.values())
     print(f"Total: {total_mean:.4f} ms")
+
+
+def latency_by_label(step_seconds, total_ms):
+    """Per-window latency for one label (Normal or Anomaly), as in the paper's latency table.
+
+    step_seconds: {step name: [seconds per window]} from a TimeRegistry.
+    total_ms: end-to-end milliseconds per window (GSAD + TAAE + fusion and the window slicing).
+    """
+    out = {name: {"mean": float(np.mean(v) * 1000), "std": float(np.std(v) * 1000)}
+           for name, v in step_seconds.items() if len(v)}
+    total_ms = np.asarray(total_ms, dtype=float)
+    if total_ms.size:
+        mean = float(total_ms.mean())
+        out["Total"] = {"mean": mean, "std": float(total_ms.std())}
+        out["throughput_win_per_s"] = 1000.0 / mean if mean > 0 else None
+    out["n_windows"] = int(total_ms.size)
+    return out
+
+
+def format_latency_by_label(label, stats, window):
+    lines = [f"\n[{label}] Latency per {window} window"]
+    for name in ("GSAD", "TAAE", "Fusion", "Total"):
+        if name in stats:
+            lines.append(f"  - {name:<6}: {stats[name]['mean']:.3f} ± {stats[name]['std']:.3f} ms")
+    if stats.get("throughput_win_per_s") is not None:
+        lines.append(f"  - Throughput: {stats['throughput_win_per_s']:.2f} windows/sec")
+    return "\n".join(lines)
+

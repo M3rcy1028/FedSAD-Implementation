@@ -41,7 +41,8 @@ from models.taae_previous import TransformerAAE  # archived FedSAD weights use t
 from gsad import create_gsad_from_window, extract_gsad_features
 from utils.get_datasets import sanitize_numeric, fedsad_data_preprocessing
 import argparse
-from utils.metrics import save_report, plt_confusion_matrix, print_latency, timed_step, GLOBAL_TIMER
+from utils.metrics import save_report, plt_confusion_matrix, print_latency, timed_step, GLOBAL_TIMER, \
+    latency_by_label, format_latency_by_label
 from utils.window_metrics import compute_window_metrics, format_window_metrics
 
 # GPU Configuration
@@ -422,24 +423,41 @@ if __name__ == "__main__":
     # Dynamically calculate threshold
     calculate_taae_threshold()
 
-    GLOBAL_TIMER.reset()
+    # Step timings are collected per label (Normal, Anomaly) for the latency table.
+    step_seconds = {}
 
     # Evaluate normal data
+    GLOBAL_TIMER.reset()
     normal_pred, normal_test, normal_results =evaluate(
         gsad_normal_test, taae_normal_test, "Normal",
         gsad_pipeline,
         taae_pipeline,
         fusion_pipeline
     )
+    step_seconds["Normal"] = {k: list(v) for k, v in GLOBAL_TIMER.storage.items()}
 
     # Evaluate anomaly data
+    GLOBAL_TIMER.reset()
     anomaly_pred, anomaly_test, anomaly_results =evaluate(
         gsad_anomaly_test, taae_anomaly_test, "Anomaly",
         gsad_pipeline,
         taae_pipeline,
         fusion_pipeline
     )
+    step_seconds["Anomaly"] = {k: list(v) for k, v in GLOBAL_TIMER.storage.items()}
 
+    latency = {
+        "Normal": latency_by_label(step_seconds["Normal"], [r["infer_ms"] for r in normal_results]),
+        "Anomaly": latency_by_label(step_seconds["Anomaly"], [r["infer_ms"] for r in anomaly_results]),
+    }
+    latency_text = "\n".join(format_latency_by_label(k, v, TIME_WINDOW) for k, v in latency.items())
+    print(latency_text)
+
+    # Overall step breakdown across both labels
+    GLOBAL_TIMER.reset()
+    for steps in step_seconds.values():
+        for name, values in steps.items():
+            GLOBAL_TIMER.storage.setdefault(name, []).extend(values)
     print_latency("Overall")
 
     y_pred = normal_pred + anomaly_pred
@@ -458,10 +476,12 @@ if __name__ == "__main__":
     wm = compute_window_metrics(results, TIME_WINDOW, episode_gap=_known.episode_gap,
                                 anomaly_timestamps=gsad_anomaly_test.index)
     wm.update({"dataset": args.eval_dataset, "threshold_std": args.threshold_std,
-               "gsad_model": config["gsad_model"], "latency_breakdown_ms": GLOBAL_TIMER.summary()})
+               "gsad_model": config["gsad_model"], "latency_breakdown_ms": GLOBAL_TIMER.summary(),
+               "latency_by_label_ms": latency})
     print(format_window_metrics(wm))
     with open(report_path, "a") as f:
         f.write(format_window_metrics(wm) + "\n")
+        f.write(latency_text + "\n")
     with open(os.path.join(config["result_path"], "window_metrics.json"), "w") as f:
         json.dump(wm, f, indent=2, default=float)
     print(f"Saved window metrics to {os.path.join(config['result_path'], 'window_metrics.json')}")
