@@ -306,6 +306,25 @@ Confusion matrices of FedSAD and GSAD alone on 1-minute windows (Anomaly is the 
 | CSE-CIC-IDS2018 | ![FedSAD CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/fedsad/fedsad_cm.png) | ![GSAD CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/gsad/gsad_cm.png) |
 | UNSW-NB15 | ![FedSAD UNSW-NB15](results/UNSW-NB15/fedsad/fedsad_cm.png) | ![GSAD UNSW-NB15](results/UNSW-NB15/gsad/gsad_cm.png) |
 
+### Effect of detection-window size
+
+FedSAD is evaluated with **30-second, 1-minute, 2-minute and 4-minute detection windows**. GSAD normal statistics are rebuilt for each window size, with `--threshold-std` fixed at **0.25 for CSE-CIC-IDS2018** and **5 for UNSW-NB15**. The table reports archived window-level results, with Anomaly as the positive class.
+
+| Dataset | Window | Accuracy | Precision | Recall | F1-score | FPR | Mean inference (ms/window) | Mean detection delay (s) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| CSE-CIC-IDS2018 | 30s | 0.9366 | 0.8116 | 0.9840 | 0.8895 | 0.0800 | 113.30 | 26.77 |
+| CSE-CIC-IDS2018 | 1min | 0.9698 | 0.8982 | 0.9895 | 0.9416 | 0.0366 | 112.70 | 53.84 |
+| CSE-CIC-IDS2018 | 2min | 0.9819 | 0.9634 | 0.9606 | 0.9620 | 0.0114 | 116.42 | 111.43 |
+| CSE-CIC-IDS2018 | 4min | 0.9933 | 0.9804 | 0.9915 | 0.9860 | 0.0062 | 118.03 | 226.85 |
+| UNSW-NB15 | 30s | 0.9946 | 0.9852 | 1.0000 | 0.9926 | 0.0084 | 116.37 | 29.89 |
+| UNSW-NB15 | 1min | 0.9938 | 0.9829 | 1.0000 | 0.9914 | 0.0097 | 125.29 | 59.70 |
+| UNSW-NB15 | 2min | 0.9929 | 0.9806 | 1.0000 | 0.9902 | 0.0111 | 150.32 | 119.25 |
+| UNSW-NB15 | 4min | 0.9930 | 0.9808 | 1.0000 | 0.9903 | 0.0110 | 224.32 | 236.69 |
+
+Mean detection delay is measured from the first flow in a correctly detected attack window to the window's closing time plus end-to-end inference. The number of evaluated windows changes with the aggregation interval. Full timing statistics, confusion counts and episode-level time-to-detect are available in the [summary CSV](results/window_sweep_summary.csv) and the saved metrics under [CSE-CIC-IDS2018](results/CSE-CIC-IDS2018/window_sweep/) and [UNSW-NB15](results/UNSW-NB15/window_sweep/).
+
+For CSE-CIC-IDS2018, increasing the window from 30 seconds to 4 minutes raises F1 from **0.8895 to 0.9860** and lowers FPR from **0.0800 to 0.0062**, while mean detection delay increases from **26.77 to 226.85 seconds**. UNSW-NB15 retains recall **1.0000** across all four settings, with F1 between **0.9902 and 0.9926**; its mean detection delay increases from **29.89 to 236.69 seconds**. These measurements show the trade-off between window-level detection quality and response delay.
+
 ### Pipeline latency
 
 Per-window inference latency and throughput of the full FedSAD pipeline (1-minute detection windows).
