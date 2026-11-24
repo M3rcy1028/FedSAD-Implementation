@@ -2,7 +2,7 @@
 
 [Back to results and analysis](../README.md)
 
-This guide preserves the installation steps, repository layout, dataset preparation, experiment commands, evaluation workflow and original study settings. The [project README](../README.md) presents the experimental results and their interpretation.
+This guide preserves the installation steps, repository layout, dataset preparation, experiment commands, evaluation workflow and original study settings. The [project README](../README.md) includes the experimental results, interpretation and full study details; this document provides a standalone reference for running and reproducing experiments.
 
 - [Quick start](#quick-start)
 - [Directory structure and archived artifacts](#directory-structure)
