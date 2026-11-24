@@ -1,0 +1,19 @@
+{
+  "stage": "complete",
+  "started_at": "2026-11-18T15:59:48.206354+09:00",
+  "completed_clients": [
+    5,
+    10,
+    15,
+    20,
+    25,
+    30,
+    35,
+    40,
+    46,
+    50
+  ],
+  "active_clients": null,
+  "child_pid": null,
+  "finished_at": "2026-11-18T19:06:38.476850+09:00"
+}

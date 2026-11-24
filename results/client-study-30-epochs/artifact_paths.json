@@ -1,0 +1,9 @@
+{
+  "study_directory": "results/client-study-30-epochs",
+  "path_aliases": {
+    "results/clients-30/": "results/client-study-30-epochs/",
+    "results/clients-70/": "results/client-study-70-epochs/",
+    "results/clients/": "results/client-study-70-epochs/"
+  },
+  "historical_paths_policy": "Model/launch configs and frozen sources retain original recorded paths. Resolve old study prefixes with path_aliases; experiment_config.json uses current paths."
+}

@@ -1,0 +1,12 @@
+Percentile: 89.75
+Threshold: 0.00762984881410375
+ROC AUC: 0.946736
+
+              precision    recall  f1-score   support
+
+      Normal   0.993634  0.820947  0.899073      4373
+     Anomaly   0.847458  0.994740  0.915211      4373
+
+    accuracy                       0.907844      8746
+   macro avg   0.920546  0.907844  0.907142      8746
+weighted avg   0.920546  0.907844  0.907142      8746

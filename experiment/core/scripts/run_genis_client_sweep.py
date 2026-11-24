@@ -225,7 +225,7 @@ def prepare(destination):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output-root", type=Path, default=ROOT / "results/clients")
+    parser.add_argument("--output-root", type=Path, default=ROOT / "results/client-study-70-epochs")
     parser.add_argument("--plan-only", action="store_true")
     parser.add_argument("--collect-only", action="store_true")
     parser.add_argument("--wait-lock", action="store_true",
