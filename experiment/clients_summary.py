@@ -1,4 +1,4 @@
-"""Build the requested final six-count GeNIS table from completed study runs."""
+"""Build a GeNIS client-count table using the recorded study configuration."""
 import argparse
 import csv
 import io
@@ -6,7 +6,6 @@ import json
 import os
 from pathlib import Path
 
-COUNTS = (5, 10, 15, 20, 25, 30)
 POLICY = "validation_best_macro_f1"
 COLUMNS = (
     ("clients", "Clients"), ("percentile", "Percentile"),
@@ -34,22 +33,24 @@ def render(rows):
 
 
 def collect(root):
+    config = json.loads((root / "experiment_config.json").read_text())
+    counts = tuple(config["client_counts"])
+    epochs = config["client_epochs"]
     states = {count: json.loads((root / f"clients_{count}/status.json").read_text())
-              for count in COUNTS}
+              for count in counts}
     failed = [count for count, state in states.items() if state["stage"] == "failed"]
     if failed:
         return {"stage": "failed", "clients": failed,
                 "message": f"GeNIS client comparison: runs for {failed} clients failed, so the final table is incomplete. Status files: {root}"}
     completed = [count for count, state in states.items() if state["stage"] == "complete"]
-    if len(completed) != len(COUNTS):
+    if len(completed) != len(counts):
         return {"stage": "waiting", "completed_clients": completed}
-    config = json.loads((root / "experiment_config.json").read_text())
-    assert config["server_rounds"] == 10 and config["client_epochs"] == 70
+    assert config["server_rounds"] == 10 and epochs > 0
     rows = list(csv.DictReader((root / "client_comparison.csv").open()))
     rows = [row for row in rows if row["threshold_policy"] == POLICY
             and row["evaluation_set"] == "test" and int(row["round"]) == 10]
     # The collector may be updating its CSV as the last status changes.
-    if len(rows) != len(COUNTS) or sorted(int(row["clients"]) for row in rows) != list(COUNTS):
+    if len(rows) != len(counts) or sorted(int(row["clients"]) for row in rows) != list(counts):
         return {"stage": "waiting", "completed_clients": completed, "reason": "final CSV is being updated"}
     for row in rows:
         count = int(row["clients"])
@@ -64,14 +65,14 @@ def collect(root):
                                    ("attack_f1", "f1-score")]:
             assert abs(float(row[source_key]) - report["Anomaly"][metric]) < 1e-12
     rows.sort(key=lambda row: int(row["clients"]))
-    message = ("GeNIS **5/10/15/20/25/30-client runs are complete.**\n\n"
+    message = (f"GeNIS **{'/'.join(map(str, counts))}-client runs are complete.**\n\n"
                + render(rows) + "\n\n"
-               "All runs use 70 local epochs, 10 server rounds, seed 123 and the same 8,746 test flows (4,373 normal / 4,373 attack). "
+               f"All runs use {epochs} local epochs, 10 server rounds, seed 123 and the same 8,746 test flows (4,373 normal / 4,373 attack). "
                "Thresholds are selected by validation macro F1; precision, recall and F1-score are for the attack (Anomaly) class.")
     markdown = root / "final_comparison_table.md"
     table = root / "final_comparison_table.csv"
     stream = io.StringIO()
-    writer = csv.DictWriter(stream, fieldnames=[key for key, _ in COLUMNS])
+    writer = csv.DictWriter(stream, fieldnames=[key for key, _ in COLUMNS], lineterminator="\n")
     writer.writeheader()
     writer.writerows({key: row[key] for key, _ in COLUMNS} for row in rows)
     atomic_text(table, stream.getvalue())

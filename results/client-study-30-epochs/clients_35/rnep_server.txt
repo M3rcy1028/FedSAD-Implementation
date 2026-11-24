@@ -1,0 +1,67 @@
+Percentile: 93.14
+Threshold: 0.00738063584752381
+ROC AUC: 0.977051
+
+              precision    recall  f1-score   support
+
+      Normal   0.995422  0.895038  0.942565      4373
+     Anomaly   0.904653  0.995884  0.948079      4373
+
+    accuracy                       0.945461      8746
+   macro avg   0.950038  0.945461  0.945322      8746
+weighted avg   0.950038  0.945461  0.945322      8746
+
+[Round 0] Validation evaluation
+Accuracy: 0.615465; AUROC: 0.647582
+Normal: precision=0.576251 recall=0.872608 F1=0.694120 support=3815
+Anomaly: precision=0.737723 recall=0.358322 F1=0.482357 support=3815
+
+[Round 1] Validation evaluation
+Accuracy: 0.876278; AUROC: 0.917920
+Normal: precision=0.907003 recall=0.838532 F1=0.871425 support=3815
+Anomaly: precision=0.849866 recall=0.914024 F1=0.880778 support=3815
+
+[Round 2] Validation evaluation
+Accuracy: 0.900000; AUROC: 0.957701
+Normal: precision=0.954437 recall=0.840105 F1=0.893629 support=3815
+Anomaly: precision=0.857210 recall=0.959895 F1=0.905651 support=3815
+
+[Round 3] Validation evaluation
+Accuracy: 0.914417; AUROC: 0.961842
+Normal: precision=0.988868 recall=0.838270 F1=0.907363 support=3815
+Anomaly: precision=0.859645 recall=0.990564 F1=0.920473 support=3815
+
+[Round 4] Validation evaluation
+Accuracy: 0.916121; AUROC: 0.966787
+Normal: precision=0.996870 recall=0.834862 F1=0.908702 support=3815
+Anomaly: precision=0.857948 recall=0.997379 F1=0.922424 support=3815
+
+[Round 5] Validation evaluation
+Accuracy: 0.915596; AUROC: 0.968390
+Normal: precision=0.996866 recall=0.833814 F1=0.908079 support=3815
+Anomaly: precision=0.857175 recall=0.997379 F1=0.921977 support=3815
+
+[Round 6] Validation evaluation
+Accuracy: 0.915072; AUROC: 0.973714
+Normal: precision=0.996862 recall=0.832765 F1=0.907455 support=3815
+Anomaly: precision=0.856403 recall=0.997379 F1=0.921531 support=3815
+
+[Round 7] Validation evaluation
+Accuracy: 0.915596; AUROC: 0.974146
+Normal: precision=0.996866 recall=0.833814 F1=0.908079 support=3815
+Anomaly: precision=0.857175 recall=0.997379 F1=0.921977 support=3815
+
+[Round 8] Validation evaluation
+Accuracy: 0.918087; AUROC: 0.976480
+Normal: precision=0.996885 recall=0.838794 F1=0.911032 support=3815
+Anomaly: precision=0.860860 recall=0.997379 F1=0.924104 support=3815
+
+[Round 9] Validation evaluation
+Accuracy: 0.918873; AUROC: 0.978695
+Normal: precision=0.996891 recall=0.840367 F1=0.911961 support=3815
+Anomaly: precision=0.862030 recall=0.997379 F1=0.924778 support=3815
+
+[Round 10] Validation evaluation
+Accuracy: 0.918349; AUROC: 0.981051
+Normal: precision=0.996887 recall=0.839318 F1=0.911342 support=3815
+Anomaly: precision=0.861249 recall=0.997379 F1=0.924329 support=3815

@@ -190,12 +190,12 @@ Other paper experiments:
 | FedSAD detection-window sweep (CIC2018, UNSW-NB15) | `python experiment/core/scripts/run_window_sweep.py --datasets cic unsw --windows 30s 1min 2min 4min` |
 | GeNIS input data for FedSAD / graph baselines | `python experiment/core/scripts/preprocess_genis.py frame` / `... baseline` |
 | MV-IDS and MM-FewShot-IDS on the GeNIS test flows | `python experiment/core/scripts/run_genis_baselines.py --models mvids mmfewshotsids` |
-| GeNIS client-count study (5–30 clients) | `python experiment/core/scripts/run_genis_client_sweep.py` |
+| GeNIS client-count study (5–50 clients, 30 epochs) | `python results/client-study-30-epochs/run_sweep.py` |
 | Recall comparison figures | `python experiment/core/scripts/plot_recall_comparison.py --all` |
 | Combined TAAE ROC figure | `python experiment/core/scripts/plot_taae_combined_roc.py` |
 | TAAE + FedAvg / centralized baselines | `python experiment/core/train_fedavg.py` / `python experiment/core/train_cml.py` |
 
-The window sweep and GeNIS baselines write to `outputs/` by default; the client study writes to `results/clients/` unless `--output-root` is given, and `preprocess_genis.py` writes to `/data/SDP_Dataset/GeNIS/processed/`. `train_fedavg.py` reads `./CIC2018/sampled_2/` and `train_cml.py` reads `./NSL-KDD/`, relative to the working directory, and write to `./fedavg/` and `./cml/`.
+The window sweep and GeNIS baselines write to `outputs/` by default; the recorded client studies live in `results/client-study-30-epochs/` and `results/client-study-70-epochs/` (the original collector defaults to the 70-epoch archive), and `preprocess_genis.py` writes to `/data/SDP_Dataset/GeNIS/processed/`. `train_fedavg.py` reads `./CIC2018/sampled_2/` and `train_cml.py` reads `./NSL-KDD/`, relative to the working directory, and write to `./fedavg/` and `./cml/`.
 
 ## Archived results
 
@@ -213,7 +213,8 @@ results/
 │   ├── <dataset>_recall.csv/png   # Recall comparison
 │   └── <dataset>_roc_data.csv     # TAAE ROC scores
 ├── GeNIS/frame/                   # FedSAD and graph baselines on the RNEP frame data
-├── clients/                       # GeNIS client-count study
+├── client-study-30-epochs/        # GeNIS: 10 client counts, 30 local epochs
+├── client-study-70-epochs/        # GeNIS: original 6 client counts, 70 local epochs
 └── combined_roc_curves*.png/csv   # Combined TAAE ROC figures
 ```
 
@@ -264,33 +265,37 @@ The [ROC summary CSV](results/combined_roc_curves_6datasets.csv) links each curv
 
 ### Effect of client count on GeNIS
 
-Measured configuration: **30 local epochs per client per round**, 10 server rounds, previous TAAE with RNEP aggregation, latent dimension 64, batch size 16, learning rate `3e-5`, dropout 0.1 and seed 123. The current CLI default for new runs is 30 epochs; the configuration here identifies the saved measurements.
+Measured configuration: **30 local epochs per client per round**, **10 server rounds**, previous TAAE with RNEP aggregation, latent dimension 64, batch size 16, learning rate `3e-5`, dropout 0.1 and seed 123. We evaluate **5, 10, 15, 20, 25, 30, 35, 40, 46 and 50 clients**.
 
-The same ordered pool of **31,123 normal training rows** was partitioned using `numpy.array_split`; increasing the client count changes the partition sizes, not the total training pool. All runs share the same **7,630 validation rows** (3,815 normal and 3,815 attack) and **8,746 test rows** (4,373 normal and 4,373 attack), with the same preprocessing and frozen implementation source. The recorded source/data hashes, partition sizes and full settings are in [experiment_config.json](results/clients/experiment_config.json) and [partition_summary.csv](results/clients/partition_summary.csv).
+The same ordered pool of **31,123 normal training rows** is partitioned using `numpy.array_split`. All runs share **7,630 validation rows** (3,815 normal and 3,815 attack) and **8,746 test rows** (4,373 normal and 4,373 attack), with identical frozen model/training sources and preprocessing. The [experiment configuration](results/client-study-30-epochs/experiment_config.json) records the source/data hashes; the [partition summary](results/client-study-30-epochs/partition_summary.csv) records the client sizes.
 
-The table reports the final model after round 10. Each run's percentile was selected by **validation macro F1** and then applied to the held-out test set. **Precision, Recall and F1-score refer to Anomaly (1)**; Macro F1 averages the Normal and Anomaly F1 scores. Scores are on a 0–1 scale, rounded to four decimal places.
+The table reports the final model after round 10. Each percentile is selected by **validation macro F1**, then applied to the held-out test set. **Precision, Recall and F1-score refer to Anomaly (1)**; Macro F1 averages the Normal and Anomaly F1 scores. Scores are rounded to four decimal places.
 
 | Clients | Selected percentile | Accuracy | Precision | Recall | F1-score | Macro F1 | ROC-AUC |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 5 | 97.14 | 0.9601 | 0.9286 | 0.9968 | 0.9615 | 0.9600 | 0.9888 |
-| 10 | 97.98 | 0.9792 | 0.9629 | 0.9968 | 0.9796 | 0.9792 | 0.9900 |
-| **15** | 98.15 | **0.9820** | 0.9674 | 0.9977 | 0.9823 | **0.9820** | **0.9904** |
-| 20 | 97.81 | 0.9803 | 0.9642 | 0.9977 | 0.9807 | 0.9803 | 0.9901 |
-| 25 | 97.82 | 0.9793 | 0.9645 | 0.9952 | 0.9796 | 0.9793 | 0.9894 |
-| 30 | 97.69 | 0.9790 | 0.9621 | 0.9973 | 0.9793 | 0.9790 | 0.9890 |
+| 5 | 98.32 | 0.9835 | 0.9702 | 0.9977 | 0.9838 | 0.9835 | 0.9905 |
+| 10 | 97.36 | 0.9752 | 0.9547 | 0.9977 | 0.9757 | 0.9752 | 0.9895 |
+| 15 | 97.63 | 0.9790 | 0.9625 | 0.9968 | 0.9793 | 0.9790 | 0.9889 |
+| 20 | 97.42 | 0.9802 | 0.9658 | 0.9957 | 0.9805 | 0.9802 | 0.9884 |
+| 25 | 96.52 | 0.9761 | 0.9590 | 0.9947 | 0.9765 | 0.9761 | 0.9866 |
+| 30 | 94.53 | 0.9559 | 0.9223 | 0.9957 | 0.9576 | 0.9558 | 0.9818 |
+| 35 | 93.14 | 0.9455 | 0.9047 | 0.9959 | 0.9481 | 0.9453 | 0.9771 |
+| 40 | 91.29 | 0.9152 | 0.8573 | 0.9961 | 0.9215 | 0.9146 | 0.9663 |
+| 46 | 89.75 | 0.9078 | 0.8475 | 0.9947 | 0.9152 | 0.9071 | 0.9467 |
+| 50 | 89.65 | 0.9036 | 0.8462 | 0.9865 | 0.9110 | 0.9029 | 0.9328 |
 
-The [full comparison CSV](results/clients/client_comparison.csv) contains both the validation-selected results above and the fixed-percentile-82 control. The figure below shows both policies; [round_comparison.png](results/clients/round_comparison.png) separately shows round-by-round validation performance at the fixed percentile.
+The [full comparison CSV](results/client-study-30-epochs/client_comparison.csv) includes the validation-selected results and the fixed-percentile-82 control. The figure compares both policies; the [round comparison](results/client-study-30-epochs/round_comparison.png) shows validation performance through round 10.
 
-![GeNIS performance by client count after 10 rounds](results/clients/client_comparison.png)
+![GeNIS client-count comparison: 30 local epochs and 10 rounds](results/client-study-30-epochs/client_comparison.png)
 
 #### Interpretation
 
-- **15 clients performs best in this run.** Relative to 5 clients, accuracy improves by **2.20 percentage points**. Most of the difference comes from fewer normal samples being flagged as attacks: false positives fall from **335 to 147**, and Normal recall rises from **92.34% to 96.64%**. Missed attacks also decrease from 14 to 10. Thus the gain reflects improved balance between normal acceptance and attack detection, while attack recall remains high.
-- **More clients do not produce a monotonic improvement.** With 10–30 clients, accuracy stays within **97.90–98.20%**, a spread of approximately **0.31 percentage points**. Increasing the count beyond 15 gives no consistent predictive benefit in these measurements. The training pool per client decreases from 6,224–6,225 rows at 5 clients to 1,037–1,038 at 30 clients. Smaller partitions, fewer optimizer steps per client per local epoch and different RNEP pairings are possible contributors to the trend; this experiment does not isolate their individual effects.
-- **Threshold calibration materially affects the comparison.** At the fixed percentile of 82, accuracy is only **88.07–89.64%** and Normal recall is **76.15–79.28%**, despite very high attack recall. The fixed-threshold control has its highest accuracy at **20 clients**, whereas validation-selected thresholds give the highest accuracy at **15 clients**. ROC-AUC is threshold-independent and also peaks at 15 clients, although the AUC differences are small. Threshold-dependent results should therefore be compared under the same selection policy.
-- **The conclusion is specific to this protocol.** These are single-seed measurements with a shared shuffled-row partitioning recipe. They support 15 clients as a reference setting for this GeNIS experiment, but do not establish a universally optimal client count or a statistically significant advantage. Repeated seeds and non-IID client partitions would be needed to assess how reliably the ordering generalizes.
+- **5 clients performs best in this 30-epoch study.** Accuracy is **0.9835**, Macro F1 is **0.9835**, attack F1 is **0.9838** and ROC-AUC is **0.9905**. Its confusion matrix has **134 false positives and 10 false negatives**, with Normal recall **0.9694** and attack recall **0.9977**.
+- **Larger client counts reduce score separation under this fixed training budget.** The 10–25-client accuracy ranges from **0.9752 to 0.9802**. At 30, 35, 40, 46 and 50 clients it falls to **0.9559, 0.9455, 0.9152, 0.9078 and 0.9036**, respectively. ROC-AUC falls to **0.9328** at 50 clients, so the deterioration involves score ranking as well as threshold calibration. Normal recall falls from **0.9694** at 5 clients to **0.8207** at 50, while attack recall remains **0.9865** at 50. False positives increase from **134 to 784**, and false negatives from **10 to 59**.
+- **Client size and calibration both matter.** The training pool per client shrinks from **6,224–6,225 rows** at 5 clients to **622–623 rows** at 50. Each local epoch therefore has fewer optimizer steps per client, and RNEP mixes a different set of local models. These are possible contributors, not isolated causal findings. The validation-selected percentile shifts from **98.32 to 89.65**; even after this calibration, the highest client counts have lower performance. The fixed-percentile-82 control gives accuracy **0.8724–0.8938**, showing why the same threshold-selection policy must be used when comparing settings.
+- **This is a single-seed result.** The measurements support 5 clients as the strongest setting among these counts for this split and 30-epoch/10-round budget. Repeated seeds and non-IID partitions are needed before generalizing that ordering.
 
-Per-client artifacts, confusion matrices and completion checks are under `results/clients/clients_<N>/`; see the [study artifact index](results/clients/README.md) for the directory contents.
+Per-client weights, figures and completion checks are under `results/client-study-30-epochs/clients_<N>/`; the [study index](results/client-study-30-epochs/README.md) describes the artifacts and reproduction command. The separate [70-epoch archive](results/client-study-70-epochs/README.md) preserves the earlier measurements.
 
 ### FedSAD and GSAD confusion matrices
 

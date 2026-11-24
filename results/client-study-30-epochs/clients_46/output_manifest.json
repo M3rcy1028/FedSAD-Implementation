@@ -1,0 +1,27 @@
+{
+  "source_run": "/home/tako/naryun/etri_sdp_revision/FedSAD-Implementation-clean/results/clients-30/clients_46/run/previous",
+  "model_variant": "previous",
+  "prepared_data": "/home/tako/naryun/IDS_Datasets/GeNIS/processed/training_20261110_135717_752617",
+  "percentile": 89.75,
+  "threshold": 0.007629848814103752,
+  "selection_set": "validation",
+  "files": [
+    "GeNIS_cm.png",
+    "GeNIS_distribution.png",
+    "GeNIS_metrics.json",
+    "GeNIS_predictions.csv",
+    "GeNIS_report.txt",
+    "GeNIS_roc.png",
+    "GeNIS_roc_data.csv",
+    "GeNIS_summary.csv",
+    "client.txt",
+    "model_config.json",
+    "preprocessing.joblib",
+    "preprocessing_report.json",
+    "rnep_frame_genis_weights.h5",
+    "rnep_history.csv",
+    "rnep_history.png",
+    "rnep_server.txt",
+    "selected_threshold.json"
+  ]
+}

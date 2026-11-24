@@ -1,0 +1,26 @@
+{
+  "rounds_completed": 10,
+  "successful_client_fits": 500,
+  "successful_client_evaluations": 500,
+  "fit_failures": 0,
+  "evaluation_failures": 0,
+  "requested_epochs_completed": true,
+  "prepared_data_unchanged": true,
+  "source_files_unchanged": {
+    "rnep.py": true,
+    "taae.py": true,
+    "taae_previous.py": true,
+    "utils/__init__.py": true,
+    "utils/arguments.py": true,
+    "utils/metrics.py": true,
+    "utils/genis.py": true,
+    "utils/genis_experiment.py": true,
+    "utils/genis_outputs.py": true,
+    "utils/taae_checkpoint.py": true,
+    "utils/gotham.py": true,
+    "utils/gotham_experiment.py": true,
+    "utils/gotham_runtime.py": true,
+    "scripts/sweep_rnep_percentiles.py": true
+  },
+  "primary_percentile_selected_on_validation": true
+}
