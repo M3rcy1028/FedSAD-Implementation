@@ -499,6 +499,12 @@ Due to manuscript space limitations, detailed implementation and training proced
 - Hyperparameter settings and the server/software environment
 - Evaluation scripts and the archived results, including the saved model weights
 
+## License
+
+This project is licensed under the [MIT License](LICENSE). Copyright (c) 2026 FedSAD contributors.
+
+Third-party datasets and components retain their respective licenses and usage terms.
+
 ## Citation
 
 If you use this repository in your research, please cite:
